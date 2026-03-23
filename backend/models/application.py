@@ -2,7 +2,8 @@ import enum
 from sqlalchemy import Column, Integer, String, Boolean, Float, DateTime, Enum, ForeignKey, Text
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
-from database import Base # Assumes backend/ is in the PYTHONPATH
+from backend.database import Base
+
 
 class ApplicationStatus(str, enum.Enum):
     """
