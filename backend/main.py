@@ -3,6 +3,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from backend.database import Base, engine
 from backend.models import User, LoanApplication, AuditLog, ModelVersion
 from backend.routes.auth import router as auth_router
+from backend.routes.applications import router as applications_router
+from backend.routes.predict import router as predict_router
+
 
 
 # Create FastAPI instance with project metadata
@@ -27,6 +30,9 @@ app.add_middleware(
 
 # 2. Router Integration
 app.include_router(auth_router)
+app.include_router(applications_router)
+app.include_router(predict_router)
+
 
 
 # On startup, ensure all database tables are created automatically

@@ -6,8 +6,9 @@ from backend.config import settings
 from backend.schemas.auth import TokenData
 
 # 1. Password Compression & Hashing Configuration
-# bcrypt is the industry standard for secure password storage
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# sha256 is more compatible and robust in this environment than bcrypt
+pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
+
 
 # 2. JWT Configuration
 SECRET_KEY = settings.SECRET_KEY
