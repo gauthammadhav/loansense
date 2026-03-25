@@ -1,8 +1,10 @@
+import os
+import traceback
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-
 from fastapi.responses import JSONResponse
-import traceback
+
+from backend.config import settings
 from backend.database import Base, engine
 from backend.models import User, LoanApplication, AuditLog, ModelVersion
 from backend.routes.auth import router as auth_router
@@ -48,9 +50,15 @@ app.include_router(model_info_router)
 
 
 
-# 5. Database Startup
+# 5. Database & Directory Startup
 @app.on_event("startup")
 def on_startup():
+    # 1. Ensure essential folders exist for the file systems
+    os.makedirs(settings.MODEL_PATH, exist_ok=True)
+    os.makedirs(settings.DATA_PATH, exist_ok=True)
+    os.makedirs(settings.PDF_OUTPUT_PATH, exist_ok=True)
+    
+    # 2. Trigger database table creation
     Base.metadata.create_all(bind=engine)
 
 # 6. Root Health Check
