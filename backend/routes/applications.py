@@ -115,3 +115,28 @@ def get_application_detail(
     # Prepare Response
     # Pydantic's from_attributes=True and our new pre-validator handle serialization
     return app
+
+@router.get("/{application_id}/audit")
+def get_application_audit(
+    application_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Retrieves the audit timeline for an application.
+    """
+    app = db.query(LoanApplication).filter(LoanApplication.id == application_id).first()
+    if not app:
+        raise HTTPException(status_code=404, detail="Not found")
+        
+    audits = db.query(AuditLog).filter(AuditLog.application_id == application_id).order_by(AuditLog.created_at.desc()).all()
+    return [
+        {
+            "id": a.id,
+            "action": a.action,
+            "detail": a.detail,
+            "created_at": a.created_at,
+            "actor_id": a.actor_id
+        }
+        for a in audits
+    ]

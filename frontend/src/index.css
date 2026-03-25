@@ -1,0 +1,54 @@
+@import "tailwindcss";
+@import "./styles/tokens.css";
+
+/* Disable Default Fonts and Inject Google Fonts from PRD */
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Montserrat:wght@400;500;600;700&display=swap');
+
+@theme {
+  /* Font Family Mapping */
+  --font-heading: 'Playfair Display', serif;
+  --font-body: 'Montserrat', sans-serif;
+
+  /* Strict Token-Only Color Palette */
+  --color-dark: var(--dark);
+  --color-page: var(--page);
+  --color-white: var(--white);
+  --color-border: var(--border);
+  --color-lime: var(--lime);
+  --color-lime-dark: var(--lime-dark);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --color-success: var(--success);
+  --color-success-bg: var(--success-bg);
+  --color-danger: var(--danger);
+  --color-danger-bg: var(--danger-bg);
+  --color-warning: var(--warning);
+  --color-warning-bg: var(--warning-bg);
+
+  /* Border Utilities from PRD */
+  --radius-card: 16px;
+  --radius-input: 10px;
+}
+
+/* Global Strict PRD Styling */
+body {
+  font-family: var(--font-body);
+  background-color: var(--page); /* Page background according to layout rules */
+  color: var(--dark);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* PRD Specific Font Overrides */
+h1 {
+  font-family: var(--font-heading);
+  font-size: 32px;
+}
+
+h2 {
+  font-family: var(--font-heading);
+  font-size: 26px;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
+}

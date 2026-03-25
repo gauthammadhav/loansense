@@ -1,0 +1,24 @@
+/* 
+  LoanSense PRD v1.0 strict token specifications.
+  DO NOT add extra colors. ONLY use these exact tokens.
+*/
+:root {
+  --dark: #111111;
+  --page: #F4F5F0;
+  --white: #FFFFFF;
+  --border: #E4E4E4;
+  --lime: #C8F135;
+  --lime-dark: #9BBF00;
+  --muted: #6B6B6B;
+  --faint: #9A9A9A;
+  --success: #1A8A2E;
+  --success-bg: #EDFFF0;
+  --danger: #CC2222;
+  --danger-bg: #FFF0F0;
+  --warning: #AA7700;
+  --warning-bg: #FFFBF0;
+
+  /* Chart Colors for Recharts */
+  --chart-approve: #1A8A2E;
+  --chart-reject: #CC2222;
+}
