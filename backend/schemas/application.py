@@ -1,6 +1,7 @@
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 from datetime import datetime
-from typing import Optional, Dict, List
+from typing import Optional, Dict, List, Any
+import json
 from backend.models.application import ApplicationStatus
 
 # 1. Base Fields (Shared properties)
@@ -34,6 +35,16 @@ class LoanApplicationResponse(LoanApplicationBase):
     submitted_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+    @model_validator(mode="before")
+    @classmethod
+    def parse_shap_values(cls, data: Any) -> Any:
+        # If data is an ORM object, extract its properties as a dict
+        if hasattr(data, "shap_values") and isinstance(data.shap_values, str):
+            setattr(data, "shap_values", json.loads(data.shap_values))
+        elif isinstance(data, dict) and isinstance(data.get("shap_values"), str):
+            data["shap_values"] = json.loads(data["shap_values"])
+        return data
 
 # 4. List View Schema (Dashboard)
 class ApplicationListItem(BaseModel):

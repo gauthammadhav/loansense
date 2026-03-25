@@ -70,11 +70,8 @@ def create_application(
     db.commit()
     
     # 5. Prepare Response
-    # Convert DB record back to schema, manually parsing the SHAP JSON
-    app_data = new_app.__dict__.copy()
-    app_data["shap_values"] = json.loads(new_app.shap_values) if new_app.shap_values else None
-    
-    return LoanApplicationResponse(**app_data)
+    # Pydantic's from_attributes=True and our new pre-validator handle serialization
+    return new_app
 
 @router.get("/", response_model=List[ApplicationListItem])
 def list_my_applications(
@@ -115,12 +112,6 @@ def get_application_detail(
             detail="You do not have permission to view this application"
         )
         
-    # Prepare Response (manual JSON parsing for SHAP)
-    app_data = app.__dict__.copy()
-    if app.shap_values:
-        try:
-            app_data["shap_values"] = json.loads(app.shap_values)
-        except:
-            app_data["shap_values"] = None
-            
-    return LoanApplicationResponse(**app_data)
+    # Prepare Response
+    # Pydantic's from_attributes=True and our new pre-validator handle serialization
+    return app

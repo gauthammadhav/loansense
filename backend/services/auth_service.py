@@ -45,6 +45,10 @@ def decode_token(token: str) -> TokenData:
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
+    
+    # Strip quotes in case the user copy-pasted them from a JSON response
+    token = token.strip('"').strip("'")
+    
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         email: str = payload.get("sub")

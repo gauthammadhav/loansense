@@ -16,7 +16,7 @@ if curr_dir not in sys.path:
 
 from preprocess import preprocess
 
-def train_models():
+def train_models(data=None):
     """
     Loads data, trains 4 classifiers, evaluates them, and saves the best model.
     """
@@ -25,12 +25,15 @@ def train_models():
     os.makedirs(models_dir, exist_ok=True)
 
     # 2. Load Dataset
-    data_path = os.path.join(curr_dir, 'data', 'loan_base.csv')
-    if not os.path.exists(data_path):
-        print(f"Error: Dataset not found at {data_path}")
-        return
+    if data is not None:
+        df_base = data
+    else:
+        data_path = os.path.join(curr_dir, 'data', 'loan_base.csv')
+        if not os.path.exists(data_path):
+            print(f"Error: Dataset not found at {data_path}")
+            return
+        df_base = pd.read_csv(data_path)
 
-    df_base = pd.read_csv(data_path)
 
     # 3. Preprocess Data
     # preprocess(df) returns (X, y)
@@ -71,6 +74,8 @@ def train_models():
     best_f1 = -1
     best_model_name = ""
     best_model_obj = None
+    best_metrics = {}
+
 
     print("--- Training Models ---")
 
@@ -104,14 +109,25 @@ def train_models():
             best_f1 = f1
             best_model_name = name
             best_model_obj = model
+            best_metrics = {
+                "accuracy": acc,
+                "f1_score": f1,
+                "precision": prec,
+                "recall": rec,
+                "model_name": name
+            }
+
 
     # 6. Save the overall best model
     if best_model_obj:
         joblib.dump(best_model_obj, os.path.join(models_dir, 'model_current.pkl'))
         print("-" * 30)
         print(f"Training complete. Best model: {best_model_name}")
+        return best_metrics
     else:
         print("Error: No models were trained.")
+        return None
+
 
 if __name__ == "__main__":
     train_models()

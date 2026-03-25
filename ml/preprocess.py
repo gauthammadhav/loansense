@@ -86,20 +86,22 @@ def preprocess(df):
     df['property_type'] = df['property_type'].map({'Urban': 2, 'Semiurban': 1, 'Rural': 0}).fillna(0).astype(int)
     
     # Label Encoding for Gender, Married, Self_Employed
-    # Using LabelEncoder with fixed fit categories to ensure consistency without state files
     le = LabelEncoder()
     
     # gender (Male/Female/Other)
     le.fit(['Female', 'Male', 'Other'])
     df['gender'] = le.transform(df['gender'].astype(str))
     
-    # married (Yes/No)
+    # married (Yes/No) - Handle booleans from API
+    df['married'] = df['married'].map({True: 'Yes', False: 'No', 'True': 'Yes', 'False': 'No', 'Yes': 'Yes', 'No': 'No'}).fillna('No')
     le.fit(['No', 'Yes'])
     df['married'] = le.transform(df['married'].astype(str))
     
-    # self_employed (Yes/No)
+    # self_employed (Yes/No) - Handle booleans from API
+    df['self_employed'] = df['self_employed'].map({True: 'Yes', False: 'No', 'True': 'Yes', 'False': 'No', 'Yes': 'Yes', 'No': 'No'}).fillna('No')
     le.fit(['No', 'Yes'])
     df['self_employed'] = le.transform(df['self_employed'].astype(str))
+
 
     # 3. Engineered Features (Section 4.1.2)
     
