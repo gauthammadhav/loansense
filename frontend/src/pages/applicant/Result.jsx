@@ -5,6 +5,7 @@ import { Button } from '../../components/ui/Button';
 import ShapChart from '../../components/ui/ShapChart';
 import WhatIfSimulator from '../../components/ui/WhatIfSimulator';
 import { ArrowLeft } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 export default function ApplicantResult() {
   const location = useLocation();
@@ -35,9 +36,14 @@ export default function ApplicantResult() {
   const isApproved = application.ml_prediction === 'Y';
   
   return (
-    <div className="max-w-5xl mx-auto space-y-6">
+    <motion.div 
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      className="max-w-5xl mx-auto space-y-6"
+    >
       <div className="flex items-center gap-4">
-        <button onClick={() => navigate('/applicant/dashboard')} className="p-2 border border-border rounded-full hover:bg-page transition-colors text-muted">
+        <button onClick={() => navigate('/applicant/dashboard')} className="p-2 border border-border rounded-full hover:bg-page transition-colors text-muted hover:text-dark">
           <ArrowLeft size={16} />
         </button>
         <div>
@@ -47,42 +53,59 @@ export default function ApplicantResult() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className={isApproved ? 'border-success border-[2px]' : 'border-danger border-[2px]'}>
-          <h3 className="text-xs uppercase font-bold text-faint tracking-wider mb-2">Machine Learning Decision</h3>
-          <div className={`text-4xl font-heading font-bold ${isApproved ? 'text-success' : 'text-danger'}`}>
-            {isApproved ? 'Favorable' : 'High Risk'}
-          </div>
-          <div className="mt-6 text-sm font-body text-dark">
-            <span className="font-bold">Confidence:</span> {(application.ml_confidence * 100).toFixed(1)}%
-          </div>
-          <div className="mt-1 text-sm font-body text-dark">
-            <span className="font-bold">Risk Band:</span> <span className="capitalize">{application.ml_risk_band?.replace('_', ' ')}</span>
-          </div>
-          
-          <div className="mt-8 pt-4 border-t border-border">
-            <p className="text-sm text-muted italic font-body">
-              This prediction is preliminary. A loan officer will review your application shortly.
-            </p>
-          </div>
-        </Card>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ type: 'spring', delay: 0.1, stiffness: 300, damping: 20 }}
+        >
+          <Card className={isApproved ? 'border-success border-[2px] shadow-[0_0_20px_rgba(46,204,113,0.1)]' : 'border-danger border-[2px] shadow-[0_0_20px_rgba(231,76,60,0.1)]'}>
+            <h3 className="text-xs uppercase font-bold text-faint tracking-wider mb-2">Machine Learning Decision</h3>
+            <div className={`text-5xl tracking-tight font-heading font-bold ${isApproved ? 'text-success' : 'text-danger'}`}>
+              {isApproved ? 'Favorable' : 'High Risk'}
+            </div>
+            <div className="mt-6 text-sm font-body text-dark">
+              <span className="font-bold">Confidence:</span> {(application.ml_confidence * 100).toFixed(1)}%
+            </div>
+            <div className="mt-1 text-sm font-body text-dark">
+              <span className="font-bold">Risk Band:</span> <span className="capitalize">{application.ml_risk_band?.replace('_', ' ')}</span>
+            </div>
+            
+            <div className="mt-8 pt-4 border-t border-border">
+              <p className="text-sm text-muted italic font-body">
+                This prediction is preliminary. A loan officer will review your application shortly.
+              </p>
+            </div>
+          </Card>
+        </motion.div>
 
-        <Card>
-          <h3 className="text-xs uppercase font-bold text-faint tracking-wider mb-4">AI Explainability (SHAP)</h3>
-          <p className="text-xs text-muted font-body mb-2">
-            Features pushing <span className="text-success font-bold">Green</span> increase approval likelihood. 
-            Features pushing <span className="text-danger font-bold">Red</span> increase rejection likelihood.
-          </p>
-          <ShapChart shapValues={parsedShap} />
-        </Card>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ type: 'spring', delay: 0.2, stiffness: 300, damping: 20 }}
+        >
+          <Card className="h-full">
+            <h3 className="text-xs uppercase font-bold text-faint tracking-wider mb-4">AI Explainability (SHAP)</h3>
+            <p className="text-xs text-muted font-body mb-2">
+              Features pushing <span className="text-success font-bold">Green</span> increase approval likelihood. 
+              Features pushing <span className="text-danger font-bold">Red</span> increase rejection likelihood.
+            </p>
+            <ShapChart shapValues={parsedShap} />
+          </Card>
+        </motion.div>
       </div>
       
       {/* WhatIfSimulator component (Step 9) */}
-      <div className="mt-12 pt-8 border-t border-border">
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4 }}
+        className="mt-12 pt-8 border-t border-border"
+      >
         <h3 className="text-lg font-heading font-bold text-dark mb-4">What-If Analysis</h3>
         <Card className="bg-page/20 border-border">
           <WhatIfSimulator application={application} />
         </Card>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }

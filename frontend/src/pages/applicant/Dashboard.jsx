@@ -6,6 +6,7 @@ import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/Table';
 import { Plus, ArrowRight } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 export default function ApplicantDashboard() {
   const [applications, setApplications] = useState([]);
@@ -39,19 +40,39 @@ export default function ApplicantDashboard() {
   };
 
   return (
-    <div className="space-y-6">
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="space-y-6"
+    >
       <div className="flex items-center justify-between">
-        <div>
+        <motion.div
+           initial={{ opacity: 0, x: -20 }}
+           animate={{ opacity: 1, x: 0 }}
+           transition={{ delay: 0.1 }}
+        >
           <h2 className="text-2xl font-heading font-bold text-dark">My Applications</h2>
           <p className="text-sm font-body text-muted mt-1">Track the status of your loan requests.</p>
-        </div>
-        <Button onClick={() => navigate('/applicant/apply')} className="gap-2">
-          <Plus size={16} /> New Application
-        </Button>
+        </motion.div>
+        
+        <motion.div
+           initial={{ opacity: 0, scale: 0.9 }}
+           animate={{ opacity: 1, scale: 1 }}
+           transition={{ delay: 0.2 }}
+        >
+          <Button onClick={() => navigate('/applicant/apply')} className="gap-2 shadow-lg">
+            <Plus size={16} /> New Application
+          </Button>
+        </motion.div>
       </div>
 
-      <Card className="p-0 overflow-hidden">
-        {loading ? (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+      >
+        <Card className="p-0 overflow-hidden border-border/60 shadow-xl">
+          {loading ? (
           <div className="p-8 text-center text-muted font-body text-sm">Loading applications...</div>
         ) : applications.length === 0 ? (
           <div className="p-12 text-center flex flex-col items-center">
@@ -77,8 +98,14 @@ export default function ApplicantDashboard() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {applications.map((app) => (
-                <TableRow key={app.id}>
+              {applications.map((app, index) => (
+                <motion.tr 
+                  key={app.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4 + index * 0.05 }}
+                  className="border-b transition-colors hover:bg-muted/5 data-[state=selected]:bg-muted"
+                >
                   <TableCell className="font-medium text-dark">
                     {new Date(app.submitted_at).toLocaleDateString()}
                   </TableCell>
@@ -97,18 +124,19 @@ export default function ApplicantDashboard() {
                   <TableCell className="text-right">
                     <Button 
                       variant="outline" 
-                      className="h-8 px-3 text-xs gap-1"
+                      className="h-8 px-3 text-xs gap-1 hover:bg-dark hover:text-white transition-all"
                       onClick={() => navigate('/applicant/result', { state: { application: app } })}
                     >
                       View ML <ArrowRight size={14} />
                     </Button>
                   </TableCell>
-                </TableRow>
+                </motion.tr>
               ))}
             </TableBody>
           </Table>
         )}
-      </Card>
-    </div>
+        </Card>
+      </motion.div>
+    </motion.div>
   );
 }

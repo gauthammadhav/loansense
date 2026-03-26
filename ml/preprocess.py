@@ -74,6 +74,14 @@ def preprocess(df):
     df['loan_amount_term'] = pd.to_numeric(df['loan_amount_term'], errors='coerce').fillna(360)
     df['credit_score'] = pd.to_numeric(df['credit_score'], errors='coerce').fillna(600)
 
+    # Scale Normalization (Inference Only)
+    # The frontend sends Annual Income and Full Dollar Loan amounts. The ML expects Monthly & Thousands.
+    is_inference = 'loan_status' not in df.columns
+    if is_inference:
+        df['applicant_income'] = df['applicant_income'].apply(lambda x: x / 12 if x > 20000 else x)
+        df['coapplicant_income'] = df['coapplicant_income'].apply(lambda x: x / 12 if x > 20000 else x)
+        df['loan_amount'] = df['loan_amount'].apply(lambda x: x / 1000 if x > 1000 else x)
+
     # 2. Categorical Encoding (including Ordinal and Binary requirements)
     
     # Dependents: Ordinal (0, 1, 2, 3+ -> 0, 1, 2, 3)
