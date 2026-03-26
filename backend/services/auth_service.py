@@ -7,7 +7,11 @@ from backend.schemas.auth import TokenData
 
 # 1. Password Compression & Hashing Configuration
 # sha256 is more compatible and robust in this environment than bcrypt
-pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
+pwd_context = CryptContext(
+    schemes=["sha256_crypt"],
+    deprecated="auto",
+    sha256_crypt__default_rounds=50000,
+)
 
 
 # 2. JWT Configuration

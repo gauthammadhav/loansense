@@ -1,20 +1,25 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import apiClient from '../../api/client';
-import { Card } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
-import { Label } from '../../components/ui/Label';
 import { Button } from '../../components/ui/Button';
-import { Select } from '../../components/ui/Select';
-import { ArrowLeft, ArrowRight, CheckCircle } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle, Loader2 } from 'lucide-react';
+
+const STEPS = [
+  'Personal Details',
+  'Education & Work',
+  'Income',
+  'Loan Request',
+  'Property & Credit',
+];
 
 export default function ApplyWizard() {
-  const navigate = useNavigate();
+  const navigate  = useNavigate();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError]   = useState('');
 
-  // Form State strictly mapping to ML Pipeline requirements
   const [formData, setFormData] = useState({
     gender: 'Male',
     married: false,
@@ -28,244 +33,244 @@ export default function ApplyWizard() {
     purpose: 'Personal',
     property_area: 'Urban',
     property_type: 'House',
-    credit_score: 700
+    credit_score: 700,
   });
 
-  const updateForm = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
-
+  const update   = (field, value) => setFormData(prev => ({ ...prev, [field]: value }));
   const parseNum = (val) => val === '' ? 0 : Number(val);
-
-  const handleNext = () => setStep(prev => Math.min(prev + 1, 5));
-  const handleBack = () => setStep(prev => Math.max(prev - 1, 1));
 
   const handleSubmit = async () => {
     setLoading(true);
     setError('');
-    
     try {
-      // POST to backend API (real-time ML inference occurs here)
       const res = await apiClient.post('/applications/', formData);
-      
-      // Navigate to results page passing the application data (which includes SHAP values)
       navigate('/applicant/result', { state: { application: res.data } });
     } catch (err) {
-      console.error(err);
       setError(err.response?.data?.detail || 'Failed to submit application. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
-  const renderStepIndicator = () => {
-    return (
-      <div className="flex gap-2 mb-8">
-        {[1, 2, 3, 4, 5].map((i) => (
-          <div 
-            key={i} 
-            className={`h-2 flex-1 rounded-full overflow-hidden ${i <= step ? 'bg-lime' : 'bg-border'}`}
-          />
-        ))}
+  const label = {
+    display: 'block',
+    fontFamily: 'var(--font-ui)',
+    fontSize: 10,
+    fontWeight: 700,
+    textTransform: 'uppercase',
+    letterSpacing: '0.08em',
+    color: 'var(--text-faint)',
+    marginBottom: 6,
+  };
+
+  const sel = {
+    width: '100%',
+    background: 'rgba(255,255,255,0.04)',
+    border: '1px solid var(--glass-border)',
+    borderRadius: 10,
+    padding: '11px 14px',
+    fontFamily: 'var(--font-body)',
+    fontSize: 13,
+    color: 'var(--text)',
+    outline: 'none',
+    cursor: 'pointer',
+    appearance: 'none',
+    WebkitAppearance: 'none',
+    transition: 'all 0.2s',
+    boxSizing: 'border-box',
+  };
+
+  const field = (labelText, children) => (
+    <div>
+      <label style={label}>{labelText}</label>
+      {children}
+    </div>
+  );
+
+  const stepContent = {
+    1: (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        {field('Gender',
+          <select style={sel} value={formData.gender} onChange={e => update('gender', e.target.value)}>
+            <option>Male</option><option>Female</option><option>Other</option>
+          </select>
+        )}
+        {field('Marital Status',
+          <select style={sel} value={formData.married} onChange={e => update('married', e.target.value === 'true')}>
+            <option value="false">Single</option><option value="true">Married</option>
+          </select>
+        )}
+        {field('Number of Dependents',
+          <Input type="number" min="0" max="10" value={formData.dependents} onChange={e => update('dependents', parseNum(e.target.value))} />
+        )}
       </div>
-    );
+    ),
+    2: (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        {field('Education Level',
+          <select style={sel} value={formData.education} onChange={e => update('education', e.target.value)}>
+            <option>Graduate</option><option value="Not Graduate">Not Graduate</option>
+          </select>
+        )}
+        {field('Employment Type',
+          <select style={sel} value={formData.self_employed} onChange={e => update('self_employed', e.target.value === 'true')}>
+            <option value="false">Salaried / Employed</option>
+            <option value="true">Self Employed / Business</option>
+          </select>
+        )}
+      </div>
+    ),
+    3: (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        {field('Annual Applicant Income (₹)',
+          <Input type="number" step="1000" min="0" value={formData.applicant_income} onChange={e => update('applicant_income', parseNum(e.target.value))} />
+        )}
+        {field('Annual Co-Applicant Income (₹)',
+          <>
+            <Input type="number" step="1000" min="0" value={formData.coapplicant_income} onChange={e => update('coapplicant_income', parseNum(e.target.value))} />
+            <p style={{ fontFamily: 'var(--font-body)', fontSize: 11, color: 'var(--text-faint)', marginTop: 5 }}>Leave as 0 if applying alone.</p>
+          </>
+        )}
+      </div>
+    ),
+    4: (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        {field('Loan Amount Requested (₹)',
+          <Input type="number" step="1000" min="1000" value={formData.loan_amount} onChange={e => update('loan_amount', parseNum(e.target.value))} />
+        )}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          {field('Loan Term',
+            <select style={sel} value={formData.loan_amount_term} onChange={e => update('loan_amount_term', parseNum(e.target.value))}>
+              <option value="120">120 Days (4 mo)</option>
+              <option value="360">360 Days (1 yr)</option>
+              <option value="1800">1800 Days (5 yr)</option>
+              <option value="3600">3600 Days (10 yr)</option>
+            </select>
+          )}
+          {field('Purpose',
+            <select style={sel} value={formData.purpose} onChange={e => update('purpose', e.target.value)}>
+              <option>Personal</option><option>Business</option>
+              <option value="Home">Home Purchase</option><option>Education</option>
+            </select>
+          )}
+        </div>
+      </div>
+    ),
+    5: (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          {field('Property Area',
+            <select style={sel} value={formData.property_area} onChange={e => update('property_area', e.target.value)}>
+              <option>Urban</option><option>Semiurban</option><option>Rural</option>
+            </select>
+          )}
+          {field('Property Type',
+            <select style={sel} value={formData.property_type} onChange={e => update('property_type', e.target.value)}>
+              <option>House</option><option>Apartment</option><option>Commercial</option>
+            </select>
+          )}
+        </div>
+        {field('Estimated Credit Score',
+          <Input type="number" min="300" max="850" value={formData.credit_score} onChange={e => update('credit_score', parseNum(e.target.value))} />
+        )}
+      </div>
+    ),
   };
 
   return (
-    <div className="max-w-xl mx-auto space-y-6">
-      <div>
-        <h2 className="text-2xl font-heading font-bold text-dark">Loan Application</h2>
-        <p className="text-sm font-body text-muted mt-1">
-          Complete these 5 steps to receive an instant, AI-powered decision.
+    <div style={{ maxWidth: 560, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 24 }}>
+
+      {/* Header */}
+      <motion.div initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }}>
+        <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 30, fontWeight: 800, color: 'var(--text)', letterSpacing: '-0.5px' }}>
+          Loan Application
+        </h2>
+        <p style={{ fontFamily: 'var(--font-body)', fontSize: 13, color: 'var(--text-muted)', marginTop: 6 }}>
+          Complete these 5 steps to receive an instant AI-powered decision.
         </p>
-      </div>
+      </motion.div>
 
-      <Card>
-        {renderStepIndicator()}
-        
-        {error && (
-          <div className="p-3 mb-6 bg-danger-bg text-danger text-sm rounded-[10px] border border-danger/20">
-            {error}
-          </div>
-        )}
+      {/* Card */}
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+        <div className="glass-card" style={{ padding: 28 }}>
 
-        {/* STEP 1: Personal Info */}
-        {step === 1 && (
-          <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
-            <h3 className="text-lg font-heading font-bold border-b border-border pb-2 mb-4">Step 1: Personal Details</h3>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>GENDER</Label>
-                <Select value={formData.gender} onChange={e => updateForm('gender', e.target.value)}>
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
-                  <option value="Other">Other</option>
-                </Select>
-              </div>
-              <div>
-                <Label>MARITAL STATUS</Label>
-                <Select value={formData.married} onChange={e => updateForm('married', e.target.value === 'true')}>
-                  <option value="false">Single</option>
-                  <option value="true">Married</option>
-                </Select>
-              </div>
+          {/* Step progress */}
+          <div style={{ marginBottom: 24 }}>
+            <div style={{ display: 'flex', gap: 4, marginBottom: 10 }}>
+              {STEPS.map((_, i) => (
+                <div key={i} style={{
+                  flex: 1, height: 3, borderRadius: 2,
+                  background: i < step ? 'var(--lime)' : 'var(--glass-border)',
+                  transition: 'background 0.3s',
+                }} />
+              ))}
             </div>
-
-            <div>
-              <Label>NUMBER OF DEPENDENTS</Label>
-              <Input 
-                type="number" min="0" max="10"
-                value={formData.dependents} 
-                onChange={e => updateForm('dependents', parseNum(e.target.value))} 
-              />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontFamily: 'var(--font-ui)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--lime-dark)' }}>
+                Step {step} of {STEPS.length}
+              </span>
+              <span style={{ fontFamily: 'var(--font-display)', fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>
+                {STEPS[step - 1]}
+              </span>
             </div>
           </div>
-        )}
 
-        {/* STEP 2: Education & Employment */}
-        {step === 2 && (
-          <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
-            <h3 className="text-lg font-heading font-bold border-b border-border pb-2 mb-4">Step 2: Education & Employment</h3>
-            
-            <div>
-              <Label>EDUCATION LEVEL</Label>
-              <Select value={formData.education} onChange={e => updateForm('education', e.target.value)}>
-                <option value="Graduate">Graduate</option>
-                <option value="Not Graduate">Not Graduate</option>
-              </Select>
-            </div>
+          {/* Error */}
+          <AnimatePresence>
+            {error && (
+              <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                style={{ fontFamily: 'var(--font-body)', fontSize: 12, color: 'var(--danger)', marginBottom: 16, padding: '10px 14px', background: 'rgba(248,113,113,0.06)', border: '1px solid rgba(248,113,113,0.2)', borderRadius: 10 }}>
+                {error}
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-            <div>
-              <Label>EMPLOYMENT TYPE</Label>
-              <Select value={formData.self_employed} onChange={e => updateForm('self_employed', e.target.value === 'true')}>
-                <option value="false">Salaried / Employed</option>
-                <option value="true">Self Employed / Business</option>
-              </Select>
-            </div>
-          </div>
-        )}
+          {/* Step content */}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={step}
+              initial={{ opacity: 0, x: 16 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -16 }}
+              transition={{ duration: 0.25 }}>
+              {stepContent[step]}
+            </motion.div>
+          </AnimatePresence>
 
-        {/* STEP 3: Financial Info */}
-        {step === 3 && (
-          <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
-            <h3 className="text-lg font-heading font-bold border-b border-border pb-2 mb-4">Step 3: Financial Information</h3>
-            
-            <div>
-              <Label>ANNUAL APPLICANT INCOME ($)</Label>
-              <Input 
-                type="number" step="1000" min="0"
-                value={formData.applicant_income} 
-                onChange={e => updateForm('applicant_income', parseNum(e.target.value))} 
-              />
-            </div>
-
-            <div>
-              <Label>ANNUAL CO-APPLICANT INCOME ($)</Label>
-              <Input 
-                type="number" step="1000" min="0"
-                value={formData.coapplicant_income} 
-                onChange={e => updateForm('coapplicant_income', parseNum(e.target.value))} 
-              />
-              <p className="text-xs text-muted mt-1">Leave as 0 if applying alone.</p>
-            </div>
-          </div>
-        )}
-
-        {/* STEP 4: Loan Request */}
-        {step === 4 && (
-          <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
-            <h3 className="text-lg font-heading font-bold border-b border-border pb-2 mb-4">Step 4: Loan Details</h3>
-            
-            <div>
-              <Label>LOAN AMOUNT REQUESTED ($)</Label>
-              <Input 
-                type="number" step="1000" min="1000"
-                value={formData.loan_amount} 
-                onChange={e => updateForm('loan_amount', parseNum(e.target.value))} 
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>LOAN TERM (DAYS)</Label>
-                <Select value={formData.loan_amount_term} onChange={e => updateForm('loan_amount_term', parseNum(e.target.value))}>
-                  <option value="120">120 Days (4 Months)</option>
-                  <option value="360">360 Days (1 Year)</option>
-                  <option value="1800">1800 Days (5 Years)</option>
-                  <option value="3600">3600 Days (10 Years)</option>
-                </Select>
-              </div>
-              <div>
-                <Label>LOAN PURPOSE</Label>
-                <Select value={formData.purpose} onChange={e => updateForm('purpose', e.target.value)}>
-                  <option value="Personal">Personal</option>
-                  <option value="Business">Business</option>
-                  <option value="Home">Home Purchase</option>
-                  <option value="Education">Education</option>
-                </Select>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* STEP 5: Property & Credit */}
-        {step === 5 && (
-          <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
-            <h3 className="text-lg font-heading font-bold border-b border-border pb-2 mb-4">Step 5: Property & Credit</h3>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>PROPERTY AREA</Label>
-                <Select value={formData.property_area} onChange={e => updateForm('property_area', e.target.value)}>
-                  <option value="Urban">Urban</option>
-                  <option value="Semiurban">Semiurban</option>
-                  <option value="Rural">Rural</option>
-                </Select>
-              </div>
-              <div>
-                <Label>PROPERTY TYPE</Label>
-                <Select value={formData.property_type} onChange={e => updateForm('property_type', e.target.value)}>
-                  <option value="House">House</option>
-                  <option value="Apartment">Apartment</option>
-                  <option value="Commercial">Commercial</option>
-                </Select>
-              </div>
-            </div>
-
-            <div>
-              <Label>ESTIMATED CREDIT SCORE</Label>
-              <Input 
-                type="number" min="300" max="850"
-                value={formData.credit_score} 
-                onChange={e => updateForm('credit_score', parseNum(e.target.value))} 
-              />
-            </div>
-          </div>
-        )}
-
-        {/* Navigation Buttons */}
-        <div className="flex justify-between items-center mt-8 pt-4 border-t border-border">
-          <Button 
-            variant="outline" 
-            onClick={handleBack} 
-            disabled={step === 1 || loading}
-            className="w-28 gap-2"
-          >
-            <ArrowLeft size={16} /> Back
-          </Button>
-
-          {step < 5 ? (
-            <Button onClick={handleNext} className="w-28 gap-2">
-              Next <ArrowRight size={16} />
+          {/* Navigation */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 28, paddingTop: 20, borderTop: '1px solid var(--glass-border)' }}>
+            <Button
+              variant="ghost"
+              disabled={step === 1 || loading}
+              onClick={() => setStep(s => Math.max(s - 1, 1))}
+              style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <ArrowLeft size={14} /> Back
             </Button>
-          ) : (
-            <Button onClick={handleSubmit} disabled={loading} className="w-36 gap-2 bg-success hover:bg-success/90">
-              {loading ? 'Processing...' : <><CheckCircle size={16} /> Submit</>}
-            </Button>
-          )}
+
+            {step < 5 ? (
+              <Button
+                variant="primary"
+                onClick={() => setStep(s => Math.min(s + 1, 5))}
+                style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                Next <ArrowRight size={14} />
+              </Button>
+            ) : (
+              <Button
+                variant="primary"
+                disabled={loading}
+                onClick={handleSubmit}
+                style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                {loading
+                  ? <><Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> Processing...</>
+                  : <><CheckCircle size={14} /> Submit</>
+                }
+              </Button>
+            )}
+          </div>
         </div>
-      </Card>
+      </motion.div>
+
+      <style>{`@keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }`}</style>
     </div>
   );
 }

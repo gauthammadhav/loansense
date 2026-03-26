@@ -1,8 +1,14 @@
 import React from 'react';
 
-export function Card({ children, className = '' }) {
+export function Card({ children, className = '', size = 'default', style: extraStyle = {} }) {
   return (
-    <div className={`bg-white rounded-[var(--radius-card)] border border-border p-6 shadow-sm ${className}`}>
+    <div
+      className={`glass-card ${className}`}
+      style={{
+        padding: size === 'large' ? 28 : 20,
+        ...extraStyle,
+      }}
+    >
       {children}
     </div>
   );
