@@ -1,129 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import apiClient from '../../api/client';
-import { Badge } from '../../components/ui/Badge';
+import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
-import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Plus, ArrowRight, Loader2, TrendingUp, Clock,
-  CheckCircle2, XCircle, FileText, Zap, ChevronRight,
-} from 'lucide-react';
-
-/* ─── helpers ─── */
-const fmt = (n) => `₹${Number(n || 0).toLocaleString('en-IN')}`;
-const fmtDate = (d) => new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
-
-function PredictionPill({ prediction }) {
-  if (prediction === 'Y') return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '3px 10px', borderRadius: 99, background: 'rgba(74,222,128,0.08)', border: '1px solid rgba(74,222,128,0.2)', fontFamily: 'var(--font-ui)', fontSize: 10, fontWeight: 700, color: 'var(--success)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-      <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--success)', flexShrink: 0 }} /> Favorable
-    </span>
-  );
-  if (prediction === 'N') return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '3px 10px', borderRadius: 99, background: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.2)', fontFamily: 'var(--font-ui)', fontSize: 10, fontWeight: 700, color: 'var(--danger)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-      <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--danger)', flexShrink: 0 }} /> High Risk
-    </span>
-  );
-  return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '3px 10px', borderRadius: 99, background: 'rgba(255,255,255,0.04)', border: '1px solid var(--glass-border)', fontFamily: 'var(--font-ui)', fontSize: 10, fontWeight: 700, color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-      <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--text-faint)', flexShrink: 0 }} /> Pending AI
-    </span>
-  );
-}
-
-function StatCard({ icon, label, value, accent, delay = 0 }) {
-  return (
-    <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay, duration: 0.4 }}>
-      <div className="glass-card" style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-        <div style={{ width: 44, height: 44, borderRadius: 14, background: `${accent}12`, border: `1px solid ${accent}22`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: accent, flexShrink: 0 }}>
-          {icon}
-        </div>
-        <div style={{ minWidth: 0 }}>
-          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-faint)', marginBottom: 4 }}>{label}</div>
-          <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, color: 'var(--text)', lineHeight: 1 }}>{value}</div>
-        </div>
-      </div>
-    </motion.div>
-  );
-}
-
-function AppCard({ app, idx, onClick }) {
-  const isApproved = app.ml_prediction === 'Y';
-  const isRejected = app.ml_prediction === 'N';
-  const borderColor = isApproved ? 'rgba(74,222,128,0.15)' : isRejected ? 'rgba(248,113,113,0.12)' : 'var(--glass-border)';
-  const confidence = app.ml_confidence ? Math.round(app.ml_confidence * 100) : null;
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.08 * idx, duration: 0.4 }}
-      whileHover={{ y: -2, transition: { duration: 0.2 } }}
-      onClick={onClick}
-      style={{ cursor: 'pointer' }}>
-      <div className="glass-card" style={{ border: `1px solid ${borderColor}`, padding: 0, overflow: 'hidden', position: 'relative' }}>
-
-        {/* Top accent bar */}
-        <div style={{ height: 3, background: isApproved ? 'var(--success)' : isRejected ? 'var(--danger)' : 'var(--glass-border)' }} />
-
-        <div style={{ padding: '20px 22px' }}>
-          {/* Top row */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
-            <div>
-              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-faint)', marginBottom: 4 }}>
-                Application LS-{String(app.id).padStart(4, '0')}
-              </div>
-              <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, color: 'var(--text)', lineHeight: 1 }}>
-                {fmt(app.loan_amount)}
-              </div>
-              <div style={{ fontFamily: 'var(--font-body)', fontSize: 11, color: 'var(--text-faint)', marginTop: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
-                <Clock size={10} /> {fmtDate(app.submitted_at)}&ensp;·&ensp;{app.purpose || 'Personal'}
-              </div>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
-              <PredictionPill prediction={app.ml_prediction} />
-              <Badge status={app.status}>
-                {(app.status || 'pending').replace(/_/g, ' ')}
-              </Badge>
-            </div>
-          </div>
-
-          {/* Confidence bar */}
-          {confidence !== null && (
-            <div style={{ marginBottom: 16 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 }}>
-                <span style={{ fontFamily: 'var(--font-ui)', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--text-faint)' }}>AI Confidence</span>
-                <span style={{ fontFamily: 'var(--font-display)', fontSize: 12, fontWeight: 700, color: isApproved ? 'var(--success)' : isRejected ? 'var(--danger)' : 'var(--text-faint)' }}>{confidence}%</span>
-              </div>
-              <div style={{ height: 4, borderRadius: 2, background: 'var(--glass-border)', overflow: 'hidden' }}>
-                <div style={{ height: '100%', borderRadius: 2, width: `${confidence}%`, background: isApproved ? 'var(--success)' : isRejected ? 'var(--danger)' : 'var(--text-faint)', transition: 'width 0.8s ease' }} />
-              </div>
-            </div>
-          )}
-
-          {/* Bottom row */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 14, borderTop: '1px solid var(--glass-border)' }}>
-            <div style={{ display: 'flex', gap: 16 }}>
-              {[
-                { l: 'Term', v: `${app.loan_amount_term || 360} days` },
-                { l: 'Credit', v: app.credit_score || '—' },
-                { l: 'Area', v: app.property_area || '—' },
-              ].map(({ l, v }) => (
-                <div key={l}>
-                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 8, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-faint)', marginBottom: 2 }}>{l}</div>
-                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)' }}>{v}</div>
-                </div>
-              ))}
-            </div>
-            <motion.div whileHover={{ x: 3 }} style={{ display: 'flex', alignItems: 'center', gap: 4, fontFamily: 'var(--font-ui)', fontSize: 10, fontWeight: 700, color: 'var(--lime-dark)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-              View Details <ChevronRight size={12} />
-            </motion.div>
-          </div>
-        </div>
-      </div>
-    </motion.div>
-  );
-}
+import { Badge } from '../../components/ui/Badge';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/Table';
+import { Plus, ArrowRight, Loader2 } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 export default function ApplicantDashboard() {
   const [applications, setApplications] = useState([]);
@@ -131,132 +14,133 @@ export default function ApplicantDashboard() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetch = async () => {
+    const fetchApplications = async () => {
       try {
         const res = await apiClient.get('/applications/');
         setApplications(res.data);
       } catch (err) {
-        console.error('Failed to fetch applications', err);
+        console.error("Failed to fetch applications", err);
       } finally {
         setLoading(false);
       }
     };
-    fetch();
+    fetchApplications();
   }, []);
 
-  /* Compute stats */
-  const total     = applications.length;
-  const approved  = applications.filter(a => a.ml_prediction === 'Y').length;
-  const rejected  = applications.filter(a => a.ml_prediction === 'N').length;
-  const pending   = applications.filter(a => !a.ml_prediction).length;
-  const totalAmt  = applications.reduce((s, a) => s + (a.loan_amount || 0), 0);
+  const getStatusBadge = (status) => {
+    switch(status) {
+      case 'approved': return <Badge variant="approved">APPROVED</Badge>;
+      case 'rejected': return <Badge variant="rejected">REJECTED</Badge>;
+      case 'under_review':
+      case 'escalated':
+      case 'submitted':
+        return <Badge variant="review">IN REVIEW</Badge>;
+      default: return <Badge>{status?.toUpperCase() || 'UNKNOWN'}</Badge>;
+    }
+  };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
-
-      {/* ── Header ── */}
-      <motion.div initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }}
-        style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
+    <div className="space-y-10">
+      <motion.div 
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        className="flex items-center justify-between"
+      >
         <div>
-          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 32, fontWeight: 900, color: 'var(--text)', letterSpacing: '-0.8px', lineHeight: 1 }}>
-            My Applications
-          </h2>
-          <p style={{ fontFamily: 'var(--font-body)', fontSize: 13, color: 'var(--text-muted)', marginTop: 8, fontWeight: 300, lineHeight: 1.6 }}>
-            AI-powered decisions at your fingertips — track every loan request live.
-          </p>
+          <h2 className="text-3xl font-heading font-black text-dark tracking-tight">My Applications</h2>
+          <p className="text-sm font-body font-medium text-muted mt-2">Track the live status of your loan requests and AI predictions.</p>
         </div>
-        <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-          <Button onClick={() => navigate('/applicant/apply')} variant="primary"
-            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 22px' }}>
-            <Plus size={16} /> New Application
-          </Button>
-        </motion.div>
+        <Button onClick={() => navigate('/applicant/apply')} className="gap-2 h-12 px-6 shadow-xl shadow-dark/10 group">
+          <Plus size={18} className="group-hover:rotate-90 transition-transform" /> New Application
+        </Button>
       </motion.div>
 
-      {/* ── KPI cards ── */}
-      {!loading && total > 0 && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
-          <StatCard icon={<FileText size={20} />}   label="Total Applications"  value={total}       accent="#818CF8" delay={0}    />
-          <StatCard icon={<CheckCircle2 size={20} />} label="Favorable (AI)"    value={approved}    accent="var(--success)" delay={0.06} />
-          <StatCard icon={<XCircle size={20} />}    label="High Risk (AI)"      value={rejected}    accent="var(--danger)"  delay={0.12} />
-          <StatCard icon={<TrendingUp size={20} />} label="Total Requested"     value={totalAmt > 0 ? `₹${(totalAmt/100000).toFixed(1)}L` : '—'} accent="var(--lime-dark)" delay={0.18} />
-        </div>
-      )}
-
-      {/* ── Content ── */}
-      <AnimatePresence mode="wait">
-        {loading ? (
-          <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14, padding: 80 }}>
-            <Loader2 size={30} style={{ animation: 'spin 1s linear infinite', color: 'var(--lime)' }} />
-            <span style={{ fontFamily: 'var(--font-ui)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--text-faint)' }}>
-              Loading your applications
-            </span>
-          </motion.div>
-
-        ) : total === 0 ? (
-          <motion.div key="empty" initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}>
-            <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '72px 24px', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
-              {/* Background glow */}
-              <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: 280, height: 280, background: 'var(--lime)', borderRadius: '50%', filter: 'blur(100px)', opacity: 0.04, pointerEvents: 'none' }} />
-              <motion.div initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 0.2, type: 'spring' }}
-                style={{ width: 72, height: 72, borderRadius: 22, background: 'rgba(200,241,53,0.08)', border: '1px solid rgba(200,241,53,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 24, color: 'var(--lime)' }}>
-                <Zap size={32} />
-              </motion.div>
-              <motion.h3 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
-                style={{ fontFamily: 'var(--font-display)', fontSize: 26, fontWeight: 800, color: 'var(--text)', marginBottom: 10, letterSpacing: '-0.5px' }}>
-                No Applications Yet
-              </motion.h3>
-              <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}
-                style={{ fontFamily: 'var(--font-body)', fontSize: 13, color: 'var(--text-muted)', maxWidth: 380, lineHeight: 1.7, marginBottom: 32, fontWeight: 300 }}>
-                Submit your first loan request and get an instant XGBoost-powered decision with SHAP explainability in seconds.
-              </motion.p>
-              <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
-                <Button onClick={() => navigate('/applicant/apply')} variant="primary"
-                  style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '13px 28px', fontSize: 14 }}>
-                  <Plus size={17} /> Start Your First Application
-                </Button>
-              </motion.div>
-
-              {/* Feature strips */}
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.7 }}
-                style={{ display: 'flex', gap: 12, marginTop: 36, flexWrap: 'wrap', justifyContent: 'center' }}>
-                {['⚡ AI Decision in Seconds', '📊 SHAP Explainability', '🔄 What-If Simulator'].map(f => (
-                  <span key={f} style={{ fontFamily: 'var(--font-ui)', fontSize: 10, fontWeight: 700, color: 'var(--text-faint)', padding: '5px 12px', borderRadius: 99, border: '1px solid var(--glass-border)', letterSpacing: '0.03em' }}>{f}</span>
-                ))}
-              </motion.div>
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+      >
+        <Card className="p-0 overflow-hidden border-2 border-border shadow-soft rounded-[32px]">
+          {loading ? (
+            <div className="p-24 text-center flex flex-col items-center gap-4">
+              <Loader2 className="animate-spin text-lime" size={32} />
+              <p className="text-muted font-bold text-xs uppercase tracking-widest">Querying Blockchain...</p>
             </div>
-          </motion.div>
-
-        ) : (
-          <motion.div key="list" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: 18 }}>
-              {applications.map((app, idx) => (
-                <AppCard
-                  key={app.id}
-                  app={app}
-                  idx={idx}
-                  onClick={() => navigate('/applicant/result', { state: { application: app } })}
-                />
-              ))}
+          ) : applications.length === 0 ? (
+            <div className="p-24 text-center flex flex-col items-center">
+              <motion.div 
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                className="w-20 h-20 rounded-3xl bg-page flex items-center justify-center mb-8 text-faint border-2 border-border shadow-inner"
+              >
+                <Plus size={40} />
+              </motion.div>
+              <h3 className="text-2xl font-black font-heading text-dark tracking-tighter">No Applications Found</h3>
+              <p className="text-base font-body text-muted mt-4 max-w-sm mb-10 font-medium">
+                You haven't submitted any loan requests. Apply now to get an instant ML-powered decision from our neural engine.
+              </p>
+              <Button onClick={() => navigate('/applicant/apply')} variant="primary" className="h-14 px-10 rounded-2xl shadow-2xl">Initialize Application Wizard</Button>
             </div>
-
-            {/* Footer summary strip */}
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}
-              style={{ marginTop: 24, padding: '14px 20px', borderRadius: 12, border: '1px solid var(--glass-border)', background: 'var(--glass)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ fontFamily: 'var(--font-body)', fontSize: 12, color: 'var(--text-faint)', fontWeight: 300 }}>
-                Showing <strong style={{ color: 'var(--text)', fontWeight: 600 }}>{total}</strong> application{total !== 1 ? 's' : ''} · {pending > 0 ? `${pending} awaiting officer review` : 'All decisions complete'}
-              </span>
-              <Button onClick={() => navigate('/applicant/apply')} variant="ghost"
-                style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, padding: '6px 14px' }}>
-                <Plus size={12} /> New Application
-              </Button>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader className="bg-page/50">
+                  <TableRow className="border-b-2 border-border">
+                    <TableHead className="font-black text-dark uppercase tracking-widest text-[10px] py-6">Date</TableHead>
+                    <TableHead className="font-black text-dark uppercase tracking-widest text-[10px] py-6">Amount</TableHead>
+                    <TableHead className="font-black text-dark uppercase tracking-widest text-[10px] py-6">Purpose</TableHead>
+                    <TableHead className="font-black text-dark uppercase tracking-widest text-[10px] py-6">AI Prediction</TableHead>
+                    <TableHead className="font-black text-dark uppercase tracking-widest text-[10px] py-6">Final Status</TableHead>
+                    <TableHead className="font-black text-dark uppercase tracking-widest text-[10px] py-6 text-right">Action</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {applications.map((app, idx) => (
+                    <motion.tr 
+                      key={app.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.1 * idx }}
+                      className="group hover:bg-page/30 transition-colors border-b border-border last:border-0"
+                    >
+                      <TableCell className="font-bold text-dark py-6">
+                        {new Date(app.submitted_at).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell className="font-mono font-bold py-6">${app.loan_amount?.toLocaleString()}</TableCell>
+                      <TableCell className="capitalize py-6 font-medium">{app.purpose || 'Personal'}</TableCell>
+                      <TableCell className="py-6">
+                        {app.ml_prediction === 'Y' ? (
+                          <div className="flex items-center gap-2">
+                             <div className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
+                             <span className="text-success font-black text-xs uppercase">Favorable</span>
+                          </div>
+                        ) : app.ml_prediction === 'N' ? (
+                          <div className="flex items-center gap-2">
+                             <div className="w-1.5 h-1.5 rounded-full bg-danger animate-pulse" />
+                             <span className="text-danger font-black text-xs uppercase">High Risk</span>
+                          </div>
+                        ) : (
+                          <span className="text-muted font-bold text-xs uppercase">Pending</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="py-6">{getStatusBadge(app.status)}</TableCell>
+                      <TableCell className="text-right py-6">
+                        <Button 
+                          variant="outline" 
+                          className="h-10 px-4 text-xs font-black uppercase tracking-widest gap-2 bg-white border-2 hover:bg-dark hover:text-white hover:border-dark transition-all"
+                          onClick={() => navigate('/applicant/result', { state: { application: app } })}
+                        >
+                          View Logic <ArrowRight size={14} strokeWidth={3} />
+                        </Button>
+                      </TableCell>
+                    </motion.tr>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </Card>
+      </motion.div>
     </div>
   );
 }

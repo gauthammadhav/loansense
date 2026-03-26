@@ -7,11 +7,7 @@ from backend.models.model_version import ModelVersion
 
 
 # Password hashing configuration
-pwd_context = CryptContext(
-    schemes=["sha256_crypt"],
-    deprecated="auto",
-    sha256_crypt__default_rounds=50000,
-)
+pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 
 
 def hash_password(password: str):

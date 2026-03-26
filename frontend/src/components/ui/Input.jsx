@@ -1,28 +1,12 @@
 import React from 'react';
 
-export function Input({ className = '', style: extraStyle = {}, ...props }) {
-  const [focused, setFocused] = React.useState(false);
-
+export const Input = React.forwardRef(({ className = '', ...props }, ref) => {
   return (
     <input
+      ref={ref}
+      className={`flex h-10 w-full rounded-[var(--radius-input)] border-[1.5px] border-border bg-white px-3 py-2 text-sm text-dark file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-faint focus:outline-none focus:ring-0 focus:border-dark disabled:cursor-not-allowed disabled:opacity-50 transition-colors ${className}`}
       {...props}
-      className={className}
-      onFocus={e => { setFocused(true); props.onFocus?.(e); }}
-      onBlur={e => { setFocused(false); props.onBlur?.(e); }}
-      style={{
-        width: '100%',
-        background: focused ? 'rgba(200,241,53,0.03)' : 'rgba(255,255,255,0.04)',
-        border: `1px solid ${focused ? 'rgba(200,241,53,0.4)' : 'var(--glass-border)'}`,
-        borderRadius: 'var(--radius-input)',
-        padding: '11px 14px',
-        fontFamily: 'var(--font-body)',
-        fontSize: 13,
-        color: 'var(--text)',
-        outline: 'none',
-        transition: 'all 0.2s',
-        boxSizing: 'border-box',
-        ...extraStyle,
-      }}
     />
   );
-}
+});
+Input.displayName = 'Input';
