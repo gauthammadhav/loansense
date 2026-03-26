@@ -82,42 +82,34 @@ export default function WhatIfSimulator({ application }) {
         <div className="space-y-6">
           <div>
             <div className="flex justify-between mb-1.5 align-middle">
-              <label className="text-[13px] font-bold font-body text-dark tracking-wide">MONTHLY INCOME</label>
-              <span className="text-sm font-bold text-lime-dark">${params.applicant_income.toLocaleString()}/mo</span>
+              <label className="text-[13px] font-bold font-body text-dark tracking-wide">APPLICANT INCOME</label>
+              <span className="text-sm font-bold text-lime-dark">${params.applicant_income.toLocaleString()}</span>
             </div>
             <input 
-              type="range" min="500" max="30000" step="500"
+              type="range" min="0" max="250000" step="1000"
               value={params.applicant_income}
               onChange={(e) => handleChange('applicant_income', e.target.value)}
               className="w-full h-1.5 bg-border rounded-lg appearance-none cursor-pointer accent-lime"
             />
-            <div className="flex justify-between text-[10px] text-muted font-bold mt-1">
-              <span>$500</span><span>$30,000</span>
-            </div>
           </div>
 
           <div>
             <div className="flex justify-between mb-1.5">
-              <label className="text-[13px] font-bold font-body text-dark tracking-wide">LOAN AMOUNT (IN THOUSANDS)</label>
-              <span className="text-sm font-bold text-lime-dark">${params.loan_amount}k = ${(params.loan_amount * 1000).toLocaleString()}</span>
+              <label className="text-[13px] font-bold font-body text-dark tracking-wide">LOAN AMOUNT</label>
+              <span className="text-sm font-bold text-lime-dark">${params.loan_amount.toLocaleString()}</span>
             </div>
             <input 
-              type="range" min="10" max="700" step="10"
+              type="range" min="1000" max="500000" step="1000"
               value={params.loan_amount}
               onChange={(e) => handleChange('loan_amount', e.target.value)}
               className="w-full h-1.5 bg-border rounded-lg appearance-none cursor-pointer accent-lime"
             />
-            <div className="flex justify-between text-[10px] text-muted font-bold mt-1">
-              <span>$10k</span><span>$700k</span>
-            </div>
           </div>
           
           <div>
             <div className="flex justify-between mb-1.5">
               <label className="text-[13px] font-bold font-body text-dark tracking-wide">CREDIT SCORE</label>
-              <span className={`text-sm font-bold ${params.credit_score >= 750 ? 'text-success' : params.credit_score >= 650 ? 'text-lime-dark' : 'text-danger'}`}>
-                {params.credit_score} {params.credit_score >= 750 ? '(Excellent)' : params.credit_score >= 650 ? '(Good)' : '(Poor)'}
-              </span>
+              <span className="text-sm font-bold text-lime-dark">{params.credit_score}</span>
             </div>
             <input 
               type="range" min="300" max="850" step="1"
@@ -125,9 +117,6 @@ export default function WhatIfSimulator({ application }) {
               onChange={(e) => handleChange('credit_score', e.target.value)}
               className="w-full h-1.5 bg-border rounded-lg appearance-none cursor-pointer accent-lime"
             />
-            <div className="flex justify-between text-[10px] text-muted font-bold mt-1">
-              <span className="text-danger">300 (Poor)</span><span className="text-success">850 (Excellent)</span>
-            </div>
           </div>
         </div>
 

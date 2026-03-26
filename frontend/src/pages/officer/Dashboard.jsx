@@ -5,8 +5,7 @@ import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/Table';
-import { ArrowRight, Clock, Loader2, ShieldCheck, AlertCircle } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { ArrowRight, Clock } from 'lucide-react';
 
 export default function OfficerDashboard() {
   const [queue, setQueue] = useState([]);
@@ -18,7 +17,6 @@ export default function OfficerDashboard() {
   }, []);
 
   const fetchQueue = async () => {
-    setLoading(true);
     try {
       const res = await apiClient.get('/officer/queue');
       setQueue(res.data);
@@ -39,119 +37,81 @@ export default function OfficerDashboard() {
   };
 
   return (
-    <div className="space-y-10">
-      <motion.div 
-        initial={{ opacity: 0, scale: 0.98 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="flex items-center justify-between"
-      >
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-heading font-black text-dark tracking-tight">Priority Review Queue</h2>
-          <p className="text-sm font-body font-bold text-muted mt-2 uppercase tracking-widest">
-            Audit-Ready FIFO Processing Layer
+          <h2 className="text-2xl font-heading font-bold text-dark">Officer Decision Queue</h2>
+          <p className="text-sm font-body text-muted mt-1">
+            Applications awaiting manual review and final decision. (FIFO)
           </p>
         </div>
-        <Button variant="outline" className="h-12 px-6 border-2 font-black uppercase tracking-widest text-[10px]" onClick={fetchQueue}>
-           Force Refresh
-        </Button>
-      </motion.div>
+      </div>
 
-      <Card className="p-0 overflow-hidden border-2 border-border shadow-soft rounded-[40px]">
+      <Card className="p-0 overflow-hidden border-border">
         {loading ? (
-          <div className="p-32 text-center flex flex-col items-center gap-6">
-            <Loader2 className="animate-spin text-dark" size={40} />
-            <p className="text-muted font-black text-xs uppercase tracking-widest animate-pulse">Synchronizing Data Streams...</p>
-          </div>
+          <div className="p-8 text-center text-muted font-body text-sm">Loading queue...</div>
         ) : queue.length === 0 ? (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="p-32 text-center flex flex-col items-center"
-          >
-            <div className="w-20 h-20 rounded-[32px] bg-success/10 flex items-center justify-center mb-10 text-success border-2 border-success/20 shadow-xl shadow-success/5">
-              <ShieldCheck size={40} strokeWidth={2.5} />
+          <div className="p-12 text-center flex flex-col items-center">
+            <div className="w-12 h-12 rounded-full bg-success-bg flex items-center justify-center mb-4 text-success border border-success/20">
+              <Clock size={24} />
             </div>
-            <h3 className="text-2xl font-black font-heading text-dark tracking-tight">System Status: Cleared</h3>
-            <p className="text-base font-body text-muted mt-4 max-w-sm font-bold opacity-80 italic">
-              "No pending applications assigned to this domain. Queue has been fully optimized."
+            <h3 className="text-lg font-bold font-heading text-dark">The queue is empty</h3>
+            <p className="text-sm font-body text-muted mt-2 max-w-sm">
+              All applications have been processed. You're all caught up!
             </p>
-          </motion.div>
-        ) : (
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader className="bg-page/50">
-                <TableRow className="border-b-2 border-border">
-                  <TableHead className="font-black text-dark uppercase tracking-[0.2em] text-[10px] py-8">SLA Priority</TableHead>
-                  <TableHead className="font-black text-dark uppercase tracking-[0.2em] text-[10px] py-8">Application Vector</TableHead>
-                  <TableHead className="font-black text-dark uppercase tracking-[0.2em] text-[10px] py-8">Quantum</TableHead>
-                  <TableHead className="font-black text-dark uppercase tracking-[0.2em] text-[10px] py-8 text-center">Inference Engine</TableHead>
-                  <TableHead className="font-black text-dark uppercase tracking-[0.2em] text-[10px] py-8">Audit State</TableHead>
-                  <TableHead className="font-black text-dark uppercase tracking-[0.2em] text-[10px] py-8 text-right">Execution</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                <AnimatePresence>
-                  {queue.map((app, idx) => (
-                    <motion.tr 
-                      key={app.id}
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: 20 }}
-                      transition={{ delay: idx * 0.08 }}
-                      className="group border-b border-border last:border-0 hover:bg-page/50 transition-all cursor-default"
-                    >
-                      <TableCell className="py-8">
-                        {app.days_pending > 0 ? (
-                          <div className="flex items-center gap-2 text-danger font-black text-xs scale-105">
-                             <AlertCircle size={16} strokeWidth={3} />
-                             <span>CRITICAL: {app.days_pending}D</span>
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-2 text-muted font-black text-xs opacity-60">
-                             <Clock size={16} />
-                             <span>NOMINAL (NEW)</span>
-                          </div>
-                        )}
-                      </TableCell>
-                      <TableCell className="font-black text-dark font-mono text-[11px] py-8 tracking-tighter">
-                        ID_{app.id.toString().padStart(6, '0')}
-                      </TableCell>
-                      <TableCell className="py-8 font-black text-dark text-lg tracking-tighter">${app.loan_amount.toLocaleString()}</TableCell>
-                      <TableCell className="py-8 text-center">
-                        {app.ml_prediction === 'Y' ? (
-                          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-success/15 border border-success/20">
-                             <div className="w-1.5 h-1.5 rounded-full bg-success shadow-[0_0_8px_var(--success)]" />
-                             <span className="text-success font-black text-[10px] uppercase tracking-widest">Favorable</span>
-                          </div>
-                        ) : (
-                          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-danger/15 border border-danger/20">
-                             <div className="w-1.5 h-1.5 rounded-full bg-danger shadow-[0_0_8px_var(--danger)]" />
-                             <span className="text-danger font-black text-[10px] uppercase tracking-widest">High risk</span>
-                          </div>
-                        )}
-                      </TableCell>
-                      <TableCell className="py-8">
-                        {app.status === 'under_review' ? (
-                          <Badge variant="review" className="shadow-lg">LOCK_REVIEW</Badge>
-                        ) : (
-                          <Badge className="bg-white border-2 border-border text-faint">QUEUED</Badge>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right py-8">
-                        <Button 
-                          variant="primary" 
-                          className="h-12 px-8 font-black uppercase tracking-widest text-[10px] rounded-2xl shadow-xl shadow-dark/10 group bg-dark text-white hover:bg-lime hover:text-dark transition-all duration-500 border-0"
-                          onClick={() => handleAssign(app.id)}
-                        >
-                          Review Matrix <ArrowRight size={14} strokeWidth={3} className="ml-2 group-hover:translate-x-1 transition-transform" />
-                        </Button>
-                      </TableCell>
-                    </motion.tr>
-                  ))}
-                </AnimatePresence>
-              </TableBody>
-            </Table>
+            <Button className="mt-6" variant="outline" onClick={fetchQueue}>Refresh Queue</Button>
           </div>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>SLA</TableHead>
+                <TableHead>Applicant ID</TableHead>
+                <TableHead>Amount</TableHead>
+                <TableHead>ML Prediction</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Action</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {queue.map((app) => (
+                <TableRow key={app.id}>
+                  <TableCell>
+                    {app.days_pending > 0 ? (
+                      <span className="text-danger font-bold font-body text-xs flex items-center gap-1"><Clock size={12}/>{app.days_pending} Days Old</span>
+                    ) : (
+                      <span className="text-muted font-bold font-body text-xs flex items-center gap-1"><Clock size={12}/>New</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="font-medium text-dark font-mono text-xs">APP-{app.id.toString().padStart(4, '0')}</TableCell>
+                  <TableCell>${app.loan_amount.toLocaleString()}</TableCell>
+                  <TableCell>
+                    {app.ml_prediction === 'Y' ? (
+                      <Badge variant="approved">FAVORABLE</Badge>
+                    ) : (
+                      <Badge variant="rejected">HIGH RISK</Badge>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {app.status === 'under_review' ? (
+                      <Badge variant="review">IN REVIEW</Badge>
+                    ) : (
+                      <Badge>PENDING</Badge>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button 
+                      variant="primary" 
+                      className="h-8 px-4 text-xs gap-1"
+                      onClick={() => handleAssign(app.id)}
+                    >
+                      Review <ArrowRight size={14} />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         )}
       </Card>
     </div>

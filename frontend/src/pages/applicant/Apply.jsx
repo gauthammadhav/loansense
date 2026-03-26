@@ -15,20 +15,20 @@ export default function ApplyWizard() {
   const [error, setError] = useState('');
 
   // Form State strictly mapping to ML Pipeline requirements
-  // NOTE: income is MONTHLY, loan_amount is in THOUSANDS — matching training data scale
   const [formData, setFormData] = useState({
     gender: 'Male',
     married: false,
     dependents: 0,
     education: 'Graduate',
     self_employed: false,
-    applicant_income: 6000,       // Monthly income in dollars
-    coapplicant_income: 0,        // Monthly co-applicant income
-    loan_amount: 150,             // In thousands (150 = $150,000)
-    loan_amount_term: 360,        // In months
+    applicant_income: 50000,
+    coapplicant_income: 0,
+    loan_amount: 150000,
+    loan_amount_term: 360,
     purpose: 'Personal',
-    property_type: 'Semiurban',   // Urban / Semiurban / Rural — used directly by ML model
-    credit_score: 750
+    property_area: 'Urban',
+    property_type: 'House',
+    credit_score: 700
   });
 
   const updateForm = (field, value) => {
@@ -152,23 +152,22 @@ export default function ApplyWizard() {
             <h3 className="text-lg font-heading font-bold border-b border-border pb-2 mb-4">Step 3: Financial Information</h3>
             
             <div>
-              <Label>MONTHLY APPLICANT INCOME ($)</Label>
+              <Label>ANNUAL APPLICANT INCOME ($)</Label>
               <Input 
-                type="number" step="500" min="0"
+                type="number" step="1000" min="0"
                 value={formData.applicant_income} 
                 onChange={e => updateForm('applicant_income', parseNum(e.target.value))} 
               />
-              <p className="text-xs text-muted mt-1">Enter your gross monthly salary (e.g. 6000 for $6,000/month).</p>
             </div>
 
             <div>
-              <Label>MONTHLY CO-APPLICANT INCOME ($)</Label>
+              <Label>ANNUAL CO-APPLICANT INCOME ($)</Label>
               <Input 
-                type="number" step="500" min="0"
+                type="number" step="1000" min="0"
                 value={formData.coapplicant_income} 
                 onChange={e => updateForm('coapplicant_income', parseNum(e.target.value))} 
               />
-              <p className="text-xs text-muted mt-1">Leave as 0 if applying alone. Enter monthly amount.</p>
+              <p className="text-xs text-muted mt-1">Leave as 0 if applying alone.</p>
             </div>
           </div>
         )}
@@ -179,26 +178,22 @@ export default function ApplyWizard() {
             <h3 className="text-lg font-heading font-bold border-b border-border pb-2 mb-4">Step 4: Loan Details</h3>
             
             <div>
-              <Label>LOAN AMOUNT (IN THOUSANDS $)</Label>
+              <Label>LOAN AMOUNT REQUESTED ($)</Label>
               <Input 
-                type="number" step="10" min="10" max="700"
+                type="number" step="1000" min="1000"
                 value={formData.loan_amount} 
                 onChange={e => updateForm('loan_amount', parseNum(e.target.value))} 
               />
-              <p className="text-xs text-muted mt-1">Enter in thousands. E.g. type <strong>150</strong> for a $150,000 loan.</p>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label>LOAN TERM (MONTHS)</Label>
+                <Label>LOAN TERM (DAYS)</Label>
                 <Select value={formData.loan_amount_term} onChange={e => updateForm('loan_amount_term', parseNum(e.target.value))}>
-                  <option value="60">60 Months (5 Years)</option>
-                  <option value="120">120 Months (10 Years)</option>
-                  <option value="180">180 Months (15 Years)</option>
-                  <option value="240">240 Months (20 Years)</option>
-                  <option value="300">300 Months (25 Years)</option>
-                  <option value="360">360 Months (30 Years)</option>
-                  <option value="480">480 Months (40 Years)</option>
+                  <option value="120">120 Days (4 Months)</option>
+                  <option value="360">360 Days (1 Year)</option>
+                  <option value="1800">1800 Days (5 Years)</option>
+                  <option value="3600">3600 Days (10 Years)</option>
                 </Select>
               </div>
               <div>
@@ -239,13 +234,12 @@ export default function ApplyWizard() {
             </div>
 
             <div>
-              <Label>CREDIT SCORE (300–850)</Label>
+              <Label>ESTIMATED CREDIT SCORE</Label>
               <Input 
-                type="number" min="300" max="850" step="1"
+                type="number" min="300" max="850"
                 value={formData.credit_score} 
                 onChange={e => updateForm('credit_score', parseNum(e.target.value))} 
               />
-              <p className="text-xs text-muted mt-1">Score above 750 = clean credit history. Below 500 = poor history.</p>
             </div>
           </div>
         )}
