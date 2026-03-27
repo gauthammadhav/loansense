@@ -109,7 +109,7 @@ export default function ApplicantDashboard() {
                   <TableCell className="font-medium text-dark">
                     {new Date(app.submitted_at).toLocaleDateString()}
                   </TableCell>
-                  <TableCell>${app.loan_amount?.toLocaleString()}</TableCell>
+                  <TableCell>₹{app.loan_amount?.toLocaleString()}</TableCell>
                   <TableCell className="capitalize">{app.purpose || 'Personal'}</TableCell>
                   <TableCell>
                     {app.ml_prediction === 'Y' ? (

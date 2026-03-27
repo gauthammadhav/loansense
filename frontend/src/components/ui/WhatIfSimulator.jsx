@@ -30,22 +30,29 @@ export default function WhatIfSimulator({ application }) {
     const timer = setTimeout(async () => {
       setLoading(true);
       try {
+        // Safely parse the original new banking dataset form data stored within SHAP
+        let parsedFormData = {};
+        try {
+          const parsedShap = JSON.parse(application.shap_values || '{}');
+          parsedFormData = parsedShap.form_data || {};
+        } catch(e) { console.error('Error extracting form data', e); }
+
         const payload = {
-          gender: application.gender || 'Male',
-          married: application.married || false,
-          dependents: application.dependents || 0,
-          education: application.education || 'Graduate',
-          self_employed: application.self_employed || false,
-          applicant_income: params.applicant_income,
-          coapplicant_income: application.coapplicant_income || 0,
+          monthly_income: params.applicant_income,
+          monthly_expenses: parsedFormData.monthly_expenses || 0,
           loan_amount: params.loan_amount,
-          loan_amount_term: params.loan_amount_term,
+          loan_tenure_months: params.loan_amount_term,
           credit_score: params.credit_score,
-          property_area: application.property_area || 'Urban',
-          property_type: application.property_type || 'Urban'
+          existing_loans_count: parsedFormData.existing_loans_count || 0,
+          total_existing_emi: parsedFormData.total_existing_emi || 0,
+          employment_type: parsedFormData.employment_type || 'salaried',
+          employment_years: parsedFormData.employment_years || 0,
+          late_payment_history: parsedFormData.late_payment_history || 0,
+          loan_purpose: application.purpose || "Medical",
+          property_type: application.property_type || "Urban"
         };
         
-        const res = await apiClient.post('/predict/whatif', payload);
+        const res = await apiClient.post('/applications/new/whatif', payload);
         setSimResult(res.data);
       } catch (err) {
         console.error("Simulation failed", err);

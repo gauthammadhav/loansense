@@ -6,11 +6,31 @@ import apiClient from '../../api/client';
 export default function ApplicantResult() {
   const location = useLocation();
   const navigate = useNavigate();
-  const application = location.state?.application;
+  const navApp = location.state?.application;
+
+  const [application, setApplication] = useState(navApp);
+  const [appLoading, setAppLoading] = useState(!!navApp && !navApp.shap_values);
 
   const [simParams, setSimParams] = useState(null);
   const [simResult, setSimResult] = useState(null);
   const [simLoading, setSimLoading] = useState(false);
+
+  useEffect(() => {
+    // If we only possess the slim Dashboard ApplicationListItem, fetch the full database object
+    if (navApp && !navApp.shap_values) {
+      const fetchFullApp = async () => {
+        try {
+          const res = await apiClient.get(`/applications/${navApp.id}`);
+          setApplication(res.data);
+        } catch (e) {
+          console.error("Failed to recover full application details:", e);
+        } finally {
+          setAppLoading(false);
+        }
+      };
+      fetchFullApp();
+    }
+  }, [navApp]);
 
   useEffect(() => {
     if (application && application.shap_values) {
@@ -59,12 +79,20 @@ export default function ApplicantResult() {
 
   if (!application) {
     return (
-    <>
-        <div style={{ padding: '32px', textAlign: 'center' }}>
-          <p>No application data found.</p>
-          <button onClick={() => navigate('/applicant/dashboard')}>Dashboard</button>
+      <div style={{ padding: '32px', textAlign: 'center' }}>
+        <p>No application data found.</p>
+        <button onClick={() => navigate('/applicant/dashboard')}>Dashboard</button>
+      </div>
+    );
+  }
+
+  if (appLoading) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '40vh', gap: '16px' }}>
+        <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--muted)', letterSpacing: '0.5px' }}>
+          Loading AI Explainability Node...
         </div>
-    </>
+      </div>
     );
   }
 
