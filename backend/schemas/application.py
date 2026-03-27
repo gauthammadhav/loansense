@@ -57,3 +57,26 @@ class ApplicationListItem(BaseModel):
     submitted_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+# 5. New Dataset Schema
+class LoanApplicationCreateNew(BaseModel):
+    monthly_income: float = Field(..., gt=0)
+    monthly_expenses: float
+    loan_amount: float = Field(..., gt=0)
+    loan_tenure_months: int = Field(..., ge=12, le=360)
+    credit_score: int = Field(..., ge=300, le=900)
+    existing_loans_count: int = Field(0, ge=0, le=20)
+    total_existing_emi: float = 0.0
+    employment_type: str
+    employment_years: int = Field(..., ge=0, le=50)
+    late_payment_history: int = Field(0, ge=0, le=20)
+    
+    loan_purpose: str = "General"
+    property_type: str = "Urban"
+    property_area: str = ""
+
+    @model_validator(mode='after')
+    def check_employment_type(self):
+        if self.employment_type not in ["salaried", "self-employed", "business"]:
+            raise ValueError('employment_type must be salaried, self-employed, or business')
+        return self

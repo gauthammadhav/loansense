@@ -1,17 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import apiClient from '../../api/client';
-import { Card } from '../../components/ui/Card';
-import { Badge } from '../../components/ui/Badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/Table';
-import { Button } from '../../components/ui/Button';
-import { BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer, CartesianGrid, Legend } from 'recharts';
-import { Activity, Database, Server, Settings } from 'lucide-react';
+
 
 export default function OfficerAnalytics() {
-  const [modelCurrent, setModelCurrent] = useState(null);
-  const [modelQueue, setModelQueue] = useState(null);
   const [modelHistory, setModelHistory] = useState([]);
-  const [applications, setApplications] = useState([]);
+  const [datasetStats, setDatasetStats] = useState(null);
+  const [featureImportance, setFeatureImportance] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -20,17 +14,15 @@ export default function OfficerAnalytics() {
 
   const fetchAllData = async () => {
     try {
-      const [currRes, queueRes, histRes, appRes] = await Promise.all([
-        apiClient.get('/model/current').catch(() => ({ data: {} })),
-        apiClient.get('/model/queue-status').catch(() => ({ data: {} })),
+      const [histRes, statsRes, featRes] = await Promise.all([
         apiClient.get('/model/comparison').catch(() => ({ data: [] })),
-        apiClient.get('/officer/applications').catch(() => ({ data: [] }))
+        apiClient.get('/model/dataset-stats').catch(() => ({ data: null })),
+        apiClient.get('/model/feature-importance').catch(() => ({ data: null }))
       ]);
 
-      setModelCurrent(currRes.data);
-      setModelQueue(queueRes.data);
-      setModelHistory(histRes.data);
-      setApplications(appRes.data);
+      setModelHistory(histRes.data || []);
+      setDatasetStats(statsRes.data);
+      setFeatureImportance(featRes.data);
     } catch (err) {
       console.error("Failed to fetch analytics", err);
     } finally {
@@ -38,154 +30,167 @@ export default function OfficerAnalytics() {
     }
   };
 
-  const forceRetrain = async () => {
-    try {
-      await apiClient.post('/model/retrain');
-      fetchAllData();
-    } catch (err) {
-      console.error(err);
-    }
-  };
+  const formatINR = (val) => new Intl.NumberFormat('en-IN').format(val || 0);
 
-  // Compute Bias Audit (Approval Rate by Gender)
-  const biasData = React.useMemo(() => {
-    const stats = { Male: { total: 0, approved: 0 }, Female: { total: 0, approved: 0 }, Other: { total: 0, approved: 0 } };
-    applications.forEach(app => {
-      const g = app.gender || 'Other';
-      if (!stats[g]) stats[g] = { total: 0, approved: 0 };
-      stats[g].total += 1;
-      if (app.ml_prediction === 'Y') stats[g].approved += 1;
-    });
+  if (loading) {
+    return (
+      <>
+        <div style={{ padding: '40px', textAlign: 'center', fontFamily: 'var(--font-body)', color: 'var(--muted)' }}>
+          Loading AI Analytics...
+        </div>
+      </>
+    );
+  }
 
-    return Object.keys(stats).map(gender => ({
-      name: gender,
-      ApprovalRate: stats[gender].total > 0 ? (stats[gender].approved / stats[gender].total) * 100 : 0,
-      Total: stats[gender].total
-    })).filter(d => d.Total > 0);
-  }, [applications]);
-
-  if (loading) return <div className="p-8 text-center text-muted font-body">Loading Analytics...</div>;
-
-  const queuePct = modelQueue?.threshold ? Math.min(100, (modelQueue.queued / modelQueue.threshold) * 100) : 0;
+  const featArray = featureImportance 
+    ? Object.entries(featureImportance).sort((a,b) => b[1] - a[1]).slice(0, 10)
+    : [];
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-heading font-bold text-dark">System Analytics & MLOps</h2>
-          <p className="text-sm font-body text-muted mt-1">
-            Monitor model drift, queue thresholds, and historical bias audits.
+    <>
+      <div style={{ maxWidth: '1000px', margin: '0 auto', paddingBottom: '60px' }}>
+        
+        <div style={{ marginBottom: '32px' }}>
+          <h2 style={{ fontSize: '24px', fontFamily: 'var(--font-heading)', fontWeight: 800, color: 'var(--dark)' }}>
+            System Analytics & Data Drift
+          </h2>
+          <p style={{ fontSize: '13px', color: 'var(--muted)', marginTop: '4px' }}>
+            Monitor global model performance, new dataset characteristics, and macro feature impacts.
           </p>
         </div>
-      </div>
 
-      {/* KPI Row */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="flex items-center gap-4">
-          <div className="p-3 bg-lime/20 rounded-full text-lime-dark"><Server size={20} /></div>
-          <div>
-            <p className="text-xs font-bold text-faint uppercase">Active Model</p>
-            <p className="font-heading font-bold text-lg">{modelCurrent?.version || 'v1.0'}</p>
-          </div>
-        </Card>
-        <Card className="flex items-center gap-4">
-          <div className="p-3 bg-success-bg rounded-full text-success"><Activity size={20} /></div>
-          <div>
-            <p className="text-xs font-bold text-faint uppercase">Uptime Status</p>
-            <p className="font-heading font-bold text-lg text-success">{modelCurrent?.status || 'Online'}</p>
-          </div>
-        </Card>
-        <Card className="flex items-center gap-4 md:col-span-2">
-          <div className="p-3 bg-page rounded-full text-dark"><Database size={20} /></div>
-          <div className="flex-1">
-            <div className="flex justify-between items-center mb-1">
-              <p className="text-xs font-bold text-faint uppercase">Retraining Queue</p>
-              <p className="text-xs font-bold">{modelQueue?.queued || 0} / {modelQueue?.threshold || 50} Records</p>
-            </div>
-            <div className="w-full bg-border rounded-full h-2">
-              <div className="bg-dark h-2 rounded-full transition-all" style={{ width: `${queuePct}%` }}></div>
-            </div>
-            {queuePct >= 100 && <p className="text-[10px] text-lime-dark font-bold mt-1">Threshold reached. Retraining imminent.</p>}
-          </div>
-        </Card>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Bias Audit Chart */}
-        <Card>
-          <div className="flex justify-between items-center mb-6">
-            <h3 className="text-sm uppercase font-bold text-dark tracking-wider">Bias Audit: Approval Rate</h3>
-            <Badge variant="default">GENDER</Badge>
-          </div>
-          <div className="h-[250px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={biasData} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
-                <XAxis dataKey="name" tick={{ fontSize: 12, fontFamily: 'var(--font-body)' }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 12, fontFamily: 'var(--font-body)' }} axisLine={false} tickLine={false} tickFormatter={(val) => `${val}%`} />
-                <RechartsTooltip cursor={{ fill: 'var(--page)' }} contentStyle={{ borderRadius: '8px', border: '1px solid var(--border)', fontSize: '12px' }} />
-                <Bar dataKey="ApprovalRate" fill="var(--chart-approve)" maxBarSize={60} radius={[4, 4, 0, 0]} name="Approval Rate (%)" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </Card>
-
-        {/* Model Execution / Ops Controls */}
-        <Card className="bg-page/40">
-          <h3 className="text-sm uppercase font-bold text-dark tracking-wider mb-2">Automated MLOps Pipeline</h3>
-          <p className="text-sm text-muted font-body mb-6">
-             The prediction engine actively monitors verified application outcomes. Once the buffer hits 
-             the threshold ({modelQueue?.threshold || 50}), it automatically fits a new XGBoost model, checks its F1 score against the current baseline, and hot-swaps it into production if superior.
-          </p>
-
-          <div className="border border-border bg-white rounded-[var(--radius-input)] p-4 space-y-4">
-            <div className="flex justify-between items-center">
-              <div>
-                <p className="font-bold text-sm text-dark">Force Manual Retrain</p>
-                <p className="text-xs text-muted">Bypass the queue threshold ({modelQueue?.next_retrain_in} remaining)</p>
+        {/* Dataset Stats Overview */}
+        {datasetStats && (
+          <div style={{ background: 'var(--white)', padding: '32px', borderRadius: 'var(--radius-card)', border: '1px solid var(--border)', marginBottom: '24px' }}>
+            <h3 style={{ fontSize: '12px', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 700, color: 'var(--dark)', marginBottom: '24px', borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>
+              Training Data Overview (New Dataset)
+            </h3>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
+              <div style={{ background: 'var(--page)', padding: '20px', borderRadius: '12px' }}>
+                <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--faint)', textTransform: 'uppercase', marginBottom: '8px' }}>Total Records</div>
+                <div style={{ fontSize: '24px', fontWeight: 800, color: 'var(--dark)' }}>{datasetStats.total_rows?.toLocaleString()}</div>
               </div>
-              <Button onClick={forceRetrain} variant="outline" className="text-xs gap-2"><Settings size={14} /> Trigger Fit</Button>
+              <div style={{ background: 'var(--page)', padding: '20px', borderRadius: '12px' }}>
+                <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--faint)', textTransform: 'uppercase', marginBottom: '8px' }}>Base Approval Rate</div>
+                <div style={{ fontSize: '24px', fontWeight: 800, color: 'var(--dark)' }}>{datasetStats.approval_rate}%</div>
+                <div style={{ fontSize: '11px', color: 'var(--muted)', marginTop: '4px' }}>{datasetStats.approved_count} approvals</div>
+              </div>
+              <div style={{ background: 'var(--page)', padding: '20px', borderRadius: '12px' }}>
+                <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--faint)', textTransform: 'uppercase', marginBottom: '8px' }}>Avg Monthly Income</div>
+                <div style={{ fontSize: '24px', fontWeight: 800, color: 'var(--dark)' }}>₹{formatINR(datasetStats.avg_monthly_income)}</div>
+              </div>
+              <div style={{ background: 'var(--page)', padding: '20px', borderRadius: '12px' }}>
+                <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--faint)', textTransform: 'uppercase', marginBottom: '8px' }}>Avg Credit Score</div>
+                <div style={{ fontSize: '24px', fontWeight: 800, color: 'var(--dark)' }}>{datasetStats.avg_credit_score?.toFixed(0)}</div>
+              </div>
+            </div>
+
+            {datasetStats.employment_distribution && Object.keys(datasetStats.employment_distribution).length > 0 && (
+              <div style={{ marginTop: '24px', paddingTop: '24px', borderTop: '1px solid var(--border)' }}>
+                <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--faint)', textTransform: 'uppercase', marginBottom: '12px' }}>Applicant Employment Profile</div>
+                <div style={{ display: 'flex', gap: '8px', height: '24px', borderRadius: '12px', overflow: 'hidden' }}>
+                  {Object.entries(datasetStats.employment_distribution).map(([type, count]) => {
+                    const pct = (count / datasetStats.total_rows) * 100;
+                    if (pct === 0) return null;
+                    return (
+                      <div key={type} title={`${type}: ${count}`} style={{ width: `${pct}%`, background: type === 'salaried' ? 'var(--lime-dark)' : type === 'self-employed' ? 'var(--success)' : 'var(--warning)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '10px', fontWeight: 700, textTransform: 'capitalize' }}>
+                        {pct > 15 ? `${type} (${pct.toFixed(1)}%)` : ''}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '24px' }}>
+          
+          {/* Model Performance */}
+          <div style={{ background: 'var(--white)', padding: '32px', borderRadius: 'var(--radius-card)', border: '1px solid var(--border)' }}>
+            <h3 style={{ fontSize: '12px', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 700, color: 'var(--dark)', marginBottom: '24px', borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>
+              Model Performance Benchmark
+            </h3>
+            
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                <thead>
+                  <tr style={{ borderBottom: '2px solid var(--border)' }}>
+                    <th style={{ padding: '12px 8px', fontSize: '11px', fontWeight: 700, color: 'var(--faint)', textTransform: 'uppercase' }}>Model Pipeline</th>
+                    <th style={{ padding: '12px 8px', fontSize: '11px', fontWeight: 700, color: 'var(--faint)', textTransform: 'uppercase' }}>Accuracy</th>
+                    <th style={{ padding: '12px 8px', fontSize: '11px', fontWeight: 700, color: 'var(--faint)', textTransform: 'uppercase' }}>F1 Score</th>
+                    <th style={{ padding: '12px 8px', fontSize: '11px', fontWeight: 700, color: 'var(--faint)', textTransform: 'uppercase' }}>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {modelHistory.length > 0 ? modelHistory.map((model, i) => {
+                    const isNew = model.name.includes('(New)');
+                    const accValue = model.accuracy ? (model.accuracy * 100).toFixed(1) + '%' : '-';
+                    const f1Value = model.f1 ? (model.f1 * 100).toFixed(1) + '%' : '-';
+                    
+                    return (
+                      <tr key={i} style={{ borderBottom: '1px solid var(--border)' }}>
+                        <td style={{ padding: '16px 8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          {model.best && <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--success)' }} />}
+                          <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--dark)' }}>{model.name}</span>
+                        </td>
+                        <td style={{ padding: '16px 8px', fontSize: '13px', fontFamily: 'monospace' }}>{accValue}</td>
+                        <td style={{ padding: '16px 8px', fontSize: '13px', fontFamily: 'monospace' }}>{f1Value}</td>
+                        <td style={{ padding: '16px 8px' }}>
+                          {model.best ? (
+                            <span style={{ padding: '4px 8px', background: 'var(--success-bg)', color: 'var(--success)', borderRadius: '4px', fontSize: '11px', fontWeight: 700 }}>ACTIVE</span>
+                          ) : model.status === 'not_trained' ? (
+                            <span style={{ padding: '4px 8px', background: 'var(--danger-bg)', color: 'var(--danger)', borderRadius: '4px', fontSize: '11px', fontWeight: 700 }}>UNAVAILABLE</span>
+                          ) : (
+                            <span style={{ padding: '4px 8px', background: 'var(--page)', color: 'var(--muted)', borderRadius: '4px', fontSize: '11px', fontWeight: 700 }}>STANDBY</span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  }) : (
+                    <tr><td colSpan={4} style={{ padding: '24px 8px', textAlign: 'center', fontSize: '13px', color: 'var(--muted)' }}>No model evaluations found.</td></tr>
+                  )}
+                </tbody>
+              </table>
             </div>
           </div>
-        </Card>
-      </div>
 
-      {/* Model History Table */}
-      <Card className="p-0 overflow-hidden">
-        <div className="p-6 border-b border-border">
-          <h3 className="text-sm uppercase font-bold text-dark tracking-wider">Model Version History</h3>
+          {/* Global Feature Importance */}
+          <div style={{ background: 'var(--white)', padding: '32px', borderRadius: 'var(--radius-card)', border: '1px solid var(--border)' }}>
+            <h3 style={{ fontSize: '12px', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 700, color: 'var(--dark)', marginBottom: '8px', borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>
+              Global Feature Importance
+            </h3>
+            <p style={{ fontSize: '11px', color: 'var(--muted)', marginBottom: '24px', lineHeight: 1.4 }}>
+              Relative weight of input features parsed from the active Random Forest classifier.
+            </p>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {featArray.length > 0 ? featArray.map(([feat, imp], i) => {
+                const max = featArray[0][1];
+                const pct = (imp / max) * 100;
+                return (
+                  <div key={feat} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', fontWeight: 600 }}>
+                      <span style={{ textTransform: 'capitalize', color: 'var(--dark)' }}>{feat.replace(/_/g, ' ')}</span>
+                      <span style={{ color: 'var(--muted)' }}>{imp.toFixed(3)}</span>
+                    </div>
+                    <div style={{ width: '100%', height: '6px', background: 'var(--page)', borderRadius: '3px', overflow: 'hidden' }}>
+                      <div style={{ width: `${pct}%`, height: '100%', background: i < 3 ? 'var(--lime-dark)' : 'var(--muted)' }} />
+                    </div>
+                  </div>
+                )
+              }) : (
+                <div style={{ fontSize: '13px', color: 'var(--muted)', textAlign: 'center', padding: '20px' }}>
+                  Feature importance data unavailable.
+                </div>
+              )}
+            </div>
+          </div>
+
         </div>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Model</TableHead>
-              <TableHead>File</TableHead>
-              <TableHead>Accuracy</TableHead>
-              <TableHead>Status</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {modelHistory.length > 0 ? modelHistory.map((model) => (
-              <TableRow key={model.name}>
-                <TableCell className="font-bold font-mono text-xs">{model.name}</TableCell>
-                <TableCell>{model.file || 'N/A'}</TableCell>
-                <TableCell>{model.accuracy ? (model.accuracy * 100).toFixed(2) + '%' : '-'}</TableCell>
-                <TableCell>
-                  {model.status === 'not_trained' ? (
-                    <span className="text-danger font-bold text-xs">Uninitialized</span>
-                  ) : (
-                    <span className="text-success font-bold text-xs">Ready</span>
-                  )}
-                </TableCell>
-              </TableRow>
-            )) : (
-              <TableRow>
-                <TableCell colSpan={4} className="text-center py-8 text-muted">No historical models found in registry.</TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </Card>
-    </div>
+
+      </div>
+    </>
   );
 }

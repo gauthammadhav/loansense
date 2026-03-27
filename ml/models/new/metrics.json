@@ -1,0 +1,56 @@
+{
+  "RandomForest": {
+    "accuracy": 0.893,
+    "f1": 0.327,
+    "precision": 0.8125,
+    "recall": 0.2047
+  },
+  "XGBoost": {
+    "accuracy": 0.892,
+    "f1": 0.2987,
+    "precision": 0.8519,
+    "recall": 0.1811
+  },
+  "DecisionTree": {
+    "accuracy": 0.601,
+    "f1": 0.257,
+    "precision": 0.1683,
+    "recall": 0.5433
+  },
+  "LogisticRegression": {
+    "accuracy": 0.546,
+    "f1": 0.2118,
+    "precision": 0.1359,
+    "recall": 0.4803
+  },
+  "best_model": "RandomForest",
+  "trained_at": "2026-03-27 10:11:40",
+  "training_rows": 5000,
+  "feature_columns": [
+    "monthly_income",
+    "monthly_expenses",
+    "loan_amount",
+    "loan_tenure_months",
+    "credit_score",
+    "existing_loans_count",
+    "total_existing_emi",
+    "employment_type",
+    "employment_years",
+    "late_payment_history",
+    "new_emi",
+    "debt_to_income",
+    "disposable_income"
+  ],
+  "feature_importance": {
+    "credit_score": 0.12348327298485014,
+    "debt_to_income": 0.11633839946957832,
+    "late_payment_history": 0.10157346873070437,
+    "disposable_income": 0.09630226231122435,
+    "loan_amount": 0.08920805812467232,
+    "monthly_income": 0.08643632215351164,
+    "new_emi": 0.08610976058882056,
+    "total_existing_emi": 0.08400426462582583,
+    "monthly_expenses": 0.08257423835523642,
+    "employment_years": 0.06313425823595561
+  }
+}

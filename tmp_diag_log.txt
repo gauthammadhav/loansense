@@ -1,0 +1,63 @@
+[INFO] Loading dataset from: C:\Users\gauth\Desktop\Projects\MiniProject_F\loansense_experiment\ml\data\dataset_new.csv
+[INFO]   Shape    : (5000, 14)
+[INFO]   Columns  : ['monthly_income', 'monthly_expenses', 'loan_amount', 'loan_tenure_months', 'credit_score', 'existing_loans_count', 'total_existing_emi', 'employment_type', 'employment_years', 'late_payment_history', 'new_emi', 'debt_to_income', 'disposable_income', 'loan_approved']
+[INFO] Target distribution: 0=4364  1=636
+[INFO]   Categorical columns : []
+[INFO]   Numerical columns   : ['monthly_income', 'monthly_expenses', 'loan_amount', 'loan_tenure_months', 'credit_score', 'existing_loans_count', 'total_existing_emi', 'employment_type', 'employment_years', 'late_payment_history', 'new_emi', 'debt_to_income', 'disposable_income']
+Traceback (most recent call last):
+  File "C:\Users\gauth\Desktop\Projects\MiniProject_F\loansense_experiment\tmp_diag.py", line 6, in <module>
+    X, y, pre, fn, oc = t.preprocess_new(df, t.TARGET_COLUMN)
+                        ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\gauth\Desktop\Projects\MiniProject_F\loansense_experiment\ml\train_new_models.py", line 148, in preprocess_new
+    X_processed = preprocessor.fit_transform(df)
+  File "C:\Users\gauth\Desktop\Projects\MiniProject_F\loansense_experiment\venv\Lib\site-packages\sklearn\utils\_set_output.py", line 316, in wrapped
+    data_to_wrap = f(self, X, *args, **kwargs)
+  File "C:\Users\gauth\Desktop\Projects\MiniProject_F\loansense_experiment\venv\Lib\site-packages\sklearn\base.py", line 1336, in wrapper
+    return fit_method(estimator, *args, **kwargs)
+  File "C:\Users\gauth\Desktop\Projects\MiniProject_F\loansense_experiment\venv\Lib\site-packages\sklearn\compose\_column_transformer.py", line 999, in fit_transform
+    result = self._call_func_on_transformers(
+        X,
+    ...<3 lines>...
+        routed_params=routed_params,
+    )
+  File "C:\Users\gauth\Desktop\Projects\MiniProject_F\loansense_experiment\venv\Lib\site-packages\sklearn\compose\_column_transformer.py", line 901, in _call_func_on_transformers
+    return Parallel(n_jobs=self.n_jobs)(jobs)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\gauth\Desktop\Projects\MiniProject_F\loansense_experiment\venv\Lib\site-packages\sklearn\utils\parallel.py", line 91, in __call__
+    return super().__call__(iterable_with_config_and_warning_filters)
+           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\gauth\Desktop\Projects\MiniProject_F\loansense_experiment\venv\Lib\site-packages\joblib\parallel.py", line 1986, in __call__
+    return output if self.return_generator else list(output)
+                                                ~~~~^^^^^^^^
+  File "C:\Users\gauth\Desktop\Projects\MiniProject_F\loansense_experiment\venv\Lib\site-packages\joblib\parallel.py", line 1914, in _get_sequential_output
+    res = func(*args, **kwargs)
+  File "C:\Users\gauth\Desktop\Projects\MiniProject_F\loansense_experiment\venv\Lib\site-packages\sklearn\utils\parallel.py", line 184, in __call__
+    return self.function(*args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\gauth\Desktop\Projects\MiniProject_F\loansense_experiment\venv\Lib\site-packages\sklearn\pipeline.py", line 1484, in _fit_transform_one
+    res = transformer.fit_transform(X, y, **params.get("fit_transform", {}))
+  File "C:\Users\gauth\Desktop\Projects\MiniProject_F\loansense_experiment\venv\Lib\site-packages\sklearn\utils\_set_output.py", line 316, in wrapped
+    data_to_wrap = f(self, X, *args, **kwargs)
+  File "C:\Users\gauth\Desktop\Projects\MiniProject_F\loansense_experiment\venv\Lib\site-packages\sklearn\base.py", line 907, in fit_transform
+    return self.fit(X, **fit_params).transform(X)
+           ~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\gauth\Desktop\Projects\MiniProject_F\loansense_experiment\venv\Lib\site-packages\sklearn\preprocessing\_data.py", line 924, in fit
+    return self.partial_fit(X, y, sample_weight)
+           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\gauth\Desktop\Projects\MiniProject_F\loansense_experiment\venv\Lib\site-packages\sklearn\base.py", line 1336, in wrapper
+    return fit_method(estimator, *args, **kwargs)
+  File "C:\Users\gauth\Desktop\Projects\MiniProject_F\loansense_experiment\venv\Lib\site-packages\sklearn\preprocessing\_data.py", line 961, in partial_fit
+    X = validate_data(
+        self,
+    ...<4 lines>...
+        reset=first_call,
+    )
+  File "C:\Users\gauth\Desktop\Projects\MiniProject_F\loansense_experiment\venv\Lib\site-packages\sklearn\utils\validation.py", line 2902, in validate_data
+    out = check_array(X, input_name="X", **check_params)
+  File "C:\Users\gauth\Desktop\Projects\MiniProject_F\loansense_experiment\venv\Lib\site-packages\sklearn\utils\validation.py", line 1022, in check_array
+    array = _asarray_with_order(array, order=order, dtype=dtype, xp=xp)
+  File "C:\Users\gauth\Desktop\Projects\MiniProject_F\loansense_experiment\venv\Lib\site-packages\sklearn\utils\_array_api.py", line 878, in _asarray_with_order
+    array = numpy.asarray(array, order=order, dtype=dtype)
+  File "C:\Users\gauth\Desktop\Projects\MiniProject_F\loansense_experiment\venv\Lib\site-packages\pandas\core\generic.py", line 2039, in __array__
+    arr = np.asarray(values, dtype=dtype)
+ValueError: could not convert string to float: 'self-employed'

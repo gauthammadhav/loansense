@@ -1,0 +1,57 @@
+Shape: (5000, 14)
+
+Columns & dtypes:
+  monthly_income: int64
+  monthly_expenses: int64
+  loan_amount: int64
+  loan_tenure_months: int64
+  credit_score: int64
+  existing_loans_count: int64
+  total_existing_emi: int64
+  employment_type: str
+  employment_years: int64
+  late_payment_history: int64
+  new_emi: float64
+  debt_to_income: float64
+  disposable_income: int64
+  loan_approved: int64
+
+Missing values:
+  monthly_income: 0
+  monthly_expenses: 0
+  loan_amount: 0
+  loan_tenure_months: 0
+  credit_score: 0
+  existing_loans_count: 0
+  total_existing_emi: 0
+  employment_type: 0
+  employment_years: 0
+  late_payment_history: 0
+  new_emi: 0
+  debt_to_income: 0
+  disposable_income: 0
+  loan_approved: 0
+
+Target column (last): loan_approved
+Target distribution: {0: 4364, 1: 636}
+
+Unique values per column:
+  monthly_income: [np.int64(136958), np.int64(161867), np.int64(146932), np.int64(118694), np.int64(134879), np.int64(125268)]
+  monthly_expenses: [np.int64(87569), np.int64(20408), np.int64(62980), np.int64(87956), np.int64(21351), np.int64(9131)]
+  loan_amount: [np.int64(1752858), np.int64(870848), np.int64(2364372), np.int64(766358), np.int64(2509730), np.int64(293768)]
+  loan_tenure_months: [np.int64(24), np.int64(12), np.int64(48), np.int64(180), np.int64(36), np.int64(120)]
+  credit_score: [np.int64(768), np.int64(581), np.int64(463), np.int64(752), np.int64(396), np.int64(608)]
+  existing_loans_count: [np.int64(1), np.int64(3), np.int64(0), np.int64(4), np.int64(2)]
+  total_existing_emi: [np.int64(35388), np.int64(18920), np.int64(37871), np.int64(42928), np.int64(23464), np.int64(38085)]
+  employment_type: ['self-employed', 'salaried']
+  employment_years: [np.int64(4), np.int64(0), np.int64(18), np.int64(16), np.int64(9), np.int64(6)]
+  late_payment_history: [np.int64(4), np.int64(2), np.int64(5), np.int64(3), np.int64(6), np.int64(8)]
+  new_emi: [np.float64(73035.75), np.float64(72570.66666666667), np.float64(49257.75), np.float64(4257.544444444445), np.float64(104572.08333333331), np.float64(6120.166666666667)]
+  debt_to_income: [np.float64(0.7916569313220111), np.float64(0.5652212413071638), np.float64(0.5929868918955707), np.float64(0.397539424439689), np.float64(0.9492662559281528), np.float64(0.3528847484326936)]
+  disposable_income: [np.int64(49389), np.int64(141459), np.int64(83952), np.int64(30738), np.int64(113528), np.int64(116137)]
+  loan_approved: [np.int64(0), np.int64(1)]
+
+Head(2):
+   monthly_income  monthly_expenses  loan_amount  loan_tenure_months  credit_score  existing_loans_count  total_existing_emi employment_type  employment_years  late_payment_history       new_emi  debt_to_income  disposable_income  loan_approved
+0          136958             87569      1752858                  24           768                     1               35388   self-employed                 4                     4  73035.750000        0.791657              49389              0
+1          161867             20408       870848                  12           581                     1               18920        salaried                 0                     2  72570.666667        0.565221             141459              0

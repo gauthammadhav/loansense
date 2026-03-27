@@ -1,13 +1,13 @@
 import json
-from typing import List
+from typing import List, Dict
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from backend.database import get_db
 from backend.models.user import User, UserRole
 from backend.models.application import LoanApplication, ApplicationStatus
 from backend.models.audit_log import AuditLog
-from backend.schemas.application import LoanApplicationCreate, LoanApplicationResponse, ApplicationListItem
-from backend.services.prediction_service import run_prediction
+from backend.schemas.application import LoanApplicationCreate, LoanApplicationResponse, ApplicationListItem, LoanApplicationCreateNew
+from backend.services.prediction_service import run_prediction, run_prediction_new
 from backend.middleware.auth_middleware import get_current_applicant, get_current_user
 
 # 1. API Route Configuration
@@ -72,6 +72,93 @@ def create_application(
     # 5. Prepare Response
     # Pydantic's from_attributes=True and our new pre-validator handle serialization
     return new_app
+
+@router.post("/new", response_model=Dict, status_code=status.HTTP_201_CREATED)
+def create_application_new(
+    app_in: LoanApplicationCreateNew, 
+    current_user: User = Depends(get_current_applicant), 
+    db: Session = Depends(get_db)
+):
+    """
+    Applicant-only endpoint to submit a new loan application (new dataset format).
+    """
+    
+    app_data = app_in.model_dump()
+    try:
+        result = run_prediction_new(app_data)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Machine Learning prediction failed: {str(e)}"
+        )
+        
+    self_employed_val = True if app_in.employment_type != "salaried" else False
+    
+    new_app = LoanApplication(
+        applicant_id=current_user.id,
+        status=ApplicationStatus.submitted,
+        gender="Other",
+        married=False,
+        dependents=0,
+        education="Graduate",
+        self_employed=self_employed_val,
+        applicant_income=app_in.monthly_income,
+        coapplicant_income=0.0,
+        loan_amount=app_in.loan_amount,
+        loan_amount_term=app_in.loan_tenure_months,
+        credit_score=app_in.credit_score,
+        property_type=app_in.property_type,
+        purpose=app_in.loan_purpose,
+        ml_prediction=result["prediction"],
+        ml_confidence=result["confidence"],
+        ml_risk_band=result["risk_band"],
+        shap_values=json.dumps({
+            "form_data": app_data,
+            "shap": result["shap_values"]
+        })
+    )
+    
+    db.add(new_app)
+    db.commit()
+    db.refresh(new_app)
+    
+    audit = AuditLog(
+        application_id=new_app.id,
+        actor_id=current_user.id,
+        action="ml_predicted",
+        detail=json.dumps({
+            "prediction": result["prediction"],
+            "confidence": result["confidence"],
+            "model_version": result["model_version"]
+        })
+    )
+    db.add(audit)
+    db.commit()
+    
+    # We return the ORM dict manually since we are using Dict to append derived_features easily
+    response = LoanApplicationResponse.model_validate(new_app).model_dump()
+    response["derived_features"] = result.get("derived_features", {})
+    return response
+
+@router.post("/new/whatif", response_model=Dict)
+def whatif_application_new(
+    app_in: LoanApplicationCreateNew, 
+    current_user: User = Depends(get_current_applicant)
+):
+    """
+    Simulation endpoint. Returns predictions and SHAP without saving.
+    """
+    app_data = app_in.model_dump()
+    try:
+        result = run_prediction_new(app_data)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Simulation failed: {str(e)}"
+        )
+    
+    return result
+
 
 @router.get("/", response_model=List[ApplicationListItem])
 def list_my_applications(

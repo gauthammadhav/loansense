@@ -1,8 +1,8 @@
-@import "tailwindcss";
-@import "./styles/tokens.css";
-
 /* Disable Default Fonts and Inject Google Fonts from PRD */
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Montserrat:wght@400;500;600;700&display=swap');
+
+@import "tailwindcss";
+@import "./styles/tokens.css";
 
 @theme {
   /* Font Family Mapping */
@@ -51,4 +51,75 @@ h2 {
 
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
+}
+
+/* Auth / Landing Dark Theme Variables */
+:root {
+  --dark2: #111118;
+  --glass: rgba(255,255,255,0.04);
+  --glass-h: rgba(255,255,255,0.08);
+  --glass-border: rgba(255,255,255,0.08);
+  --text: #F0F0EC;
+  --text-muted: #888896;
+  --text-faint: #444450;
+  --lime-glow: rgba(200, 241, 53, 0.2);
+  --font-ui: 'Space Grotesk', system-ui, sans-serif;
+  --font-display: 'Playfair Display', Georgia, serif;
+}
+
+.page-bg {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% -20%, rgba(200,241,53,0.15) 0%, transparent 60%);
+  z-index: 0;
+  pointer-events: none;
+}
+
+.page-grid {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px);
+  background-size: 24px 24px;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.glass-strong {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 24px;
+  backdrop-filter: blur(32px);
+  -webkit-backdrop-filter: blur(32px);
+  position: relative;
+  overflow: hidden;
+}
+
+.glass-strong::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+}
+
+.ls-input::placeholder {
+  color: var(--text-faint);
+  font-weight: 300;
+  font-family: var(--font-body);
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
 }
