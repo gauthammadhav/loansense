@@ -64,14 +64,14 @@ export default function Login() {
 
       {/* LEFT COLUMN — Brand panel */}
       <div style={{
-        padding: '60px',
-        display: 'flex',
+        padding: '60px',  
+        display: 'flex',  
         flexDirection: 'column',
         justifyContent: 'center',
         position: 'relative',
         zIndex: 1
       }}>
-        <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '48px' }}>
+        <Link to="/" style={{ textDecoration: 'none', display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '48px', width: 'fit-content' }}>
           <div style={{
             width: '32px', height: '32px', background: 'var(--lime)', borderRadius: '8px',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -89,7 +89,7 @@ export default function Login() {
           <div style={{ fontFamily: 'var(--font-display)', fontSize: '20px', fontWeight: 700, color: 'var(--text)' }}>
             LoanSense
           </div>
-        </div>
+        </Link>
 
         <h2 style={{
           fontFamily: 'var(--font-display)', fontSize: '48px', fontWeight: 800,

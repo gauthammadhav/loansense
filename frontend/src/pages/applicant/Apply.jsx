@@ -427,20 +427,20 @@ export default function ApplyWizard() {
           )}
 
           {/* Nav */}
-          {step < 5 && (
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '32px', paddingTop: '24px', borderTop: '1px solid var(--border)' }}>
-              <button 
-                onClick={handleBack} disabled={step === 1}
-                style={{ padding: '10px 24px', background: 'transparent', border: '1px solid var(--border)', borderRadius: '8px', cursor: step === 1 ? 'not-allowed' : 'pointer', fontWeight: 600, opacity: step === 1 ? 0.5 : 1 }}>
-                Back
-              </button>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '32px', paddingTop: '24px', borderTop: '1px solid var(--border)' }}>
+            <button 
+              onClick={handleBack} disabled={step === 1}
+              style={{ padding: '10px 24px', background: 'transparent', border: '1px solid var(--border)', borderRadius: '8px', cursor: step === 1 ? 'not-allowed' : 'pointer', fontWeight: 600, opacity: step === 1 ? 0.5 : 1 }}>
+              Back
+            </button>
+            {step < 5 && (
               <button 
                 onClick={handleNext}
                 style={{ padding: '10px 24px', background: 'var(--dark)', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}>
                 Next
               </button>
-            </div>
-          )}
+            )}
+          </div>
 
         </div>
       </div>

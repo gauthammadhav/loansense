@@ -38,7 +38,7 @@ export default function Landing() {
     <div className="bg-white min-h-screen font-body scroll-smooth text-dark">
       
       {/* 1. NAVBAR */}
-      <nav className="sticky top-0 z-50 bg-white border-b border-border py-4 px-12 flex items-center justify-between">
+      <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-border shadow-sm py-4 px-12 flex items-center justify-between transition-all">
         <div className="flex items-center gap-3">
           <div className="w-7 h-7 bg-dark rounded flex items-center justify-center">
             <span className="text-lime text-lg font-bold leading-none">+</span>
@@ -47,10 +47,22 @@ export default function Landing() {
         </div>
         
         <div className="hidden md:flex items-center gap-8 text-[13px] text-muted font-medium">
-          <a href="#features" className="hover:text-dark transition-colors">Features</a>
-          <a href="#how-it-works" className="hover:text-dark transition-colors">How it works</a>
-          <a href="#portals" className="hover:text-dark transition-colors">For officers</a>
-          <a href="#about" className="hover:text-dark transition-colors">About</a>
+          <a href="#features" className="relative group hover:text-lime-dark hover:-translate-y-0.5 transition-all duration-300">
+            Features
+            <span className="absolute -bottom-1 left-1/2 w-0 h-[2px] bg-lime-dark group-hover:w-full group-hover:left-0 transition-all duration-300 rounded-full" />
+          </a>
+          <a href="#how-it-works" className="relative group hover:text-lime-dark hover:-translate-y-0.5 transition-all duration-300">
+            How it works
+            <span className="absolute -bottom-1 left-1/2 w-0 h-[2px] bg-lime-dark group-hover:w-full group-hover:left-0 transition-all duration-300 rounded-full" />
+          </a>
+          <a href="#portals" className="relative group hover:text-lime-dark hover:-translate-y-0.5 transition-all duration-300">
+            For officers
+            <span className="absolute -bottom-1 left-1/2 w-0 h-[2px] bg-lime-dark group-hover:w-full group-hover:left-0 transition-all duration-300 rounded-full" />
+          </a>
+          <a href="#about" className="relative group hover:text-lime-dark hover:-translate-y-0.5 transition-all duration-300">
+            About
+            <span className="absolute -bottom-1 left-1/2 w-0 h-[2px] bg-lime-dark group-hover:w-full group-hover:left-0 transition-all duration-300 rounded-full" />
+          </a>
         </div>
         
         <div className="flex items-center gap-4">
@@ -320,20 +332,65 @@ export default function Landing() {
       </section>
 
       {/* 7. FOOTER */}
-      <footer className="bg-white border-t border-border py-8 px-12 flex flex-col md:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-2">
-          <div className="w-5 h-5 bg-dark rounded flex items-center justify-center">
-            <span className="text-lime text-[10px] font-bold leading-none">+</span>
+      <footer className="bg-[#0A0A0A] pt-20 pb-12 px-12 mt-auto">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
+            <div className="md:col-span-1">
+              <div className="flex items-center gap-2 mb-6">
+                <div className="w-6 h-6 bg-lime rounded flex items-center justify-center">
+                  <span className="text-dark text-xs font-bold leading-none">+</span>
+                </div>
+                <span className="font-heading font-extrabold text-white text-xl tracking-tight">LoanSense</span>
+              </div>
+              <p className="text-[13px] text-white/50 leading-relaxed max-w-[240px]">
+                Democratizing financial decisions through transparent, machine-learning-driven lending logic.
+              </p>
+            </div>
+            
+            <div>
+              <h4 className="text-white font-bold text-sm mb-6">Product</h4>
+              <ul className="space-y-4 text-[13px] text-white/50">
+                <li><a href="#features" className="hover:text-lime transition-colors">Features</a></li>
+                <li><a href="#how-it-works" className="hover:text-lime transition-colors">How it works</a></li>
+                <li><a href="#portals" className="hover:text-lime transition-colors">For officers</a></li>
+                <li><a href="#" className="hover:text-lime transition-colors">What-if Simulator</a></li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="text-white font-bold text-sm mb-6">Company</h4>
+              <ul className="space-y-4 text-[13px] text-white/50">
+                <li><a href="#" className="hover:text-lime transition-colors">About us</a></li>
+                <li><a href="#" className="hover:text-lime transition-colors">Careers</a></li>
+                <li><a href="#" className="hover:text-lime transition-colors">Contact</a></li>
+                <li><a href="#" className="hover:text-lime transition-colors">Blog</a></li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="text-white font-bold text-sm mb-6">Legal</h4>
+              <ul className="space-y-4 text-[13px] text-white/50">
+                <li><a href="#" className="hover:text-lime transition-colors">Privacy Policy</a></li>
+                <li><a href="#" className="hover:text-lime transition-colors">Terms of Service</a></li>
+                <li><a href="#" className="hover:text-lime transition-colors">Security Center</a></li>
+              </ul>
+            </div>
           </div>
-          <span className="font-heading font-bold text-dark text-sm">LoanSense</span>
-        </div>
-        
-        <div className="text-[11px] text-muted font-medium">
-          College Mini Project · Banking & FinTech Domain
-        </div>
-        
-        <div className="text-[11px] text-muted font-medium bg-page px-3 py-1 rounded-full border border-border">
-          v1.1 · Design System Updated
+          
+          <div className="pt-8 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="text-[11px] text-white/30 font-medium tracking-wide">
+              &copy; {new Date().getFullYear()} LoanSense Financial Technologies. All rights reserved.
+            </div>
+            <div className="flex items-center gap-4 text-white/30">
+              {/* Social placeholders */}
+              <div className="w-8 h-8 rounded-full border border-white/10 flex items-center justify-center hover:text-white hover:border-white/30 transition-colors cursor-pointer">
+                in
+              </div>
+              <div className="w-8 h-8 rounded-full border border-white/10 flex items-center justify-center hover:text-white hover:border-white/30 transition-colors cursor-pointer">
+                x
+              </div>
+            </div>
+          </div>
         </div>
       </footer>
     </div>
