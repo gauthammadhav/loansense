@@ -13,8 +13,6 @@ from backend.routes.predict import router as predict_router
 from backend.routes.officer import router as officer_router
 from backend.routes.model_info import router as model_info_router
 
-
-
 # 1. App Initialization
 app = FastAPI(
     title="LoanSense API",
@@ -47,8 +45,6 @@ app.include_router(applications_router)
 app.include_router(predict_router)
 app.include_router(officer_router)
 app.include_router(model_info_router)
-
-
 
 # 5. Database & Directory Startup
 @app.on_event("startup")

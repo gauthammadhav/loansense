@@ -89,7 +89,8 @@ def train_and_evaluate():
             colsample_bytree=0.8,
             random_state=42,
             eval_metric='logloss',
-            use_label_encoder=False
+            use_label_encoder=False,
+            monotone_constraints="(1, -1, -1, 0, 1, -1, -1, 0, 1, -1, -1, -1, 1)"
         ),
         "DecisionTree": DecisionTreeClassifier(
             max_depth=8,
@@ -146,6 +147,12 @@ def train_and_evaluate():
             best_f1 = f1
             best_model_name = name
             best_model = model
+
+    # FORCE override: We strictly require Monotonic Constraints to guarantee logical UI sliders.
+    # The constrained XGBoost model will become the primary engine, ignoring minor F1 differences.
+    best_model_name = "XGBoost"
+    best_model = models["XGBoost"]
+    best_f1 = metrics_dict["XGBoost"]["f1"]
 
     joblib.dump(best_model, 'ml/models/new/model_current_new.pkl')
     print(f"\nBest model: {best_model_name} with F1: {best_f1:.4f}\n")

@@ -1,7 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Check, ArrowRight, ArrowLeft, ShieldCheck, CheckCircle2, AlertCircle, Activity } from 'lucide-react';
 import apiClient from '../../api/client';
-
+import { Input } from '../../components/ui/Input';
+import { Button } from '../../components/ui/Button';
 
 export default function ApplyWizard() {
   const navigate = useNavigate();
@@ -58,12 +61,15 @@ export default function ApplyWizard() {
         credit_score: Number(formData.credit_score) || 300,
         employment_years: Number(formData.employment_years) || 0
       };
+      setLoading(true);
       const res = await apiClient.post('/applications/new/whatif', payload);
       setEligibilityResult(res.data);
     } catch (err) {
       console.error(err);
       const detail = err.response?.data?.detail;
       setError(Array.isArray(detail) ? detail.map(d => `${d.loc[d.loc.length-1]}: ${d.msg}`).join(' | ') : (typeof detail === 'string' ? detail : 'Validation failed. Please check your inputs.'));
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -82,7 +88,7 @@ export default function ApplyWizard() {
         employment_years: Number(formData.employment_years) || 0
       };
       const res = await apiClient.post('/applications/new', payload);
-      navigate(`/applicant/result`, { state: { application: res.data } });
+      navigate(`/applicant/result/${res.data.id}`, { state: { application: res.data } });
     } catch (err) {
       console.error(err);
       const detail = err.response?.data?.detail;
@@ -97,353 +103,316 @@ export default function ApplyWizard() {
 
   const formatINR = (val) => new Intl.NumberFormat('en-IN').format(val);
 
-  const getCibilBand = (score) => {
-    if (!score) return null;
-    if (score < 550) return { label: 'Poor', color: 'var(--danger)' };
-    if (score < 650) return { label: 'Fair', color: 'var(--warning)' };
-    if (score < 750) return { label: 'Good', color: 'var(--lime-dark)' };
-    if (score < 800) return { label: 'Very good', color: 'var(--lime)' };
-    return { label: 'Excellent', color: 'var(--success)' };
+  const steps = [
+    { id: 1, title: 'Financial Profile', desc: 'Income and expenses' },
+    { id: 2, title: 'Loan Details', desc: 'Requirements and purpose' },
+    { id: 3, title: 'Credit History', desc: 'CIBIL and behavior' },
+    { id: 4, title: 'Employment', desc: 'Work and stability' },
+    { id: 5, title: 'Review', desc: 'Verify and submit' }
+  ];
+
+  const slideVariants = {
+    enter: (direction) => ({ x: direction > 0 ? 50 : -50, opacity: 0 }),
+    center: { zIndex: 1, x: 0, opacity: 1 },
+    exit: (direction) => ({ zIndex: 0, x: direction < 0 ? 50 : -50, opacity: 0 })
   };
 
-  const cibilBand = getCibilBand(formData.credit_score);
-
   return (
-    <>
-      <div style={{ maxWidth: '640px', margin: '0 auto', paddingBottom: '60px' }}>
+    <div className="max-w-3xl mx-auto pb-20 mt-4">
+      {/* Header */}
+      <div className="mb-12">
+        <h1 className="text-4xl font-heading font-black mb-3">Loan Application</h1>
+        <p className="text-text-muted">Complete the following steps to initialize your machine-learning risk assessment.</p>
+      </div>
+
+      {/* Progress Stepper */}
+      <div className="flex justify-between items-center relative mb-12">
+        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-white/5 z-0 rounded-full" />
+        <motion.div 
+          className="absolute left-0 top-1/2 -translate-y-1/2 h-1 bg-lime z-0 rounded-full" 
+          initial={{ width: 0 }}
+          animate={{ width: `${((step - 1) / (steps.length - 1)) * 100}%` }}
+          transition={{ ease: "easeInOut", duration: 0.5 }}
+        />
         
-        {/* Progress Bar */}
-        <div style={{ display: 'flex', alignItems: 'center', marginBottom: '32px', gap: '8px' }}>
-          {[1, 2, 3, 4, 5].map((i) => {
-            const isCompleted = i < step;
-            const isCurrent = i === step;
-            let bg = 'var(--page)';
-            let color = 'var(--text-faint)';
-            if (isCompleted) { bg = 'var(--dark)'; color = 'var(--white)'; }
-            else if (isCurrent) { bg = 'var(--lime)'; color = 'var(--dark)'; }
-
-            return (
-              <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1, position: 'relative' }}>
-                <div style={{
-                  width: '32px', height: '32px', borderRadius: '50%', background: bg, 
-                  color: color, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontWeight: 600, fontSize: '14px', zIndex: 2
-                }}>
-                  {isCompleted ? '✓' : i}
-                </div>
-                <div style={{ fontSize: '10px', color: 'var(--muted)', marginTop: '8px', fontFamily: 'var(--font-body)', textAlign: 'center' }}>
-                  {i === 1 ? 'Income' : i === 2 ? 'Loan' : i === 3 ? 'Credit' : i === 4 ? 'Employment' : 'Review'}
-                </div>
-                {i < 5 && (
-                  <div style={{
-                    position: 'absolute', top: '16px', left: '60%', right: '-40%', height: '2px',
-                    background: isCompleted ? 'var(--dark)' : 'var(--border)', zIndex: 1
-                  }} />
-                )}
+        {steps.map((s, index) => {
+          const isCompleted = step > s.id;
+          const isCurrent = step === s.id;
+          return (
+            <div key={s.id} className="relative z-10 flex flex-col items-center">
+              <motion.div 
+                animate={{ 
+                  backgroundColor: isCurrent ? 'var(--lime)' : isCompleted ? 'var(--lime-dark)' : 'var(--dark2)',
+                  borderColor: isCurrent || isCompleted ? 'var(--lime)' : 'var(--border)'
+                }}
+                className={`w-10 h-10 rounded-full border-2 flex items-center justify-center font-bold text-sm ${isCurrent ? 'text-dark shadow-[0_0_15px_rgba(200,241,53,0.3)]' : isCompleted ? 'text-dark' : 'text-text-muted'}`}
+              >
+                {isCompleted ? <Check size={16} /> : s.id}
+              </motion.div>
+              <div className="absolute top-12 whitespace-nowrap text-center">
+                 <div className={`text-xs font-bold font-heading hidden sm:block ${isCurrent ? 'text-lime' : isCompleted ? 'text-white' : 'text-text-muted'}`}>{s.title}</div>
               </div>
-            );
-          })}
-        </div>
-
-        {/* Form Card */}
-        <div style={{
-          background: 'var(--white)', borderRadius: 'var(--radius-card)', padding: '32px',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.05)', border: '1px solid var(--border)',
-          animation: 'scaleIn 0.3s ease-out'
-        }}>
-          
-          <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '22px', fontWeight: 700, marginBottom: '4px', color: 'var(--dark)' }}>
-            {step === 1 ? 'Financial profile' : 
-             step === 2 ? 'Loan requirements' : 
-             step === 3 ? 'Credit history' : 
-             step === 4 ? 'Employment details' : 'Review & submit'}
-          </h2>
-          <p style={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--muted)', marginBottom: '24px' }}>
-            {step === 1 ? 'Your income and expenses' : 
-             step === 2 ? 'Details about the loan you need' : 
-             step === 3 ? 'Your past credit behavior' : 
-             step === 4 ? 'Your work and stability' : 'Almost done. Review your details.'}
-          </p>
-
-          {error && <div style={{ background: 'var(--danger-bg)', color: 'var(--danger)', padding: '12px', borderRadius: '8px', marginBottom: '16px', fontSize: '14px' }}>{error}</div>}
-
-          {/* STEP 1 */}
-          {step === 1 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--dark)', marginBottom: '6px' }}>Monthly income</label>
-                <div style={{ position: 'relative' }}>
-                  <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--muted)' }}>₹</span>
-                  <input type="text" placeholder="e.g. 75000"
-                    value={formData.monthly_income} onChange={e => updateForm('monthly_income', e.target.value.replace(/\\D/g, ''))}
-                    style={{ width: '100%', padding: '12px 12px 12px 30px', border: '1px solid var(--border)', borderRadius: 'var(--radius-input)', outline: 'none', fontFamily: 'var(--font-body)', fontSize: '14px' }} />
-                </div>
-                <p style={{ fontSize: '11px', color: 'var(--muted)', marginTop: '4px' }}>Your take-home salary or business income per month</p>
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--dark)', marginBottom: '6px' }}>Monthly expenses</label>
-                <div style={{ position: 'relative' }}>
-                  <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--muted)' }}>₹</span>
-                  <input type="text" placeholder="e.g. 45000"
-                    value={formData.monthly_expenses} onChange={e => updateForm('monthly_expenses', e.target.value.replace(/\\D/g, ''))}
-                    style={{ width: '100%', padding: '12px 12px 12px 30px', border: '1px solid var(--border)', borderRadius: 'var(--radius-input)', outline: 'none', fontFamily: 'var(--font-body)', fontSize: '14px' }} />
-                </div>
-                <p style={{ fontSize: '11px', color: 'var(--muted)', marginTop: '4px' }}>Rent, utilities, groceries — all regular monthly outgoings</p>
-              </div>
-
-              {formData.monthly_income && formData.monthly_expenses && (
-                <div style={{ background: preview.savings >= 0 ? 'var(--success-bg)' : 'var(--danger-bg)', padding: '16px', borderRadius: '12px', border: `1px solid ${preview.savings >= 0 ? 'var(--success)' : 'var(--danger)'}40` }}>
-                  <div style={{ fontSize: '13px', color: preview.savings >= 0 ? 'var(--success)' : 'var(--danger)', fontWeight: 600 }}>
-                    Estimated savings capacity: ₹{formatINR(preview.savings)}/month
-                  </div>
-                </div>
-              )}
             </div>
-          )}
+          );
+        })}
+      </div>
 
-          {/* STEP 2 */}
-          {step === 2 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--dark)', marginBottom: '6px' }}>Loan amount</label>
-                <div style={{ position: 'relative' }}>
-                  <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--muted)' }}>₹</span>
-                  <input type="text" placeholder="e.g. 500000"
-                    value={formData.loan_amount} onChange={e => updateForm('loan_amount', e.target.value.replace(/\\D/g, ''))}
-                    style={{ width: '100%', padding: '12px 12px 12px 30px', border: '1px solid var(--border)', borderRadius: 'var(--radius-input)', outline: 'none', fontFamily: 'var(--font-body)', fontSize: '14px' }} />
-                </div>
-                <p style={{ fontSize: '11px', color: 'var(--muted)', marginTop: '4px', marginBottom: '8px' }}>Total amount you wish to borrow</p>
-                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                  {[{l: '₹1L', v: 100000}, {l:'₹2L', v: 200000}, {l:'₹5L', v: 500000}, {l:'₹10L', v: 1000000}, {l:'₹20L', v: 2000000}, {l:'₹50L', v: 5000000}].map(p => (
-                    <button key={p.l} onClick={() => updateForm('loan_amount', p.v)}
-                      style={{ padding: '6px 12px', borderRadius: '20px', border: '1px solid var(--border)', background: 'transparent', fontSize: '12px', cursor: 'pointer', color: 'var(--dark)' }}>
-                      {p.l}
-                    </button>
-                  ))}
-                </div>
-              </div>
+      <AnimatePresence>
+        {error && (
+          <motion.div 
+             initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+             className="mb-8 p-4 rounded-xl bg-danger/10 border border-danger/30 text-danger text-sm font-medium flex items-center gap-2"
+          >
+            <AlertCircle size={18} /> {error}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-              <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--dark)', marginBottom: '6px' }}>Repayment tenure</label>
-                <select value={formData.loan_tenure_months} onChange={e => updateForm('loan_tenure_months', parseNum(e.target.value))}
-                  style={{ width: '100%', padding: '12px', border: '1px solid var(--border)', borderRadius: 'var(--radius-input)', outline: 'none', background: 'var(--page)', fontFamily: 'var(--font-body)', fontSize: '14px', cursor: 'pointer' }}>
-                  <option value="12">12 months (1 year)</option>
-                  <option value="24">24 months (2 years)</option>
-                  <option value="36">36 months (3 years)</option>
-                  <option value="60">60 months (5 years)</option>
-                  <option value="84">84 months (7 years)</option>
-                  <option value="120">120 months (10 years)</option>
-                  <option value="180">180 months (15 years)</option>
-                  <option value="240">240 months (20 years)</option>
-                  <option value="360">360 months (30 years)</option>
-                </select>
-              </div>
+      {/* Step Container */}
+      <div className="glass-strong rounded-[24px] p-8 sm:p-10 relative overflow-hidden min-h-[400px]">
+        
+        <AnimatePresence mode="wait" custom={1}>
+          <motion.div
+            key={step}
+            custom={1}
+            variants={slideVariants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={{ duration: 0.4, ease: [0.43, 0.13, 0.23, 0.96] }}
+            className="w-full flex-1"
+          >
+            <h2 className="text-2xl font-heading font-bold mb-1 text-white">{steps[step-1].title}</h2>
+            <p className="text-sm text-text-muted mb-8">{steps[step-1].desc}</p>
 
-              <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--dark)', marginBottom: '6px' }}>Purpose of loan</label>
-                <select value={formData.loan_purpose} onChange={e => updateForm('loan_purpose', e.target.value)}
-                  style={{ width: '100%', padding: '12px', border: '1px solid var(--border)', borderRadius: 'var(--radius-input)', outline: 'none', background: 'var(--page)', fontFamily: 'var(--font-body)', fontSize: '14px', cursor: 'pointer' }}>
-                  <option value="Home Purchase">Home Purchase</option>
-                  <option value="Home Construction">Home Construction</option>
-                  <option value="Vehicle">Vehicle</option>
-                  <option value="Education">Education</option>
-                  <option value="Business">Business</option>
-                  <option value="Personal">Personal</option>
-                  <option value="Medical">Medical</option>
-                  <option value="Other">Other</option>
-                </select>
-              </div>
-
-              {formData.loan_amount && formData.loan_tenure_months && (
-                <div style={{ background: 'var(--success-bg)', padding: '16px', borderRadius: '12px', border: `1px solid var(--success)40` }}>
-                  <div style={{ fontSize: '14px', color: 'var(--success)', fontWeight: 600 }}>
-                    Estimated monthly EMI: ₹{formatINR(preview.newEmi.toFixed(0))}
-                  </div>
-                  <div style={{ fontSize: '11px', color: 'var(--success)', opacity: 0.8, marginTop: '2px' }}>
-                    at standard interest rates, actual EMI may vary
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* STEP 3 */}
-          {step === 3 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--dark)', marginBottom: '6px' }}>CIBIL / Credit score</label>
-                <input type="number" min="300" max="900"
-                  value={formData.credit_score} onChange={e => updateForm('credit_score', e.target.value)}
-                  style={{ width: '100%', padding: '12px', border: '1px solid var(--border)', borderRadius: 'var(--radius-input)', outline: 'none', fontFamily: 'var(--font-body)', fontSize: '14px' }} />
-                <p style={{ fontSize: '11px', color: 'var(--muted)', marginTop: '4px', marginBottom: '8px' }}>Your credit score from CIBIL, Experian, or CRIF. Range: 300–900</p>
+            {/* STEP 1: FINANCIALS */}
+            {step === 1 && (
+              <div className="space-y-6">
+                <Input 
+                  label="Monthly Income"
+                  value={formData.monthly_income}
+                  onChange={e => updateForm('monthly_income', e.target.value.replace(/\D/g, ''))}
+                  icon={<span className="font-bold text-lg">₹</span>}
+                  placeholder="e.g. 75000"
+                />
                 
-                {cibilBand && (
-                  <div style={{ background: 'var(--page)', padding: '8px 12px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div style={{ background: cibilBand.color, width: '12px', height: '12px', borderRadius: '50%' }}></div>
-                    <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--dark)' }}>{cibilBand.label}</span>
-                  </div>
-                )}
-              </div>
+                <Input 
+                  label="Monthly Expenses"
+                  value={formData.monthly_expenses}
+                  onChange={e => updateForm('monthly_expenses', e.target.value.replace(/\D/g, ''))}
+                  icon={<span className="font-bold text-lg">₹</span>}
+                  placeholder="e.g. 45000"
+                />
 
-              <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--dark)', marginBottom: '6px' }}>Late payment history</label>
-                <input type="number" min="0" max="20"
-                  value={formData.late_payment_history} onChange={e => updateForm('late_payment_history', parseNum(e.target.value))}
-                  style={{ width: '100%', padding: '12px', border: '1px solid var(--border)', borderRadius: 'var(--radius-input)', outline: 'none', fontFamily: 'var(--font-body)', fontSize: '14px' }} />
-                <p style={{ fontSize: '11px', color: 'var(--muted)', marginTop: '4px' }}>Number of times you have paid EMIs/bills late in the past 2 years</p>
+                <AnimatePresence>
+                  {formData.monthly_income && formData.monthly_expenses && (
+                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="pt-2">
+                      <div className={`p-4 rounded-xl border flex items-center gap-3 ${preview.savings >= 0 ? 'bg-success/5 border-success/20 text-success' : 'bg-danger/5 border-danger/20 text-danger'}`}>
+                        <Activity size={20} />
+                        <div>
+                          <div className="text-xs font-bold uppercase tracking-wider mb-0.5">Estimated Savings Capacity</div>
+                          <div className="text-lg font-bold font-mono">₹{formatINR(preview.savings)}/mo</div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            )}
+
+            {/* STEP 2: LOAN DETAILS */}
+            {step === 2 && (
+              <div className="space-y-8">
+                <div>
+                  <Input 
+                    label="Loan Amount Required"
+                    value={formData.loan_amount}
+                    onChange={e => updateForm('loan_amount', e.target.value.replace(/\D/g, ''))}
+                    icon={<span className="font-bold text-lg">₹</span>}
+                    placeholder="e.g. 500000"
+                  />
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    {[{l: '₹1L', v: 100000}, {l:'₹2L', v: 200000}, {l:'₹5L', v: 500000}, {l:'₹10L', v: 1000000}, {l:'₹20L', v: 2000000}].map(p => (
+                      <button key={p.l} onClick={() => updateForm('loan_amount', p.v)} className="px-3 py-1 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full text-xs font-bold transition-colors text-white">
+                        {p.l}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs text-text-muted font-bold uppercase tracking-wider ml-1">Repayment Tenure</label>
+                    <div className="relative border border-white/10 rounded-xl bg-white/5 hover:border-lime/50 transition-colors">
+                      <select value={formData.loan_tenure_months} onChange={e => updateForm('loan_tenure_months', parseNum(e.target.value))} className="w-full bg-transparent text-white p-4 outline-none appearance-none cursor-pointer">
+                        {[12, 24, 36, 60, 84, 120, 180, 240, 360].map(m => (
+                          <option key={m} value={m} className="bg-dark text-white">{m} months ({m/12} years)</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs text-text-muted font-bold uppercase tracking-wider ml-1">Purpose of Loan</label>
+                    <div className="relative border border-white/10 rounded-xl bg-white/5 hover:border-lime/50 transition-colors">
+                      <select value={formData.loan_purpose} onChange={e => updateForm('loan_purpose', e.target.value)} className="w-full bg-transparent text-white p-4 outline-none appearance-none cursor-pointer">
+                        {['Home Purchase', 'Home Construction', 'Vehicle', 'Education', 'Business', 'Personal', 'Medical', 'Other'].map(type => (
+                          <option key={type} value={type} className="bg-dark text-white">{type}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                </div>
                 
-                {formData.late_payment_history > 3 && (
-                  <div style={{ marginTop: '8px', padding: '10px', background: 'var(--warning-bg)', color: 'var(--warning)', borderRadius: '8px', fontSize: '12px', fontWeight: 600 }}>
-                    ⚠ More than 3 late payments significantly reduces approval chances
-                  </div>
+                {formData.loan_amount && (
+                   <div className="p-4 rounded-xl border bg-info/5 border-info/20 text-info flex items-center gap-3">
+                      <Activity size={20} />
+                      <div>
+                        <div className="text-xs font-bold uppercase tracking-wider mb-0.5">Estimated Monthly EMI</div>
+                        <div className="text-lg font-bold font-mono">₹{formatINR(preview.newEmi.toFixed(0))}</div>
+                      </div>
+                   </div>
                 )}
               </div>
-            </div>
-          )}
+            )}
 
-          {/* STEP 4 */}
-          {step === 4 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--dark)', marginBottom: '6px' }}>Employment type</label>
-                <div style={{ display: 'flex', gap: '12px' }}>
-                  {['salaried', 'self-employed', 'business'].map(type => {
-                    const isSelected = formData.employment_type === type;
-                    return (
-                      <div key={type} onClick={() => updateForm('employment_type', type)}
-                        style={{
-                          flex: 1, padding: '14px 18px', textAlign: 'center', cursor: 'pointer',
-                          borderRadius: '12px', border: `1px solid ${isSelected ? 'var(--lime-dark)' : 'var(--border)'}`,
-                          background: isSelected ? 'var(--success-bg)' : 'var(--white)',
-                          color: isSelected ? 'var(--success)' : 'var(--muted)',
-                          fontFamily: 'var(--font-body)', fontSize: '13px', fontWeight: 600, textTransform: 'capitalize'
-                        }}>
+            {/* STEP 3: CREDIT HISTORY */}
+            {step === 3 && (
+              <div className="space-y-6">
+                <Input 
+                  label="Credit Score (CIBIL)"
+                  value={formData.credit_score}
+                  onChange={e => updateForm('credit_score', e.target.value)}
+                  type="number"
+                  placeholder="Range 300 - 900"
+                />
+
+                <Input 
+                  label="Late Payment History"
+                  value={formData.late_payment_history}
+                  onChange={e => updateForm('late_payment_history', parseNum(e.target.value))}
+                  type="number"
+                  placeholder="Number of missed EMIs in 2 years"
+                />
+
+                <AnimatePresence>
+                  {formData.late_payment_history > 3 && (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-3 bg-danger/10 border border-danger/20 text-danger rounded-xl flex items-center gap-2 text-sm font-bold">
+                      <AlertCircle size={16} /> More than 3 late payments severely impacts ML approval probability.
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            )}
+
+            {/* STEP 4: EMPLOYMENT */}
+            {step === 4 && (
+              <div className="space-y-8">
+                <div className="flex flex-col gap-2">
+                  <label className="text-xs text-text-muted font-bold uppercase tracking-wider ml-1">Employment Type</label>
+                  <div className="grid grid-cols-3 gap-3">
+                    {['salaried', 'self-employed', 'business'].map(type => (
+                      <div 
+                        key={type} 
+                        onClick={() => updateForm('employment_type', type)}
+                        className={`p-3 rounded-xl border text-center cursor-pointer transition-all font-medium text-sm capitalize ${formData.employment_type === type ? 'bg-lime/10 border-lime text-lime shadow-[0_0_10px_rgba(200,241,53,0.1)]' : 'bg-white/5 border-white/10 text-white hover:bg-white/10'}`}
+                      >
                         {type.replace('-', ' ')}
                       </div>
-                    )
-                  })}
-                </div>
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--dark)', marginBottom: '6px' }}>Years in current employment</label>
-                <input type="number" min="0" max="50"
-                  value={formData.employment_years} onChange={e => updateForm('employment_years', e.target.value)}
-                  style={{ width: '100%', padding: '12px', border: '1px solid var(--border)', borderRadius: 'var(--radius-input)', outline: 'none', fontFamily: 'var(--font-body)', fontSize: '14px' }} />
-                <p style={{ fontSize: '11px', color: 'var(--muted)', marginTop: '4px', marginBottom: '8px' }}>How long you have been at your current job or running your business</p>
-                {formData.employment_years !== '' && (
-                  <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--lime-dark)' }}>
-                    {Number(formData.employment_years) < 1 ? 'Very new — higher risk' : Number(formData.employment_years) <= 3 ? 'Building stability' : Number(formData.employment_years) <= 5 ? 'Stable' : 'Strong stability'}
-                  </div>
-                )}
-              </div>
-
-              <div style={{ display: 'flex', gap: '16px' }}>
-                <div style={{ flex: 1 }}>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--dark)', marginBottom: '6px' }}>Number of existing loans</label>
-                  <input type="number" min="0" max="20"
-                    value={formData.existing_loans_count} onChange={e => updateForm('existing_loans_count', parseNum(e.target.value))}
-                    style={{ width: '100%', padding: '12px', border: '1px solid var(--border)', borderRadius: 'var(--radius-input)', outline: 'none', fontFamily: 'var(--font-body)', fontSize: '14px' }} />
-                </div>
-                <div style={{ flex: 1 }}>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--dark)', marginBottom: '6px' }}>Total monthly EMI</label>
-                  <div style={{ position: 'relative' }}>
-                    <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--muted)' }}>₹</span>
-                    <input type="text" placeholder="e.g. 10000"
-                      value={formData.total_existing_emi} onChange={e => updateForm('total_existing_emi', e.target.value.replace(/\\D/g, ''))}
-                      style={{ width: '100%', padding: '12px 12px 12px 30px', border: '1px solid var(--border)', borderRadius: 'var(--radius-input)', outline: 'none', fontFamily: 'var(--font-body)', fontSize: '14px' }} />
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* STEP 5 */}
-          {step === 5 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-              
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', background: 'var(--page)', padding: '16px', borderRadius: '12px', fontSize: '13px' }}>
-                <div><span style={{ color: 'var(--muted)', display: 'block', fontSize: '11px' }}>Income</span>₹{formatINR(formData.monthly_income)}/mo</div>
-                <div><span style={{ color: 'var(--muted)', display: 'block', fontSize: '11px' }}>Loan Amount</span>₹{formatINR(formData.loan_amount)}</div>
-                <div><span style={{ color: 'var(--muted)', display: 'block', fontSize: '11px' }}>Tenure</span>{formData.loan_tenure_months} months</div>
-                <div><span style={{ color: 'var(--muted)', display: 'block', fontSize: '11px' }}>CIBIL Score</span>{formData.credit_score}</div>
-                <div><span style={{ color: 'var(--muted)', display: 'block', fontSize: '11px' }}>Employment</span>{formData.employment_type} ({formData.employment_years} yrs)</div>
-                <div><span style={{ color: 'var(--muted)', display: 'block', fontSize: '11px' }}>Existing EMI</span>₹{formatINR(formData.total_existing_emi)}/mo</div>
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <div style={{ background: 'var(--success-bg)', padding: '16px', borderRadius: '12px', border: '1px solid var(--success)40' }}>
-                  <div style={{ fontSize: '12px', color: 'var(--dark)', fontWeight: 600 }}>Estimated EMI</div>
-                  <div style={{ fontSize: '18px', color: 'var(--success)', fontWeight: 700 }}>₹{formatINR(preview.newEmi.toFixed(0))}/month</div>
-                </div>
-                
-                <div style={{ background: 'var(--success-bg)', padding: '16px', borderRadius: '12px', border: '1px solid var(--success)40' }}>
-                  <div style={{ fontSize: '12px', color: 'var(--dark)', fontWeight: 600 }}>Debt-to-income ratio</div>
-                  <div style={{ fontSize: '18px', color: preview.dti < 0.4 ? 'var(--success)' : preview.dti < 0.6 ? 'var(--warning)' : 'var(--danger)', fontWeight: 700 }}>
-                    {(preview.dti * 100).toFixed(1)}%
+                    ))}
                   </div>
                 </div>
 
-                <div style={{ background: preview.disposable >= 0 ? 'var(--success-bg)' : 'var(--danger-bg)', padding: '16px', borderRadius: '12px', border: `1px solid ${preview.disposable >= 0 ? 'var(--success)' : 'var(--danger)'}40` }}>
-                  <div style={{ fontSize: '12px', color: 'var(--dark)', fontWeight: 600 }}>Disposable income</div>
-                  <div style={{ fontSize: '18px', color: preview.disposable >= 0 ? 'var(--success)' : 'var(--danger)', fontWeight: 700 }}>
-                    ₹{formatINR(preview.disposable.toFixed(0))}/month
-                  </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <Input 
+                    label="Years Employed"
+                    value={formData.employment_years}
+                    onChange={e => updateForm('employment_years', e.target.value)}
+                    type="number"
+                  />
+                  <Input 
+                    label="Active Loans Count"
+                    value={formData.existing_loans_count}
+                    onChange={e => updateForm('existing_loans_count', parseNum(e.target.value))}
+                    type="number"
+                  />
                 </div>
+
+                <Input 
+                  label="Total Active EMI Value"
+                  value={formData.total_existing_emi}
+                  onChange={e => updateForm('total_existing_emi', e.target.value.replace(/\D/g, ''))}
+                  icon={<span className="font-bold text-lg">₹</span>}
+                />
               </div>
-
-              <div>
-                <button onClick={checkEligibility} style={{ width: '100%', padding: '12px', background: 'var(--page)', border: '1px solid var(--border)', borderRadius: 'var(--radius-input)', fontSize: '13px', fontWeight: 600, cursor: 'pointer', marginBottom: '16px' }}>
-                  Check eligibility first
-                </button>
-                {eligibilityResult && (
-                  <div style={{ textAlign: 'center', color: eligibilityResult.prediction === 'Y' ? 'var(--success)' : 'var(--danger)', fontWeight: 600, marginBottom: '16px' }}>
-                    {eligibilityResult.prediction === 'Y' ? 'Likely Approved ✓' : 'Likely Rejected ✗'} ({Math.round(eligibilityResult.confidence * 100)}%)
-                  </div>
-                )}
-              </div>
-
-              <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
-                <input type="checkbox" checked={consent} onChange={e => setConsent(e.target.checked)} style={{ marginTop: '4px' }} />
-                <p style={{ fontSize: '12px', color: 'var(--muted)', fontFamily: 'var(--font-body)', lineHeight: 1.5 }}>
-                  I confirm all information provided is accurate and authorize LoanSense to assess my application
-                </p>
-              </div>
-
-              <button 
-                onClick={handleSubmit} 
-                disabled={!consent || loading}
-                style={{
-                  width: '100%', padding: '16px', background: consent ? 'var(--lime)' : 'var(--page)', 
-                  color: 'var(--dark)', border: 'none', borderRadius: 'var(--radius-input)',
-                  fontSize: '15px', fontWeight: 700, cursor: consent && !loading ? 'pointer' : 'not-allowed',
-                  opacity: loading ? 0.7 : 1
-                }}
-              >
-                {loading ? 'Submitting...' : 'Submit application'}
-              </button>
-            </div>
-          )}
-
-          {/* Nav */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '32px', paddingTop: '24px', borderTop: '1px solid var(--border)' }}>
-            <button 
-              onClick={handleBack} disabled={step === 1}
-              style={{ padding: '10px 24px', background: 'transparent', border: '1px solid var(--border)', borderRadius: '8px', cursor: step === 1 ? 'not-allowed' : 'pointer', fontWeight: 600, opacity: step === 1 ? 0.5 : 1 }}>
-              Back
-            </button>
-            {step < 5 && (
-              <button 
-                onClick={handleNext}
-                style={{ padding: '10px 24px', background: 'var(--dark)', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}>
-                Next
-              </button>
             )}
-          </div>
 
-        </div>
+            {/* STEP 5: REVIEW */}
+            {step === 5 && (
+              <div className="space-y-6">
+                 
+                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <div className="p-4 bg-white/5 rounded-xl border border-white/10">
+                      <div className="text-[10px] text-text-muted uppercase tracking-wider font-bold mb-1">Total Savings</div>
+                      <div className="text-lg font-bold font-mono text-white">₹{formatINR(preview.savings)}/mo</div>
+                    </div>
+                    <div className="p-4 bg-white/5 rounded-xl border border-white/10">
+                      <div className="text-[10px] text-text-muted uppercase tracking-wider font-bold mb-1">DTI Ratio</div>
+                      <div className={`text-lg font-bold font-mono ${preview.dti > 0.6 ? 'text-danger' : 'text-success'}`}>{Number(preview.dti * 100).toFixed(1)}%</div>
+                    </div>
+                    <div className="p-4 bg-white/5 rounded-xl border border-white/10 col-span-2 md:col-span-1">
+                      <div className="text-[10px] text-text-muted uppercase tracking-wider font-bold mb-1">Expected EMI</div>
+                      <div className="text-lg font-bold font-mono text-white">₹{formatINR(preview.newEmi.toFixed(0))}</div>
+                    </div>
+                 </div>
+
+                 {/* Pre-flight Check */}
+                 <div className="pt-4 border-t border-white/10">
+                    <Button variant="secondary" onClick={checkEligibility} loading={loading && !eligibilityResult} className="w-full mb-4" icon={<Activity size={18} />}>
+                      Run Preliminary Assessment
+                    </Button>
+
+                    <AnimatePresence>
+                      {eligibilityResult && (
+                        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className={`p-4 rounded-xl border mb-4 flex items-center gap-3 ${eligibilityResult.prediction === 'Y' ? 'bg-success/10 border-success/30 text-success' : 'bg-danger/10 border-danger/30 text-danger'}`}>
+                           {eligibilityResult.prediction === 'Y' ? <CheckCircle2 size={24} /> : <AlertCircle size={24} />}
+                           <div>
+                             <div className="font-bold">ML Model Pre-Approval: {eligibilityResult.prediction === 'Y' ? 'Favorable' : 'High Risk'}</div>
+                             <div className="text-xs opacity-80">Confidence: {(eligibilityResult.confidence * 100).toFixed(1)}%</div>
+                           </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                 </div>
+
+                 <label className="flex items-start gap-3 p-4 rounded-xl bg-white/5 border border-white/10 cursor-pointer hover:bg-white/10 transition-colors">
+                    <input type="checkbox" className="mt-1 accent-lime w-4 h-4" checked={consent} onChange={e => setConsent(e.target.checked)} />
+                    <span className="text-xs text-text-muted leading-relaxed">I confirm the above financial information is truthful. I authorize LoanSense to utilize algorithmic fairness processing on this data to render an approval decision.</span>
+                 </label>
+              </div>
+            )}
+
+          </motion.div>
+        </AnimatePresence>
       </div>
-    </>
+
+      {/* Navigation Footer */}
+      <div className="flex justify-between items-center mt-8">
+        <Button variant="ghost" disabled={step === 1} onClick={handleBack} icon={<ArrowLeft size={16} />}>
+          Previous
+        </Button>
+        
+        {step < 5 ? (
+          <Button variant="primary" onClick={handleNext} className="min-w-[120px]">
+            Continue <ArrowRight size={16} className="ml-2" />
+          </Button>
+        ) : (
+          <Button variant="primary" onClick={handleSubmit} disabled={!consent || loading} loading={loading} className="min-w-[160px] bg-white text-dark hover:bg-white/90 focus-visible:ring-white">
+            Submit Application <ShieldCheck size={16} className="ml-2" />
+          </Button>
+        )}
+      </div>
+
+    </div>
   );
 }

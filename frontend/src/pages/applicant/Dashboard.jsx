@@ -1,142 +1,114 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import apiClient from '../../api/client';
-import { Card } from '../../components/ui/Card';
-import { Button } from '../../components/ui/Button';
-import { Badge } from '../../components/ui/Badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/Table';
-import { Plus, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
+import { useAuthStore } from '../../store/useAuthStore';
+import api from '../../api/client';
+import { Card, ActionCard } from '../../components/ui/Card';
+import { AnimatedTable } from '../../components/ui/Table';
+import { Badge } from '../../components/ui/Badge';
 
-export default function ApplicantDashboard() {
-  const [applications, setApplications] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
+import { FileText, CheckCircle, Clock, PlusCircle } from 'lucide-react';
 
-  useEffect(() => {
-    const fetchApplications = async () => {
-      try {
-        const res = await apiClient.get('/applications/');
-        setApplications(res.data);
-      } catch (err) {
-        console.error("Failed to fetch applications", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchApplications();
-  }, []);
-
-  const getStatusBadge = (status) => {
-    switch(status) {
-      case 'approved': return <Badge variant="approved">APPROVED</Badge>;
-      case 'rejected': return <Badge variant="rejected">REJECTED</Badge>;
-      case 'under_review':
-      case 'escalated':
-      case 'submitted':
-        return <Badge variant="review">IN REVIEW</Badge>;
-      default: return <Badge>{status?.toUpperCase() || 'UNKNOWN'}</Badge>;
-    }
-  };
-
+function StatCard({ icon, label, value, color, pulse }) {
   return (
-    <motion.div 
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="space-y-6"
+    <motion.div
+      className="glass-card p-6 relative overflow-hidden group"
+      whileHover={{ y: -5, scale: 1.02 }}
+      initial={{ opacity: 0, scale: 0.8 }}
+      animate={{ opacity: 1, scale: 1 }}
     >
-      <div className="flex items-center justify-between">
-        <motion.div
-           initial={{ opacity: 0, x: -20 }}
-           animate={{ opacity: 1, x: 0 }}
-           transition={{ delay: 0.1 }}
+      <div className="flex justify-between items-start mb-4 relative z-10">
+        <motion.div 
+          className="w-12 h-12 rounded-xl border border-white/10 flex items-center justify-center bg-white/5"
+          style={{ color }}
+          animate={pulse ? { scale: [1, 1.1, 1] } : {}}
+          transition={{ duration: 2, repeat: Infinity }}
         >
-          <h2 className="text-2xl font-heading font-bold text-dark">My Applications</h2>
-          <p className="text-sm font-body text-muted mt-1">Track the status of your loan requests.</p>
-        </motion.div>
-        
-        <motion.div
-           initial={{ opacity: 0, scale: 0.9 }}
-           animate={{ opacity: 1, scale: 1 }}
-           transition={{ delay: 0.2 }}
-        >
-          <Button onClick={() => navigate('/applicant/apply')} className="gap-2 shadow-lg">
-            <Plus size={16} /> New Application
-          </Button>
+          {icon}
         </motion.div>
       </div>
+      <div className="relative z-10">
+        <div className="text-[40px] leading-none font-heading font-extrabold text-white mb-2">
+          {value.toLocaleString()}
+        </div>
+        <p className="text-sm text-text-muted font-medium">{label}</p>
+      </div>
+      {/* Dynamic interactive glow mapping to the color property */}
+      <div className="absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-500 blur-2xl pointer-events-none" style={{ backgroundColor: color }} />
+    </motion.div>
+  );
+}
 
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-      >
-        <Card className="p-0 overflow-hidden border-border/60 shadow-xl">
-          {loading ? (
-          <div className="p-8 text-center text-muted font-body text-sm">Loading applications...</div>
-        ) : applications.length === 0 ? (
-          <div className="p-12 text-center flex flex-col items-center">
-            <div className="w-12 h-12 rounded-full bg-page flex items-center justify-center mb-4 text-faint border border-border">
-              <Plus size={24} />
-            </div>
-            <h3 className="text-lg font-bold font-heading text-dark">No applications yet</h3>
-            <p className="text-sm font-body text-muted mt-2 max-w-sm mb-6">
-              You haven't submitted any loan requests. Apply now to get an instant ML-powered decision.
-            </p>
-            <Button onClick={() => navigate('/applicant/apply')}>Start Application</Button>
-          </div>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Date</TableHead>
-                <TableHead>Amount</TableHead>
-                <TableHead>Purpose</TableHead>
-                <TableHead>Prediction</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Action</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {applications.map((app, index) => (
-                <motion.tr 
-                  key={app.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.4 + index * 0.05 }}
-                  className="border-b transition-colors hover:bg-muted/5 data-[state=selected]:bg-muted"
-                >
-                  <TableCell className="font-medium text-dark">
-                    {new Date(app.submitted_at).toLocaleDateString()}
-                  </TableCell>
-                  <TableCell>₹{app.loan_amount?.toLocaleString()}</TableCell>
-                  <TableCell className="capitalize">{app.purpose || 'Personal'}</TableCell>
-                  <TableCell>
-                    {app.ml_prediction === 'Y' ? (
-                      <span className="text-success font-bold font-body text-sm">Favorable</span>
-                    ) : app.ml_prediction === 'N' ? (
-                      <span className="text-danger font-bold font-body text-sm">High Risk</span>
-                    ) : (
-                      <span className="text-muted font-body text-sm">Pending</span>
-                    )}
-                  </TableCell>
-                  <TableCell>{getStatusBadge(app.status)}</TableCell>
-                  <TableCell className="text-right">
-                    <Button 
-                      variant="outline" 
-                      className="h-8 px-3 text-xs gap-1 hover:bg-dark hover:text-white transition-all"
-                      onClick={() => navigate('/applicant/result', { state: { application: app } })}
-                    >
-                      View ML <ArrowRight size={14} />
-                    </Button>
-                  </TableCell>
-                </motion.tr>
-              ))}
-            </TableBody>
-          </Table>
-        )}
+export default function Dashboard() {
+  const { user } = useAuthStore();
+  const navigate = useNavigate();
+  const [stats, setStats] = useState({ total: 0, approved: 0, pending: 0 });
+  const [applications, setApplications] = useState([]);
+
+  useEffect(() => {
+    const fetchDashboard = async () => {
+      try {
+        const res = await api.get('/applications');
+        const apps = res.data;
+        setApplications(apps);
+        setStats({
+          total: apps.length,
+          approved: apps.filter(a => a.status === 'approved' || a.ml_prediction === 'Y').length,
+          pending: apps.filter(a => a.status === 'pending').length
+        });
+      } catch (e) {
+        console.error("Dashboard fetch error", e);
+      }
+    };
+    fetchDashboard();
+  }, []);
+
+  const formatCurrency = (val) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(val);
+
+  return (
+    <div className="space-y-10">
+      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: 'easeOut' }}>
+        <h1 className="text-[40px] tracking-tight font-heading font-extrabold mb-2">
+          Welcome back, <span className="text-lime">{user?.full_name || user?.email?.split('@')?.[0] || 'Applicant'}</span>
+        </h1>
+        <p className="text-text-muted text-lg font-light">Here is the latest overview of your workspace.</p>
+      </motion.div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <StatCard icon={<FileText />} label="Total Applications" value={stats.total} color="var(--info)" />
+        <StatCard icon={<CheckCircle />} label="Approved Loans" value={stats.approved} color="var(--success)" />
+        <StatCard icon={<Clock />} label="Pending Verification" value={stats.pending} color="var(--warning)" pulse={stats.pending > 0} />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <ActionCard
+          title="Start Application Pipeline"
+          description="Initialize a new application request using our 5-step ML verification wizard."
+          icon={<PlusCircle size={24} />}
+          onClick={() => navigate('/applicant/apply')}
+          glowColor="var(--lime)"
+        />
+      </div>
+
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+        <Card title="Applications History">
+          <AnimatedTable
+            data={applications}
+            columns={[
+              { key: 'id', label: 'ID', render: (row) => <Badge variant="outline">#{row.id}</Badge> },
+              { key: 'loan_amount', label: 'Amount', format: formatCurrency },
+              { key: 'status', label: 'Status', render: (row) => (
+                  <Badge variant={row.ml_prediction === 'Y' ? 'success' : row.status === 'pending' ? 'warning' : 'danger'} pulse={row.status === 'pending'}>
+                    {row.status === 'pending' ? 'Pending' : row.ml_prediction === 'Y' ? 'Approved' : 'Rejected'}
+                  </Badge>
+                ) 
+              },
+              { key: 'submitted_at', label: 'Submission Date', render: (row) => new Date(row.submitted_at).toLocaleDateString() }
+            ]}
+            onRowClick={(app) => navigate(`/applicant/result/${app.id}`)}
+          />
         </Card>
       </motion.div>
-    </motion.div>
+    </div>
   );
 }

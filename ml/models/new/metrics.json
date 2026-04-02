@@ -6,10 +6,10 @@
     "recall": 0.2047
   },
   "XGBoost": {
-    "accuracy": 0.892,
-    "f1": 0.2987,
-    "precision": 0.8519,
-    "recall": 0.1811
+    "accuracy": 0.885,
+    "f1": 0.303,
+    "precision": 0.6579,
+    "recall": 0.1969
   },
   "DecisionTree": {
     "accuracy": 0.601,
@@ -23,8 +23,8 @@
     "precision": 0.1359,
     "recall": 0.4803
   },
-  "best_model": "RandomForest",
-  "trained_at": "2026-03-27 10:11:40",
+  "best_model": "XGBoost",
+  "trained_at": "2026-03-27 14:06:40",
   "training_rows": 5000,
   "feature_columns": [
     "monthly_income",

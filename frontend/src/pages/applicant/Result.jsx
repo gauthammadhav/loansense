@@ -1,133 +1,112 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import apiClient from '../../api/client';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import confetti from 'canvas-confetti';
+import { ArrowLeft, CheckCircle2, XCircle, ChevronRight, Activity, Cpu, Percent, Wallet, FileText, Banknote } from 'lucide-react';
 
+import apiClient from '../../api/client';
+import { Card } from '../../components/ui/Card';
+import { ShapChart } from '../../components/ui/ShapChart';
+import WhatIfSimulator from '../../components/ui/WhatIfSimulator';
+import { Badge } from '../../components/ui/Badge';
+import { Button } from '../../components/ui/Button';
 
 export default function ApplicantResult() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { id } = useParams();
   const navApp = location.state?.application;
 
   const [application, setApplication] = useState(navApp);
-  const [appLoading, setAppLoading] = useState(!!navApp && !navApp.shap_values);
-
-  const [simParams, setSimParams] = useState(null);
-  const [simResult, setSimResult] = useState(null);
-  const [simLoading, setSimLoading] = useState(false);
+  const [loading, setLoading] = useState(!navApp || !navApp.shap_values);
 
   useEffect(() => {
-    // If we only possess the slim Dashboard ApplicationListItem, fetch the full database object
-    if (navApp && !navApp.shap_values) {
-      const fetchFullApp = async () => {
-        try {
-          const res = await apiClient.get(`/applications/${navApp.id}`);
-          setApplication(res.data);
-        } catch (e) {
-          console.error("Failed to recover full application details:", e);
-        } finally {
-          setAppLoading(false);
-        }
-      };
-      fetchFullApp();
-    }
-  }, [navApp]);
-
-  useEffect(() => {
-    if (application && application.shap_values) {
+    const fetchFullApp = async () => {
       try {
-        const parsed = typeof application.shap_values === 'string' 
-          ? JSON.parse(application.shap_values) 
-          : application.shap_values;
-          
-        const initData = parsed.form_data || {};
-        const params = {
-          monthly_income: initData.monthly_income || 0,
-          loan_amount: initData.loan_amount || 0,
-          loan_tenure_months: initData.loan_tenure_months || 60,
-          credit_score: initData.credit_score || 700,
-          total_existing_emi: initData.total_existing_emi || 0,
-          monthly_expenses: initData.monthly_expenses || 0,
-          existing_loans_count: initData.existing_loans_count || 0,
-          employment_type: initData.employment_type || 'salaried',
-          employment_years: initData.employment_years || 0,
-          late_payment_history: initData.late_payment_history || 0,
-          loan_purpose: initData.loan_purpose || 'General',
-          property_type: initData.property_type || 'Urban',
-          property_area: initData.property_area || 'Urban',
-        };
-        setSimParams(params);
-      } catch (e) { console.error(e) }
+        const res = await apiClient.get(`/applications/${id || navApp?.id}`);
+        setApplication(res.data);
+      } catch (e) {
+        console.error("Failed to recover full application details:", e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    if (!navApp || !navApp.shap_values) {
+      if(id || navApp?.id) fetchFullApp();
+    }
+  }, [navApp, id]);
+
+  useEffect(() => {
+    if (application?.ml_prediction === 'Y') {
+      triggerConfetti();
     }
   }, [application]);
 
-  useEffect(() => {
-    if (!simParams) return;
-    
-    const timer = setTimeout(async () => {
-      setSimLoading(true);
-      try {
-        const res = await apiClient.post('/applications/new/whatif', simParams);
-        setSimResult(res.data);
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setSimLoading(false);
-      }
-    }, 600);
-    return () => clearTimeout(timer);
-  }, [simParams]);
+  const triggerConfetti = () => {
+    const duration = 3000;
+    const animationEnd = Date.now() + duration;
+    const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 100 };
 
-  if (!application) {
+    const randomInRange = (min, max) => Math.random() * (max - min) + min;
+
+    const interval = setInterval(function() {
+      const timeLeft = animationEnd - Date.now();
+      if (timeLeft <= 0) {
+        return clearInterval(interval);
+      }
+      const particleCount = 50 * (timeLeft / duration);
+      confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } });
+      confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } });
+    }, 250);
+  };
+
+  const formatCurrency = (val) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(val || 0);
+
+  if (!application && !loading) {
     return (
-      <div style={{ padding: '32px', textAlign: 'center' }}>
-        <p>No application data found.</p>
-        <button onClick={() => navigate('/applicant/dashboard')}>Dashboard</button>
+      <div className="flex flex-col items-center justify-center min-h-[50vh] text-center">
+        <p className="text-text-muted mb-4 font-medium">No application data found.</p>
+        <Button onClick={() => navigate(-1)} variant="secondary">Go Back</Button>
       </div>
     );
   }
 
-  if (appLoading) {
+  if (loading) {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '40vh', gap: '16px' }}>
-        <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--muted)', letterSpacing: '0.5px' }}>
-          Loading AI Explainability Node...
+      <div className="flex flex-col items-center justify-center min-h-[50vh] gap-6">
+        <div className="relative">
+          <motion.div 
+            animate={{ rotate: 360 }} 
+            transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
+            className="w-20 h-20 rounded-full border-2 border-lime border-t-transparent shadow-[0_0_20px_rgba(200,241,53,0.3)]"
+          />
+          <Cpu className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-lime opacity-50" size={24} />
+        </div>
+        <div className="text-lime font-bold uppercase tracking-widest text-sm animate-pulse">
+          Reconstructing ML Nodes...
         </div>
       </div>
     );
   }
 
+  const isApproved = application.ml_prediction === 'Y';
   let parsedShap = {};
-  let derived = application.derived_features || {};
-  let originalPrediction = application.ml_prediction;
-  let originalConfidence = application.ml_confidence;
-  let originalRisk = application.ml_risk_band;
-
+  let parsedForm = {};
+  
   try {
-    const rawShap = typeof application.shap_values === 'string' 
-      ? JSON.parse(application.shap_values) 
-      : application.shap_values;
+    const rawShap = typeof application.shap_values === 'string' ? JSON.parse(application.shap_values) : application.shap_values;
     parsedShap = rawShap.shap || {};
+    parsedForm = rawShap.form_data || {};
   } catch (e) {}
 
-  // If simResult exists, use it to override displayed outputs
-  const currentPrediction = simResult ? simResult.prediction : originalPrediction;
-  const currentConfidence = simResult ? simResult.confidence : originalConfidence;
-  const currentRisk = simResult ? simResult.risk_band : originalRisk;
-  const currentDerived = simResult ? simResult.derived_features : derived;
-  const currentShap = simResult ? simResult.shap_values : parsedShap;
-
-  const isApproved = currentPrediction === 'Y';
-
-  const formatINR = (val) => new Intl.NumberFormat('en-IN').format(val || 0);
-
-  // Map SHAP to Plain text
   const getShapText = (key) => {
     const map = {
       'monthly_income': 'Income Amount',
       'monthly_expenses': 'Living Expenses',
       'loan_amount': 'Loan Size',
       'loan_tenure_months': 'Repayment Tenure',
-      'credit_score': 'CIBIL Score',
+      'credit_score': 'Credit Score',
       'existing_loans_count': 'Num of Loans',
       'total_existing_emi': 'Active EMI Load',
       'employment_type': 'Work Profile',
@@ -140,187 +119,150 @@ export default function ApplicantResult() {
     return map[key] || key.replace(/_/g, ' ');
   };
 
-  const shapArray = Object.entries(currentShap || {})
-    .map(([k, v]) => ({ key: k, label: getShapText(k), val: Number(v), abs: Math.abs(Number(v)) }))
+  const shapArray = Object.entries(parsedShap || {})
+    .map(([k, v]) => {
+       const featureValue = parsedForm[k] !== undefined ? parsedForm[k] : 'N/A';
+       return { feature: getShapText(k), value: Number(v), abs: Math.abs(Number(v)), feature_value: featureValue }
+    })
     .sort((a,b) => b.abs - a.abs)
-    .slice(0, 8);
+    .slice(0, 10);
+
+  let derived = application.derived_features || {};
+
+  if (!derived.new_emi && (parsedForm.loan_amount || application.loan_amount)) {
+     const loan_amount = parseFloat(parsedForm.loan_amount || application.loan_amount) || 0;
+     const loan_tenure_months = Math.max(parseFloat(parsedForm.loan_tenure_months || application.loan_amount_term) || 1, 1);
+     const monthly_income = Math.max(parseFloat(parsedForm.monthly_income || application.applicant_income) || 1, 1);
+     const monthly_expenses = parseFloat(parsedForm.monthly_expenses) || 0;
+     const total_existing_emi = parseFloat(parsedForm.total_existing_emi) || 0;
+
+     const new_emi = loan_amount / loan_tenure_months;
+     const debt_to_income = (total_existing_emi + new_emi) / monthly_income;
+     const disposable_income = monthly_income - monthly_expenses - total_existing_emi - new_emi;
+
+     derived = { new_emi, debt_to_income, disposable_income };
+  }
 
   return (
-    <>
-      <div style={{ maxWidth: '900px', margin: '0 auto', paddingBottom: '60px' }}>
-        
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '32px' }}>
-          <button onClick={() => navigate('/applicant/dashboard')} style={{ padding: '8px 16px', borderRadius: '20px', border: '1px solid var(--border)', background: 'var(--white)', cursor: 'pointer', fontFamily: 'var(--font-body)', fontWeight: 600 }}>
-            ← Back to Dashboard
-          </button>
-          <div>
-            <h2 style={{ fontSize: '24px', fontFamily: 'var(--font-heading)', fontWeight: 800, color: 'var(--dark)' }}>Application #{application.id}</h2>
-          </div>
+    <div className="space-y-8 max-w-5xl mx-auto pb-20 mt-4">
+      <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="flex items-center gap-4 border-b border-white/10 pb-6">
+        <button 
+          onClick={() => navigate('/applicant/dashboard')}
+          className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 hover:text-lime transition-colors cursor-pointer"
+        >
+          <ArrowLeft size={24} />
+        </button>
+        <div>
+          <h1 className="text-4xl font-heading font-black text-white leading-tight">Evaluation Report</h1>
+          <p className="text-lime text-sm font-bold tracking-widest uppercase mt-1">Application #{application.id}</p>
         </div>
+      </motion.div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', alignItems: 'stretch' }}>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        
+        {/* ML Decision Card */}
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
+          className={`glass-strong rounded-[32px] p-10 border-2 relative overflow-hidden group ${isApproved ? 'border-success/30 bg-success/5' : 'border-danger/30 bg-danger/5'}`}
+        >
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.05),transparent)] z-0 pointer-events-none" />
+          <div className={`absolute top-0 left-0 w-full h-1.5 ${isApproved ? 'bg-success' : 'bg-danger'}`} />
           
-          {/* Main Decision */}
-          <div style={{ background: 'var(--white)', padding: '32px', borderRadius: 'var(--radius-card)', border: `2px solid ${isApproved ? 'var(--success)' : 'var(--danger)'}`, boxShadow: `0 8px 30px ${isApproved ? 'rgba(26,138,46,0.1)' : 'rgba(204,34,34,0.1)'}` }}>
-            <h3 style={{ fontSize: '12px', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 700, color: 'var(--muted)', marginBottom: '8px' }}>
-              Machine Learning Decision
-            </h3>
-            <div style={{ fontSize: '42px', fontFamily: 'var(--font-heading)', fontWeight: 800, color: isApproved ? 'var(--success)' : 'var(--danger)', marginBottom: '16px' }}>
+          <div className="relative z-10 flex flex-col items-center text-center">
+            <Badge variant="outline" className="mb-8 opacity-80" icon={<Cpu size={14} />}>Automated ML Engine</Badge>
+            
+            <motion.div 
+               initial={{ scale: 0, rotate: -45 }} 
+               animate={{ scale: 1, rotate: 0 }} 
+               transition={{ type: 'spring', damping: 15, delay: 0.2 }}
+            >
+              {isApproved ? (
+                <CheckCircle2 size={72} className="text-success mb-6 drop-shadow-[0_0_20px_rgba(74,222,128,0.5)]" />
+              ) : (
+                <XCircle size={72} className="text-danger mb-6 drop-shadow-[0_0_20px_rgba(248,113,113,0.5)]" />
+              )}
+            </motion.div>
+            
+            <h2 className={`text-6xl font-heading font-black tracking-tight mb-4 ${isApproved ? 'text-success drop-shadow-[0_0_10px_rgba(74,222,128,0.2)]' : 'text-danger drop-shadow-[0_0_10px_rgba(248,113,113,0.2)]'}`}>
               {isApproved ? 'Favorable' : 'High Risk'}
-            </div>
-            <div style={{ fontSize: '15px', fontWeight: 600, color: 'var(--dark)', marginBottom: '8px' }}>
-              Decision Confidence: {(currentConfidence * 100).toFixed(1)}%
-            </div>
-            <div style={{ fontSize: '15px', fontWeight: 600, color: 'var(--dark)', marginBottom: '24px' }}>
-              Risk Band: {currentRisk?.replace('_', ' ').toUpperCase()}
-            </div>
-            
-            <div style={{ height: '1px', background: 'var(--border)', marginBottom: '16px' }} />
-            
-            <p style={{ fontSize: '13px', color: 'var(--muted)', lineHeight: 1.5 }}>
-              This is a preliminary AI-driven decision. A loan officer will review this manually for final approval.
+            </h2>
+            <p className="text-xl text-white font-medium mb-10">
+              Confidence Score: <span className={`font-mono font-bold px-3 py-1 rounded-lg ${application.ml_confidence > 0.8 ? 'bg-success/20 text-success' : 'bg-warning/20 text-warning'}`}>{(application.ml_confidence * 100).toFixed(1)}%</span>
             </p>
-          </div>
 
-          {/* Derived Metrics */}
-          <div style={{ background: 'var(--white)', padding: '32px', borderRadius: 'var(--radius-card)', border: '1px solid var(--border)' }}>
-            <h3 style={{ fontSize: '12px', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 700, color: 'var(--muted)', marginBottom: '16px' }}>
-              Financial Capacity
-            </h3>
-            
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div style={{ background: 'var(--page)', padding: '16px', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--muted)' }}>Proposed Monthly EMI</span>
-                <span style={{ fontSize: '16px', fontWeight: 800, color: 'var(--dark)' }}>₹{formatINR(currentDerived?.new_emi?.toFixed(0))}</span>
+            <div className="w-full bg-dark2/80 border border-white/10 rounded-2xl p-5 flex justify-between items-center text-left shadow-inner">
+              <div>
+                <div className="text-xs text-text-faint uppercase tracking-[0.2em] font-bold mb-1">Assessed Risk Band</div>
+                <div className="text-white font-bold text-lg">{application.ml_risk_band?.replace('_', ' ').toUpperCase()}</div>
+              </div>
+              <Activity className={isApproved ? "text-success" : "text-danger"} size={28} />
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Financial Derived Capacity */}
+        <motion.div 
+          initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }}
+          className="flex flex-col h-full"
+        >
+          <Card title="Financial Capacity" icon={<Wallet size={20} />} className="flex-1 h-full">
+            <div className="space-y-4 pt-2 flex flex-col h-full justify-center">
+              <div className="bg-dark2 border border-white/5 p-5 rounded-2xl flex justify-between items-center group-hover:border-white/20 transition-all hover:scale-[1.02]">
+                 <div className="flex items-center gap-4">
+                   <div className="w-12 h-12 rounded-xl bg-lime/10 text-lime flex items-center justify-center shadow-[0_0_15px_rgba(200,241,53,0.1)]"><Banknote size={24} /></div>
+                   <span className="font-bold text-white tracking-wide">Proposed EMI</span>
+                 </div>
+                 <span className="text-2xl font-bold font-mono text-lime tracking-tight drop-shadow-[0_0_10px_rgba(200,241,53,0.2)]">{formatCurrency(derived?.new_emi)}</span>
               </div>
               
-              <div style={{ background: 'var(--page)', padding: '16px', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--muted)' }}>Debt-to-Income (DTI)</span>
-                <span style={{ fontSize: '16px', fontWeight: 800, color: currentDerived?.debt_to_income > 0.6 ? 'var(--danger)' : 'var(--dark)' }}>
-                  {((currentDerived?.debt_to_income || 0) * 100).toFixed(1)}%
-                </span>
+              <div className="bg-dark2 border border-white/5 p-5 rounded-2xl flex justify-between items-center group-hover:border-white/20 transition-all hover:scale-[1.02]">
+                 <div className="flex items-center gap-4">
+                   <div className="w-12 h-12 rounded-xl bg-info/10 text-info flex items-center justify-center shadow-[0_0_15px_rgba(129,140,248,0.1)]"><Percent size={24} /></div>
+                   <span className="font-bold text-white tracking-wide">DTI Ratio</span>
+                 </div>
+                 <span className={`text-2xl font-bold font-mono tracking-tight ${(derived?.debt_to_income || 0) > 0.6 ? 'text-danger drop-shadow-[0_0_10px_rgba(248,113,113,0.3)]' : 'text-white'}`}>
+                    {((derived?.debt_to_income || 0) * 100).toFixed(1)}%
+                 </span>
               </div>
 
-              <div style={{ background: currentDerived?.disposable_income < 0 ? 'var(--danger-bg)' : 'var(--page)', padding: '16px', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--muted)' }}>Disposable Income</span>
-                <span style={{ fontSize: '16px', fontWeight: 800, color: currentDerived?.disposable_income < 0 ? 'var(--danger)' : 'var(--dark)' }}>
-                  ₹{formatINR(currentDerived?.disposable_income?.toFixed(0))}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Explainability */}
-        <div style={{ background: 'var(--white)', padding: '32px', borderRadius: 'var(--radius-card)', border: '1px solid var(--border)', marginTop: '24px' }}>
-          <h3 style={{ fontSize: '18px', fontFamily: 'var(--font-heading)', fontWeight: 800, color: 'var(--dark)', marginBottom: '8px' }}>
-            Why did the AI make this decision?
-          </h3>
-          <p style={{ fontSize: '13px', color: 'var(--muted)', marginBottom: '24px' }}>
-            Green bars indicate factors pushing towards approval. Red bars pushed towards rejection.
-          </p>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {shapArray.length > 0 ? shapArray.map(item => {
-              const cap = Math.max(shapArray[0].abs, 0.001);
-              const pct = (item.abs / cap) * 100;
-              const isPos = item.val > 0;
-              return (
-                <div key={item.key} style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                  <div style={{ width: '140px', fontSize: '12px', fontWeight: 600, color: 'var(--dark)', textAlign: 'right' }}>
-                    {item.label}
-                  </div>
-                  <div style={{ flex: 1, height: '24px', background: 'var(--page)', position: 'relative', borderRadius: '4px' }}>
-                    <div style={{ position: 'absolute', top: 0, bottom: 0, left: !isPos && '50%', right: isPos && '50%', width: isPos ? `${pct/2}%` : `${pct/2}%`, background: isPos ? 'var(--chart-approve)' : 'var(--chart-reject)', borderRadius: '2px' }} />
-                    <div style={{ position: 'absolute', left: '50%', top: 0, bottom: 0, width: '1px', background: 'var(--muted)', opacity: 0.3 }} />
-                  </div>
-                  <div style={{ width: '60px', fontSize: '10px', fontWeight: 600, color: isPos ? 'var(--chart-approve)' : 'var(--chart-reject)' }}>
-                    {isPos ? '+' : ''}{item.val.toFixed(3)}
-                  </div>
-                </div>
-              );
-            }) : (
-              <div style={{ fontSize: '13px', color: 'var(--muted)' }}>No explainability data available.</div>
-            )}
-          </div>
-        </div>
-
-        {/* What-If Simulator */}
-        {simParams && (
-          <div style={{ background: 'var(--dark)', padding: '32px', borderRadius: 'var(--radius-card)', marginTop: '24px', color: 'var(--white)', position: 'relative', overflow: 'hidden' }}>
-            {simLoading && (
-              <div style={{ position: 'absolute', inset: 0, background: 'rgba(17,17,17,0.7)', backdropFilter: 'blur(2px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10, fontSize: '14px', fontWeight: 600, letterSpacing: '1px' }}>
-                Simulating outcome...
-              </div>
-            )}
-            
-            <h3 style={{ fontSize: '18px', fontFamily: 'var(--font-heading)', fontWeight: 800, marginBottom: '8px', color: 'var(--lime)' }}>
-              Live "What-If" Simulator
-            </h3>
-            <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.7)', marginBottom: '24px' }}>
-              Adjust the sliders below to see how changes to your application would affect the AI decision in real-time.
-            </p>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px' }}>
-              <div>
-                <label style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', fontWeight: 600, marginBottom: '8px' }}>
-                  <span>Monthly Income</span>
-                  <span style={{ color: 'var(--lime)' }}>₹{formatINR(simParams.monthly_income)}</span>
-                </label>
-                <input type="range" min="10000" max="500000" step="5000"
-                  value={simParams.monthly_income} 
-                  onChange={(e) => setSimParams({...simParams, monthly_income: Number(e.target.value)})}
-                  style={{ width: '100%', accentColor: 'var(--lime)' }} />
-              </div>
-
-              <div>
-                <label style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', fontWeight: 600, marginBottom: '8px' }}>
-                  <span>Loan Amount</span>
-                  <span style={{ color: 'var(--lime)' }}>₹{formatINR(simParams.loan_amount)}</span>
-                </label>
-                <input type="range" min="50000" max="10000000" step="50000"
-                  value={simParams.loan_amount} 
-                  onChange={(e) => setSimParams({...simParams, loan_amount: Number(e.target.value)})}
-                  style={{ width: '100%', accentColor: 'var(--lime)' }} />
-              </div>
-
-              <div>
-                <label style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', fontWeight: 600, marginBottom: '8px' }}>
-                  <span>CIBIL Score</span>
-                  <span style={{ color: 'var(--lime)' }}>{simParams.credit_score}</span>
-                </label>
-                <input type="range" min="300" max="900" step="10"
-                  value={simParams.credit_score} 
-                  onChange={(e) => setSimParams({...simParams, credit_score: Number(e.target.value)})}
-                  style={{ width: '100%', accentColor: 'var(--lime)' }} />
-              </div>
-
-              <div>
-                <label style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', fontWeight: 600, marginBottom: '8px' }}>
-                  <span>Tenure (Months)</span>
-                  <span style={{ color: 'var(--lime)' }}>{simParams.loan_tenure_months}</span>
-                </label>
-                <input type="range" min="12" max="360" step="12"
-                  value={simParams.loan_tenure_months} 
-                  onChange={(e) => setSimParams({...simParams, loan_tenure_months: Number(e.target.value)})}
-                  style={{ width: '100%', accentColor: 'var(--lime)' }} />
+              <div className="bg-dark2 border border-white/5 p-5 rounded-2xl flex justify-between items-center group-hover:border-white/20 transition-all hover:scale-[1.02]">
+                 <div className="flex items-center gap-4">
+                   <div className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-[0_0_15px_rgba(currentColor,0.1)] ${derived?.disposable_income < 0 ? 'bg-danger/10 text-danger' : 'bg-success/10 text-success'}`}><Activity size={24} /></div>
+                   <span className="font-bold text-white tracking-wide">Free Cash Flow</span>
+                 </div>
+                 <span className={`text-2xl font-bold font-mono tracking-tight ${derived?.disposable_income < 0 ? 'text-danger drop-shadow-[0_0_10px_rgba(248,113,113,0.3)]' : 'text-white'}`}>
+                    {formatCurrency(derived?.disposable_income)}
+                 </span>
               </div>
             </div>
-
-            {originalPrediction !== currentPrediction && (
-              <div style={{ marginTop: '24px', padding: '12px', background: currentPrediction === 'Y' ? 'rgba(26,138,46,0.2)' : 'rgba(204,34,34,0.2)', border: `1px solid ${currentPrediction === 'Y' ? 'var(--success)' : 'var(--danger)'}`, borderRadius: '8px', color: currentPrediction === 'Y' ? 'var(--success)' : 'var(--danger)', fontSize: '13px', fontWeight: 700, textAlign: 'center' }}>
-                Outcome flipped to {currentPrediction === 'Y' ? 'Favorable' : 'High Risk'}!
-              </div>
-            )}
-            {originalPrediction === currentPrediction && simResult && (
-              <div style={{ marginTop: '24px', padding: '12px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: 'var(--white)', opacity: 0.7, fontSize: '13px', fontWeight: 600, textAlign: 'center' }}>
-                Baseline Outcome Unchanged
-              </div>
-            )}
-          </div>
-        )}
+          </Card>
+        </motion.div>
 
       </div>
-    </>
+
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+        <Card title="Model Explainability Context" icon={<FileText size={20} />}>
+          <p className="text-sm text-text-muted mb-6 leading-relaxed max-w-2xl">
+            The Waterfall chart illustrates the exact mathematical weights assigned to your individual features by the Random Forest model. Features pushing left (yellow) increase risk, while features pushing right (green) favor approval.
+          </p>
+          <ShapChart data={shapArray} />
+        </Card>
+      </motion.div>
+
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+        <Card title="Interactive Model Engine" icon={<Cpu size={20} />}>
+           <WhatIfSimulator application={application} />
+        </Card>
+      </motion.div>
+
+      <motion.div 
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
+        className="text-center pb-8"
+      >
+         <Button onClick={() => navigate('/applicant/dashboard')} variant="ghost" size="lg">
+            Return to Dashboard
+         </Button>
+      </motion.div>
+    </div>
   );
 }

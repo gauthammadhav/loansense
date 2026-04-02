@@ -1,5 +1,5 @@
 /* Disable Default Fonts and Inject Google Fonts from PRD */
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Montserrat:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Montserrat:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 
 @import "tailwindcss";
 @import "./styles/tokens.css";
@@ -8,9 +8,12 @@
   /* Font Family Mapping */
   --font-heading: 'Playfair Display', serif;
   --font-body: 'Montserrat', sans-serif;
+  --font-ui: 'Space Grotesk', system-ui, sans-serif;
 
   /* Strict Token-Only Color Palette */
   --color-dark: var(--dark);
+  --color-dark2: var(--dark2);
+  --color-dark3: var(--dark3);
   --color-page: var(--page);
   --color-white: var(--white);
   --color-border: var(--border);
@@ -19,107 +22,126 @@
   --color-muted: var(--muted);
   --color-faint: var(--faint);
   --color-success: var(--success);
-  --color-success-bg: var(--success-bg);
   --color-danger: var(--danger);
-  --color-danger-bg: var(--danger-bg);
   --color-warning: var(--warning);
-  --color-warning-bg: var(--warning-bg);
+  --color-info: var(--info);
 
-  /* Border Utilities from PRD */
   --radius-card: 16px;
   --radius-input: 10px;
+}
+
+:root {
+  --dark: #0A0A0F;
+  --dark2: #111118;
+  --dark3: #1A1A24;
+  --lime: #C8F135;
+  --lime-dark: #9BBF00;
+  --lime-glow: rgba(200,241,53,0.15);
+  --glass: rgba(255,255,255,0.04);
+  --glass-border: rgba(255,255,255,0.08);
+  --text: #F0F0EC;
+  --text-muted: #888896;
+  --text-faint: #444450;
+  --success: #4ADE80;
+  --danger: #F87171;
+  --warning: #FBBF24;
+  --info: #818CF8;
 }
 
 /* Global Strict PRD Styling */
 body {
   font-family: var(--font-body);
-  background-color: var(--page); /* Page background according to layout rules */
-  color: var(--dark);
+  background-color: var(--dark); /* Master prompt: Dark page background */
+  color: var(--text);
   -webkit-font-smoothing: antialiased;
 }
 
-/* PRD Specific Font Overrides */
-h1 {
+h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading);
-  font-size: 32px;
 }
 
-h2 {
-  font-family: var(--font-heading);
-  font-size: 26px;
-}
-
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
-}
-
-/* Auth / Landing Dark Theme Variables */
-:root {
-  --dark2: #111118;
-  --glass: rgba(255,255,255,0.04);
-  --glass-h: rgba(255,255,255,0.08);
-  --glass-border: rgba(255,255,255,0.08);
-  --text: #F0F0EC;
-  --text-muted: #888896;
-  --text-faint: #444450;
-  --lime-glow: rgba(200, 241, 53, 0.2);
-  --font-ui: 'Space Grotesk', system-ui, sans-serif;
-  --font-display: 'Playfair Display', Georgia, serif;
-}
-
-.page-bg {
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(circle at 50% -20%, rgba(200,241,53,0.15) 0%, transparent 60%);
-  z-index: 0;
-  pointer-events: none;
-}
-
-.page-grid {
-  position: absolute;
-  inset: 0;
-  background-image: radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px);
-  background-size: 24px 24px;
-  z-index: 0;
-  pointer-events: none;
-}
-
-.glass-strong {
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.12);
-  border-radius: 24px;
-  backdrop-filter: blur(32px);
-  -webkit-backdrop-filter: blur(32px);
+/* Glass variants */
+.glass-card {
+  background: var(--glass);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
   position: relative;
   overflow: hidden;
 }
 
-.glass-strong::before {
+.glass-strong {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.glass-lime {
+  background: var(--lime-glow);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--lime);
+}
+
+/* Hover glow effect (Magnetic) */
+.glass-card::before {
   content: '';
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  bottom: 0;
+  background: radial-gradient(
+    circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+    var(--lime-glow) 0%,
+    transparent 50%
+  );
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
 }
 
-.ls-input::placeholder {
-  color: var(--text-faint);
-  font-weight: 300;
-  font-family: var(--font-body);
+.glass-card:hover::before {
+  opacity: 1;
 }
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
+/* Animated gradient border */
+@keyframes rotate-gradient {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+.glass-card-animated::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  background: conic-gradient(
+    from 0deg,
+    var(--lime),
+    var(--info),
+    var(--success),
+    var(--lime)
+  );
+  border-radius: inherit;
+  z-index: -1;
+  animation: rotate-gradient 4s linear infinite;
+  opacity: 0;
+  transition: opacity 0.3s;
 }
 
-@keyframes scaleIn {
-  from { opacity: 0; transform: scale(0.95); }
-  to   { opacity: 1; transform: scale(1); }
+.glass-card-animated:hover::after {
+  opacity: 1;
+}
+
+/* Recharts styling to match theme */
+.recharts-cartesian-grid-horizontal line, .recharts-cartesian-grid-vertical line {
+  stroke: rgba(255,255,255,0.05);
+}
+.recharts-text {
+  fill: var(--text-muted);
+}
+.recharts-tooltip-wrapper {
+  outline: none;
+  background: none;
 }

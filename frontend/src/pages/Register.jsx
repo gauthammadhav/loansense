@@ -1,299 +1,217 @@
 import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, Link } from 'react-router-dom';
-import apiClient from '../api/client';
+import { useAuthStore } from '../store/useAuthStore';
+import { Mail, Lock, ArrowRight, ShieldCheck, User } from 'lucide-react';
+import { Input, PasswordInput } from '../components/ui/Input';
+import { Button } from '../components/ui/Button';
+import { Canvas, useFrame } from '@react-three/fiber';
+import { Environment, Float, MeshDistortMaterial, Stars, Trail } from '@react-three/drei';
+import * as random from 'maath/random/dist/maath-random.esm';
+
+function OrbitingParticles() {
+  const ref = React.useRef();
+  const [sphere] = useState(() => random.inSphere(new Float32Array(500), { radius: 10 }));
+  
+  useFrame((state, delta) => {
+    if(ref.current) {
+      ref.current.rotation.y += delta * 0.2;
+      ref.current.rotation.x += delta * 0.1;
+    }
+  });
+
+  return (
+    <group ref={ref}>
+      {Array.from({ length: 40 }).map((_, i) => (
+        <Trail key={i} target={null} width={0.5} length={15} color={'#C8F135'} attenuation={(t) => t * t}>
+          <mesh position={[
+            (Math.random() - 0.5) * 15,
+            (Math.random() - 0.5) * 15,
+            (Math.random() - 0.5) * 15
+          ]}>
+            <sphereGeometry args={[0.02, 8, 8]} />
+            <meshBasicMaterial color="#C8F135" />
+          </mesh>
+        </Trail>
+      ))}
+    </group>
+  );
+}
 
 export default function Register() {
-  const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-  const [loading, setLoading] = useState(false);
-  
-  // UI interaction states
-  const [focusName, setFocusName] = useState(false);
-  const [focusEmail, setFocusEmail] = useState(false);
-  const [focusPass, setFocusPass] = useState(false);
-  const [btnHover, setBtnHover] = useState(false);
+  const [fullName, setFullName] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
   
   const navigate = useNavigate();
 
   const handleRegister = async (e) => {
     e.preventDefault();
-    setError('');
-    setSuccess('');
-    setLoading(true);
-
+    setIsLoading(true);
+    setError(null);
     try {
-      await apiClient.post('/auth/register', { 
-        full_name: fullName,
-        email, 
-        password 
+      const response = await fetch('http://localhost:8000/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, full_name: fullName })
       });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.detail || 'Registration failed');
       
-      setSuccess('Account created successfully! Redirecting to login...');
-      setTimeout(() => {
-        navigate('/login');
-      }, 2000);
-      
+      // Auto-redirect to login
+      navigate('/login');
     } catch (err) {
-      setError(err.response?.data?.detail || 'Registration failed. Please try again.');
+      setError(err.message);
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
-  // Password strength calculation
-  const getStrengthLog = () => {
-    const len = password.length;
-    if (len === 0) return { level: 0, text: '' };
-    if (len < 6) return { level: 1, text: 'Weak' };
-    if (len < 8) return { level: 2, text: 'Fair' };
-    if (len < 10) return { level: 3, text: 'Good' };
-    return { level: 4, text: 'Strong' };
+  const staggerContainer = {
+    hidden: { opacity: 0 },
+    show: { opacity: 1, transition: { staggerChildren: 0.1 } }
   };
-  const strength = getStrengthLog();
+  
+  const fadeUp = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 300, damping: 24 } }
+  };
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      display: 'grid',
-      gridTemplateColumns: '1fr 1fr',
-      position: 'relative',
-      fontFamily: 'var(--font-body)',
-      background: 'var(--dark)',
-      color: 'var(--text)',
-      overflow: 'hidden'
-    }}>
-      <div className="page-bg" />
-      <div className="page-grid" />
+    <div className="min-h-screen w-full flex bg-dark relative overflow-hidden">
+      {/* Animated Setup Background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-dark via-dark2 to-[#1a220a] z-0" />
+      <div className="page-grid z-0" />
 
-      {/* LEFT COLUMN — Brand panel */}
-      <div style={{
-        padding: '60px',  
-        display: 'flex',  
-        flexDirection: 'column',
-        justifyContent: 'center',
-        position: 'relative',
-        zIndex: 1
-      }}>
-        <Link to="/" style={{ textDecoration: 'none', display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '48px', width: 'fit-content' }}>
-          <div style={{
-            width: '32px', height: '32px', background: 'var(--lime)', borderRadius: '8px',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            position: 'relative', overflow: 'hidden'
-          }}>
-            <div style={{
-              position: 'absolute', inset: 0,
-              background: 'linear-gradient(135deg, rgba(255,255,255,0.25), transparent)',
-              pointerEvents: 'none'
-            }} />
-            <svg viewBox="0 0 14 14" fill="none" style={{ width: '14px', height: '14px' }}>
-              <path d="M1 7h12M7 1v12" stroke="#111" strokeWidth="2.5" strokeLinecap="round"/>
-            </svg>
-          </div>
-          <div style={{ fontFamily: 'var(--font-display)', fontSize: '20px', fontWeight: 700, color: 'var(--text)' }}>
-            LoanSense
-          </div>
-        </Link>
+      {/* Left Form Panel */}
+      <motion.div 
+        className="w-full lg:w-[45%] h-full min-h-screen flex flex-col justify-center px-8 sm:px-16 lg:px-24 relative z-10 py-12"
+        initial={{ opacity: 0, x: -50 }}
+        animate={{ opacity: 1, x: 0 }}
+        exit={{ opacity: 0, x: 50 }}
+        transition={{ duration: 0.6, ease: [0.43, 0.13, 0.23, 0.96] }}
+      >
+        <div className="w-full max-w-md mx-auto">
+          {/* Logo */}
+          <motion.div 
+            className="flex items-center gap-3 mb-12 cursor-pointer inline-flex" 
+            onClick={() => navigate('/')}
+            whileHover={{ scale: 1.05 }}
+          >
+            <div className="w-8 h-8 bg-lime rounded-lg flex items-center justify-center text-dark font-bold">+</div>
+            <span className="font-heading font-bold text-2xl tracking-tight text-white">LoanSense</span>
+          </motion.div>
 
-        <h2 style={{
-          fontFamily: 'var(--font-display)', fontSize: '48px', fontWeight: 800,
-          lineHeight: 1.08, letterSpacing: '-1.5px', marginBottom: '16px', color: 'var(--text)'
-        }}>
-          Start your<br/>
-          <em style={{ fontStyle: 'italic', color: 'var(--lime)', display: 'block' }}>journey.</em>
-          Get funded.
-        </h2>
-
-        <p style={{
-          fontFamily: 'var(--font-body)', fontSize: '15px', fontWeight: 300,
-          color: 'var(--text-muted)', lineHeight: 1.75, maxWidth: '360px', marginBottom: '40px'
-        }}>
-          Create your LoanSense account and get an AI-powered loan decision in minutes — with complete transparency on every factor.
-        </p>
-
-        <div style={{ marginTop: 'auto', display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
-          {["94% model accuracy", "Decision in under 2s", "SHAP explained"].map(item => (
-            <div key={item} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontFamily: 'var(--font-body)', fontSize: '12px', color: 'var(--text-faint)' }}>
-              <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--lime)', flexShrink: 0 }} />
-              {item}
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* RIGHT COLUMN — Form panel */}
-      <div style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        padding: '40px', position: 'relative', zIndex: 1
-      }}>
-        <div className="glass-strong" style={{ width: '100%', maxWidth: '420px', padding: '40px', position: 'relative' }}>
-          
-          <div style={{
-            position: 'absolute', bottom: '-60px', right: '-60px', width: '200px', height: '200px',
-            borderRadius: '50%', background: 'var(--lime-glow)', filter: 'blur(40px)', pointerEvents: 'none'
-          }} />
-
-          {success ? (
-            <div style={{ textAlign: 'center', padding: '20px 0', animation: 'scaleIn 0.3s ease' }}>
-              <div style={{
-                width: '48px', height: '48px', borderRadius: '50%', background: 'rgba(74,222,128,0.1)',
-                border: '1px solid rgba(74,222,128,0.3)', display: 'flex', alignItems: 'center',
-                justifyContent: 'center', margin: '0 auto 12px'
-              }}>
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                  <path d="M4 10l4 4 8-8" stroke="var(--success)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </div>
-              <div style={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--success)', fontWeight: 500 }}>
-                {success}
-              </div>
-            </div>
-          ) : (
-            <>
-              <div style={{ fontFamily: 'var(--font-display)', fontSize: '28px', fontWeight: 700, color: 'var(--text)', marginBottom: '6px' }}>
-                Create account
-              </div>
-              <div style={{ fontFamily: 'var(--font-body)', fontSize: '13px', fontWeight: 300, color: 'var(--text-muted)', marginBottom: '28px', lineHeight: 1.6 }}>
-                Join thousands of applicants getting smarter loan decisions
-              </div>
-
-              <div style={{
-                background: 'rgba(200,241,53,0.05)', border: '1px solid rgba(200,241,53,0.12)',
-                borderRadius: '10px', padding: '12px 14px', marginBottom: '20px',
-                display: 'flex', gap: '10px', alignItems: 'flex-start'
-              }}>
-                <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--lime)', marginTop: '4px', flexShrink: 0 }} />
-                <div style={{ fontFamily: 'var(--font-body)', fontSize: '12px', color: 'rgba(200,241,53,0.65)', lineHeight: 1.5 }}>
-                  Officer accounts are set up by your bank administrator. Register here only as a loan applicant.
-                </div>
-              </div>
-
-              <form onSubmit={handleRegister}>
-                <div style={{ marginBottom: '16px' }}>
-                  <label style={{ display: 'block', fontFamily: 'var(--font-ui)', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', color: 'var(--text-faint)', marginBottom: '6px' }}>
-                    Full name
-                  </label>
-                  <input 
-                    type="text" 
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    onFocus={() => setFocusName(true)}
-                    onBlur={() => setFocusName(false)}
-                    placeholder="John Doe"
-                    className="ls-input"
-                    required
-                    style={{
-                      width: '100%', borderRadius: '10px', padding: '11px 14px', fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--text)', outline: 'none', transition: 'all 0.2s',
-                      background: focusName ? 'rgba(200,241,53,0.03)' : 'rgba(255,255,255,0.04)',
-                      border: focusName ? '1px solid rgba(200,241,53,0.4)' : '1px solid var(--glass-border)'
-                    }}
-                  />
-                </div>
-
-                <div style={{ marginBottom: '16px' }}>
-                  <label style={{ display: 'block', fontFamily: 'var(--font-ui)', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', color: 'var(--text-faint)', marginBottom: '6px' }}>
-                    Email address
-                  </label>
-                  <input 
-                    type="email" 
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    onFocus={() => setFocusEmail(true)}
-                    onBlur={() => setFocusEmail(false)}
-                    placeholder="you@example.com"
-                    className="ls-input"
-                    required
-                    style={{
-                      width: '100%', borderRadius: '10px', padding: '11px 14px', fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--text)', outline: 'none', transition: 'all 0.2s',
-                      background: focusEmail ? 'rgba(200,241,53,0.03)' : 'rgba(255,255,255,0.04)',
-                      border: focusEmail ? '1px solid rgba(200,241,53,0.4)' : '1px solid var(--glass-border)'
-                    }}
-                  />
-                </div>
-
-                <div style={{ marginBottom: '24px' }}>
-                  <label style={{ display: 'block', fontFamily: 'var(--font-ui)', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', color: 'var(--text-faint)', marginBottom: '6px' }}>
-                    Password
-                  </label>
-                  <input 
-                    type="password" 
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    onFocus={() => setFocusPass(true)}
-                    onBlur={() => setFocusPass(false)}
-                    placeholder="••••••••"
-                    className="ls-input"
-                    required
-                    style={{
-                      width: '100%', borderRadius: '10px', padding: '11px 14px', fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--text)', outline: 'none', transition: 'all 0.2s',
-                      background: focusPass ? 'rgba(200,241,53,0.03)' : 'rgba(255,255,255,0.04)',
-                      border: focusPass ? '1px solid rgba(200,241,53,0.4)' : '1px solid var(--glass-border)'
-                    }}
-                  />
-                  
-                  {password.length > 0 && (
-                    <>
-                      <div style={{ display: 'flex', gap: '3px', marginTop: '6px' }}>
-                        {[1, 2, 3, 4].map((seg) => (
-                          <div key={seg} style={{
-                            flex: 1, height: '3px', borderRadius: '2px', transition: 'background 0.3s',
-                            background: seg <= strength.level ? 'var(--lime-dark)' : 'var(--glass-border)'
-                          }} />
-                        ))}
-                      </div>
-                      <div style={{ fontFamily: 'var(--font-body)', fontSize: '10px', color: 'var(--text-faint)', marginTop: '4px' }}>
-                        {strength.text}
-                      </div>
-                    </>
-                  )}
-                </div>
-
-                <button 
-                  type="submit" 
-                  disabled={loading}
-                  onMouseEnter={() => setBtnHover(true)}
-                  onMouseLeave={() => setBtnHover(false)}
-                  style={{
-                    width: '100%', padding: '13px', background: 'var(--lime)', border: 'none', borderRadius: '11px',
-                    fontFamily: 'var(--font-ui)', fontSize: '13px', fontWeight: 700, color: 'var(--dark)', letterSpacing: '0.3px',
-                    transition: 'all 0.25s', position: 'relative', overflow: 'hidden',
-                    cursor: loading ? 'not-allowed' : 'pointer',
-                    opacity: loading ? 0.8 : 1,
-                    transform: btnHover && !loading ? 'translateY(-1px)' : 'none',
-                    boxShadow: btnHover && !loading ? '0 6px 24px rgba(200,241,53,0.3)' : 'none',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'
-                  }}
+          <motion.div variants={staggerContainer} initial="hidden" animate="show">
+            <motion.h1 variants={fadeUp} className="text-4xl font-heading font-bold text-white mb-2">Create Account</motion.h1>
+            <motion.p variants={fadeUp} className="text-text-muted mb-8 text-sm">Join the next generation of transparent lending.</motion.p>
+            
+            <AnimatePresence>
+              {error && (
+                <motion.div 
+                   initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                   animate={{ opacity: 1, y: 0, scale: 1 }}
+                   exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                   className="mb-6 p-4 rounded-xl bg-danger/10 border border-danger/30 text-danger text-sm font-medium flex items-center gap-2"
                 >
-                  {loading ? (
-                    <>
-                      <svg width="16" height="16" viewBox="0 0 16 16" style={{animation:'spin 0.8s linear infinite'}}>
-                        <circle cx="8" cy="8" r="6" fill="none" stroke="var(--dark)" strokeWidth="2" strokeDasharray="20" strokeDashoffset="10"/>
-                      </svg>
-                      CREATING ACCOUNT...
-                    </>
-                  ) : 'Create my account'}
-                </button>
-              </form>
-            </>
-          )}
+                  <ShieldCheck size={18} /> {error}
+                </motion.div>
+              )}
+            </AnimatePresence>
 
-          {error && !success && (
-            <div style={{ marginTop: '10px', fontFamily: 'var(--font-body)', fontSize: '12px', color: 'var(--danger)', display: 'flex', alignItems: 'center', gap: '6px', animation: 'fadeIn 0.3s ease' }}>
-              <div style={{ width: '14px', height: '14px', borderRadius: '50%', background: 'var(--danger-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '8px', color: 'var(--danger)' }}>
-                ✕
-              </div>
-              {error}
-            </div>
-          )}
+            <motion.form variants={staggerContainer} onSubmit={handleRegister} className="space-y-4">
+              <motion.div variants={fadeUp}>
+                <Input 
+                  label="Full Name"
+                  type="text"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  icon={<User size={18} />}
+                  required
+                />
+              </motion.div>
 
-          <div style={{ marginTop: '20px', textAlign: 'center', fontFamily: 'var(--font-body)', fontSize: '12px', color: 'var(--text-faint)' }}>
-            Already have an account? <span style={{ color: 'var(--lime-dark)', fontWeight: 600, cursor: 'pointer' }} onClick={() => navigate('/login')}>Sign in</span>
-          </div>
+              <motion.div variants={fadeUp}>
+                <Input 
+                  label="Email address"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  icon={<Mail size={18} />}
+                  required
+                />
+              </motion.div>
+              
+              <motion.div variants={fadeUp}>
+                <PasswordInput 
+                  label="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  icon={<Lock size={18} />}
+                  showStrength={true}
+                  required
+                />
+              </motion.div>
 
+              <motion.div variants={fadeUp} className="pt-4">
+                <Button type="submit" loading={isLoading} className="w-full" icon={<ArrowRight size={18} />}>
+                  Initialize workspace
+                </Button>
+              </motion.div>
+            </motion.form>
+
+            <motion.div variants={fadeUp} className="mt-8 text-center sm:text-left">
+               <span className="text-text-muted text-sm">Already have an account? </span>
+               <Link to="/login" className="text-lime hover:text-white transition-colors text-sm font-medium inline-block ml-1">
+                 Sign in instead
+               </Link>
+            </motion.div>
+
+          </motion.div>
         </div>
+      </motion.div>
+
+      {/* Right Canvas Visualization */}
+      <div className="hidden lg:block lg:w-[55%] relative z-0 h-screen overflow-hidden">
+        <div className="absolute inset-0 bg-dark pointer-events-none z-10 opacity-20" />
+        <Canvas camera={{ position: [0, 0, 15], fov: 45 }}>
+          <ambientLight intensity={0.5} />
+          <directionalLight position={[-10, -10, -10]} color="#818CF8" intensity={1} />
+          <directionalLight position={[10, 10, 10]} color="#C8F135" intensity={1} />
+          <Float speed={2} rotationIntensity={0.8} floatIntensity={1.5}>
+            <mesh position={[0, 0, 0]} scale={2.8}>
+              <octahedronGeometry args={[2, 0]} />
+              <MeshDistortMaterial color="#0A0A0F" distort={0.2} speed={1} roughness={0.1} metalness={0.9} wireframe />
+            </mesh>
+            <mesh scale={2.5}>
+              <octahedronGeometry args={[2, 0]} />
+              <meshStandardMaterial color="#111118" transparent opacity={0.9} />
+            </mesh>
+          </Float>
+          <OrbitingParticles />
+          <Stars radius={100} depth={50} count={2000} factor={4} saturation={0} fade speed={1} />
+          <Environment preset="city" />
+        </Canvas>
+        
+        {/* Value Prop Overlay */}
+        <motion.div 
+          className="absolute bottom-12 right-12 left-12 glass-strong p-8 z-20 overflow-hidden"
+          initial={{ opacity: 0, x: 50 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.5, duration: 0.8, type: 'spring' }}
+        >
+          <div className="absolute inset-0 bg-[conic-gradient(from_0deg,transparent,rgba(200,241,53,0.1),transparent)] animate-[spin_4s_linear_infinite] opacity-50" />
+          <div className="relative z-10">
+             <div className="flex items-center gap-2 mb-2">
+                <span className="w-2 h-2 rounded-full bg-lime animate-pulse" />
+                <span className="text-lime font-bold text-xs tracking-widest uppercase">Live Network</span>
+             </div>
+             <h2 className="text-3xl font-heading text-white font-bold mb-3">Join 10,000+ applicants.</h2>
+             <p className="text-text-muted text-lg max-w-md">Get instant pre-approvals backed by automated SHAP reasoning and algorithmic fairness validation.</p>
+          </div>
+        </motion.div>
       </div>
     </div>
   );

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import apiClient from '../../api/client';
 import { Badge } from './Badge';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Loader2, Zap, AlertTriangle, ShieldCheck } from 'lucide-react';
 
 export default function WhatIfSimulator({ application }) {
   const [params, setParams] = useState({
@@ -21,7 +23,6 @@ export default function WhatIfSimulator({ application }) {
       credit_score: application.credit_score
     };
 
-    // If completely unmodified, reset and skip network.
     if (JSON.stringify(params) === JSON.stringify(defaultParams)) {
       setSimResult(null);
       return;
@@ -30,7 +31,6 @@ export default function WhatIfSimulator({ application }) {
     const timer = setTimeout(async () => {
       setLoading(true);
       try {
-        // Safely parse the original new banking dataset form data stored within SHAP
         let parsedFormData = {};
         try {
           const parsedShap = JSON.parse(application.shap_values || '{}');
@@ -64,9 +64,7 @@ export default function WhatIfSimulator({ application }) {
     return () => clearTimeout(timer);
   }, [params, application]);
 
-  const handleChange = (field, value) => {
-    setParams(prev => ({ ...prev, [field]: Number(value) }));
-  };
+  const handleChange = (field, value) => setParams(prev => ({ ...prev, [field]: Number(value) }));
 
   const getDiffStatus = () => {
     if (!simResult) return null;
@@ -74,97 +72,160 @@ export default function WhatIfSimulator({ application }) {
     const newPred = simResult.prediction;
     
     if (oldPred === 'N' && newPred === 'Y') {
-      return <Badge variant="approved">FLIPPED TO FAVORABLE</Badge>;
+      return <Badge variant="success" pulse icon={<Zap size={12}/>}>FLIPPED TO FAVORABLE</Badge>;
     } else if (oldPred === 'Y' && newPred === 'N') {
-      return <Badge variant="rejected">FLIPPED TO HIGH RISK</Badge>;
+      return <Badge variant="danger" pulse icon={<AlertTriangle size={12}/>}>FLIPPED TO HIGH RISK</Badge>;
     }
-    return <Badge>UNCHANGED</Badge>;
+    return <Badge variant="outline">UNCHANGED</Badge>;
+  };
+
+  const getSliderTrackGradient = (min, max, val, isInverse) => {
+    const percent = ((val - min) / (max - min)) * 100;
+    const color = isInverse ? (percent < 40 ? '#4ADE80' : percent < 70 ? '#FBBF24' : '#F87171') : (percent < 30 ? '#F87171' : percent < 70 ? '#FBBF24' : '#4ADE80');
+    return `linear-gradient(to right, ${color} ${percent}%, rgba(255,255,255,0.1) ${percent}%)`;
   };
 
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+    <div className="w-full">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-12 lg:gap-8">
         
         {/* Sliders Input Area */}
-        <div className="space-y-6">
-          <div>
-            <div className="flex justify-between mb-1.5 align-middle">
-              <label className="text-[13px] font-bold font-body text-dark tracking-wide">MONTHLY INCOME</label>
-              <span className="text-sm font-bold text-lime-dark">${params.applicant_income.toLocaleString()}/mo</span>
+        <div className="lg:col-span-3 space-y-8">
+          
+          <div className="space-y-4">
+            <div className="flex justify-between items-end">
+              <div>
+                <label className="text-sm font-bold text-white tracking-wide block mb-1">MONTHLY INCOME</label>
+                <span className="text-xs text-text-muted">Adjust total provable monthly income</span>
+              </div>
+              <span className="text-xl font-bold text-lime tracking-tight">₹{params.applicant_income.toLocaleString('en-IN')}</span>
             </div>
-            <input 
-              type="range" min="500" max="30000" step="500"
-              value={params.applicant_income}
-              onChange={(e) => handleChange('applicant_income', e.target.value)}
-              className="w-full h-1.5 bg-border rounded-lg appearance-none cursor-pointer accent-lime"
-            />
-            <div className="flex justify-between text-[10px] text-muted font-bold mt-1">
-              <span>$500</span><span>$30,000</span>
+            <div className="relative group/slider pb-2">
+              <input 
+                type="range" min="5000" max="500000" step="5000"
+                value={params.applicant_income}
+                onChange={(e) => handleChange('applicant_income', e.target.value)}
+                className="w-full h-2 rounded-lg appearance-none cursor-pointer outline-none relative z-10 transition-all [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:shadow-[0_0_10px_rgba(255,255,255,0.5)] group-hover/slider:[&::-webkit-slider-thumb]:w-5 group-hover/slider:[&::-webkit-slider-thumb]:h-5 group-hover/slider:[&::-webkit-slider-thumb]:transition-all"
+                style={{ background: getSliderTrackGradient(5000, 500000, params.applicant_income, false) }}
+              />
             </div>
           </div>
 
-          <div>
-            <div className="flex justify-between mb-1.5">
-              <label className="text-[13px] font-bold font-body text-dark tracking-wide">LOAN AMOUNT (IN THOUSANDS)</label>
-              <span className="text-sm font-bold text-lime-dark">${params.loan_amount}k = ${(params.loan_amount * 1000).toLocaleString()}</span>
+          <div className="space-y-4">
+            <div className="flex justify-between items-end">
+              <div>
+                <label className="text-sm font-bold text-white tracking-wide block mb-1">LOAN AMOUNT REQUIRED</label>
+                <span className="text-xs text-text-muted">Total capital required (INR)</span>
+              </div>
+              <span className="text-xl font-bold text-lime tracking-tight">₹{params.loan_amount.toLocaleString('en-IN')}</span>
             </div>
-            <input 
-              type="range" min="10" max="700" step="10"
-              value={params.loan_amount}
-              onChange={(e) => handleChange('loan_amount', e.target.value)}
-              className="w-full h-1.5 bg-border rounded-lg appearance-none cursor-pointer accent-lime"
-            />
-            <div className="flex justify-between text-[10px] text-muted font-bold mt-1">
-              <span>$10k</span><span>$700k</span>
+            <div className="relative group/slider pb-2">
+              <input 
+                type="range" min="10000" max="10000000" step="10000"
+                value={params.loan_amount}
+                onChange={(e) => handleChange('loan_amount', e.target.value)}
+                className="w-full h-2 rounded-lg appearance-none cursor-pointer outline-none relative z-10 transition-all [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:shadow-[0_0_10px_rgba(255,255,255,0.5)] group-hover/slider:[&::-webkit-slider-thumb]:w-5 group-hover/slider:[&::-webkit-slider-thumb]:h-5 group-hover/slider:[&::-webkit-slider-thumb]:transition-all"
+                style={{ background: getSliderTrackGradient(10000, 10000000, params.loan_amount, true) }}
+              />
             </div>
           </div>
           
-          <div>
-            <div className="flex justify-between mb-1.5">
-              <label className="text-[13px] font-bold font-body text-dark tracking-wide">CREDIT SCORE</label>
-              <span className={`text-sm font-bold ${params.credit_score >= 750 ? 'text-success' : params.credit_score >= 650 ? 'text-lime-dark' : 'text-danger'}`}>
-                {params.credit_score} {params.credit_score >= 750 ? '(Excellent)' : params.credit_score >= 650 ? '(Good)' : '(Poor)'}
+          <div className="space-y-4">
+            <div className="flex justify-between items-end">
+              <div>
+                <label className="text-sm font-bold text-white tracking-wide block mb-1">CREDIT SCORE</label>
+                <span className="text-xs text-text-muted">FICO/Vantage score equivalent</span>
+              </div>
+              <span className={`text-xl font-bold tracking-tight ${params.credit_score >= 750 ? 'text-success' : params.credit_score >= 650 ? 'text-warning' : 'text-danger'}`}>
+                {params.credit_score}
               </span>
             </div>
-            <input 
-              type="range" min="300" max="850" step="1"
-              value={params.credit_score}
-              onChange={(e) => handleChange('credit_score', e.target.value)}
-              className="w-full h-1.5 bg-border rounded-lg appearance-none cursor-pointer accent-lime"
-            />
-            <div className="flex justify-between text-[10px] text-muted font-bold mt-1">
-              <span className="text-danger">300 (Poor)</span><span className="text-success">850 (Excellent)</span>
+            <div className="relative group/slider pb-2">
+              <input 
+                type="range" min="300" max="850" step="1"
+                value={params.credit_score}
+                onChange={(e) => handleChange('credit_score', e.target.value)}
+                className="w-full h-2 rounded-lg appearance-none cursor-pointer outline-none relative z-10 transition-all [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:shadow-[0_0_10px_rgba(255,255,255,0.5)] group-hover/slider:[&::-webkit-slider-thumb]:w-5 group-hover/slider:[&::-webkit-slider-thumb]:h-5 group-hover/slider:[&::-webkit-slider-thumb]:transition-all"
+                style={{ background: getSliderTrackGradient(300, 850, params.credit_score, false) }}
+              />
             </div>
           </div>
+
         </div>
 
         {/* Live Simulation Outcome Area */}
-        <div className="p-6 rounded-[var(--radius-card)] bg-page/50 border border-border flex flex-col items-center justify-center relative min-h-[160px]">
-          {loading && (
-            <div className="absolute inset-0 bg-white/50 backdrop-blur-[2px] flex items-center justify-center rounded-[var(--radius-card)] z-10 text-sm font-bold text-muted pointer-events-none">
-              Simulating Inference...
-            </div>
-          )}
+        <motion.div 
+           className="lg:col-span-2 shadow-2xl rounded-[32px] p-8 flex flex-col items-center justify-center relative min-h-[300px] overflow-hidden border transition-colors duration-500"
+           animate={{
+            backgroundColor: simResult ? (simResult.prediction === 'Y' ? 'rgba(74,222,128,0.05)' : 'rgba(248,113,113,0.05)') : 'rgba(255,255,255,0.02)',
+            borderColor: simResult ? (simResult.prediction === 'Y' ? 'rgba(74,222,128,0.3)' : 'rgba(248,113,113,0.3)') : 'rgba(255,255,255,0.1)'
+           }}
+        >
+          {/* Animated Glow */}
+          <div className="absolute inset-0 z-0">
+             <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 opacity-20 blur-[50px] transition-colors duration-1000 ${simResult ? (simResult.prediction === 'Y' ? 'bg-success' : 'bg-danger') : 'bg-white'}`} />
+          </div>
+
+          <AnimatePresence>
+            {loading && (
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="absolute inset-0 bg-dark/60 backdrop-blur-md flex flex-col items-center justify-center z-20"
+              >
+                <div className="relative">
+                   <div className="absolute inset-0 bg-lime/30 blur-xl rounded-full" />
+                   <div className="w-16 h-16 rounded-full border border-lime/30 flex items-center justify-center bg-dark/50 mb-4 relative z-10">
+                     <Loader2 size={24} className="text-lime animate-spin" />
+                   </div>
+                </div>
+                <span className="text-xs font-bold text-lime uppercase tracking-[0.3em]">Running Inference</span>
+              </motion.div>
+            )}
+          </AnimatePresence>
           
-          <h4 className="text-xs font-bold text-faint uppercase tracking-wider mb-2">Simulated Outcome</h4>
-          
-          {simResult ? (
-            <div className="text-center">
-              <div className={`text-4xl font-heading font-bold mb-3 ${simResult.prediction === 'Y' ? 'text-success' : 'text-danger'}`}>
-                {simResult.prediction === 'Y' ? 'Favorable' : 'High Risk'}
-              </div>
-              <div className="font-body text-sm font-bold mb-4">
-                Confidence: {(simResult.confidence * 100).toFixed(1)}%
-              </div>
-              {getDiffStatus()}
-            </div>
-          ) : (
-            <div className="text-center text-muted font-body text-sm px-4">
-              <p>Move the sliders to see how live variations affect the model decision.</p>
-              <div className="mt-4"><Badge variant="default">BASELINE MODE</Badge></div>
-            </div>
-          )}
-        </div>
+          <div className="relative z-10 w-full flex flex-col items-center text-center">
+            <h4 className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] mb-6 shadow-sm">Live Outcome Prediction</h4>
+            
+            <AnimatePresence mode="wait">
+              {simResult ? (
+                <motion.div 
+                  key="simResult"
+                  initial={{ opacity: 0, y: 10, filter: 'blur(10px)' }}
+                  animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                  exit={{ opacity: 0, y: -10, filter: 'blur(10px)' }}
+                  className="w-full flex flex-col items-center"
+                >
+                  <div className={`text-[42px] leading-tight font-heading font-black mb-4 tracking-tight ${simResult.prediction === 'Y' ? 'text-success drop-shadow-[0_0_15px_rgba(74,222,128,0.3)]' : 'text-danger drop-shadow-[0_0_15px_rgba(248,113,113,0.3)]'}`}>
+                    {simResult.prediction === 'Y' ? 'Favorable' : 'High Risk'}
+                  </div>
+                  <div className="bg-dark2/80 border border-white/10 rounded-full px-5 py-2 flex items-center gap-3 mb-6 shadow-xl backdrop-blur-xl">
+                    <span className="text-[10px] text-text-muted uppercase tracking-widest">Confidence</span>
+                    <span className="text-sm font-bold text-white font-mono object-tabular-nums">{(simResult.confidence * 100).toFixed(1)}%</span>
+                  </div>
+                  {getDiffStatus()}
+                </motion.div>
+              ) : (
+                <motion.div 
+                   key="baseline"
+                   initial={{ opacity: 0 }}
+                   animate={{ opacity: 1 }}
+                   exit={{ opacity: 0 }}
+                   className="flex flex-col items-center px-4"
+                >
+                  <div className="w-16 h-16 rounded-3xl bg-white/5 border border-white/10 flex items-center justify-center mb-6 text-white/20 shadow-inner">
+                    <ShieldCheck size={28} />
+                  </div>
+                  <p className="text-text-muted text-sm max-w-[200px] leading-relaxed mb-6">
+                    Adjust the sliders to see how live data variations affect the Random Forest algorithm.
+                  </p>
+                  <Badge variant="outline" className="opacity-50 tracking-widest border-dashed">BASELINE ACTIVE</Badge>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </motion.div>
         
       </div>
     </div>

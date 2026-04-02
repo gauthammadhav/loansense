@@ -1,32 +1,59 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import { Button } from '../components/ui/Button';
-import { Check, ArrowRight, Activity, Code, FileText, Database, Shield, Zap } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Badge } from '../components/ui/Badge';
+import { Check, ArrowRight, Activity, Code, FileText, Database, Shield, Zap, Sparkles, Binary, MoveRight } from 'lucide-react';
+import { motion, useScroll, useTransform } from 'framer-motion';
+import Lenis from 'lenis';
+import AdvancedHero from '../components/hero/AdvancedHero';
 
 // Animation variants
 const staggerContainer = {
   hidden: { opacity: 0 },
   show: {
     opacity: 1,
-    transition: { staggerChildren: 0.1 }
+    transition: { staggerChildren: 0.1, delayChildren: 0.2 }
   }
 };
 
 const fadeInUp = {
-  hidden: { opacity: 0, y: 20 },
-  show: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 300, damping: 24 } }
+  hidden: { opacity: 0, y: 30 },
+  show: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 200, damping: 20 } }
 };
 
 const scaleIn = {
-  hidden: { opacity: 0, scale: 0.9 },
-  show: { opacity: 1, scale: 1, transition: { type: 'spring', stiffness: 300, damping: 20 } }
+  hidden: { opacity: 0, scale: 0.95 },
+  show: { opacity: 1, scale: 1, transition: { type: 'spring', stiffness: 200, damping: 20 } }
 };
 
 export default function Landing() {
   const { isAuthenticated, role } = useAuthStore();
   const navigate = useNavigate();
+  const { scrollYProgress } = useScroll();
+  
+  // Parallax effects
+  const yParallax1 = useTransform(scrollYProgress, [0, 1], [0, -100]);
+  const yParallax2 = useTransform(scrollYProgress, [0, 1], [0, -200]);
+  const opacityFade = useTransform(scrollYProgress, [0, 0.2], [1, 0]);
+
+  useEffect(() => {
+    // Lenis smooth scroll configuration
+    const lenis = new Lenis({
+      duration: 1.5,
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), 
+      smoothWheel: true,
+      wheelMultiplier: 1.2,
+    });
+
+    function raf(time) {
+      lenis.raf(time);
+      requestAnimationFrame(raf);
+    }
+    requestAnimationFrame(raf);
+
+    return () => lenis.destroy();
+  }, []);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -35,162 +62,49 @@ export default function Landing() {
   }, [isAuthenticated, role, navigate]);
 
   return (
-    <div className="bg-white min-h-screen font-body scroll-smooth text-dark">
+    <div className="bg-dark min-h-screen font-body scroll-smooth text-white overflow-hidden selection:bg-lime selection:text-dark">
       
       {/* 1. NAVBAR */}
-      <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-border shadow-sm py-4 px-12 flex items-center justify-between transition-all">
-        <div className="flex items-center gap-3">
-          <div className="w-7 h-7 bg-dark rounded flex items-center justify-center">
-            <span className="text-lime text-lg font-bold leading-none">+</span>
+      <nav className="fixed top-0 w-full z-50 bg-dark/50 backdrop-blur-xl border-b border-white/5 py-4 px-6 md:px-12 flex items-center justify-between transition-all">
+        <div className="flex items-center gap-3 cursor-pointer" onClick={() => window.scrollTo(0,0)}>
+          <div className="w-8 h-8 bg-lime rounded-lg flex items-center justify-center shadow-[0_0_15px_rgba(200,241,53,0.3)]">
+            <span className="text-dark text-xl font-bold leading-none">+</span>
           </div>
-          <span className="font-heading font-bold text-dark text-xl tracking-tight">LoanSense</span>
+          <span className="font-heading font-black text-white text-2xl tracking-tight hidden sm:block">LoanSense</span>
         </div>
         
-        <div className="hidden md:flex items-center gap-8 text-[13px] text-muted font-medium">
-          <a href="#features" className="relative group hover:text-lime-dark hover:-translate-y-0.5 transition-all duration-300">
-            Features
-            <span className="absolute -bottom-1 left-1/2 w-0 h-[2px] bg-lime-dark group-hover:w-full group-hover:left-0 transition-all duration-300 rounded-full" />
-          </a>
-          <a href="#how-it-works" className="relative group hover:text-lime-dark hover:-translate-y-0.5 transition-all duration-300">
-            How it works
-            <span className="absolute -bottom-1 left-1/2 w-0 h-[2px] bg-lime-dark group-hover:w-full group-hover:left-0 transition-all duration-300 rounded-full" />
-          </a>
-          <a href="#portals" className="relative group hover:text-lime-dark hover:-translate-y-0.5 transition-all duration-300">
-            For officers
-            <span className="absolute -bottom-1 left-1/2 w-0 h-[2px] bg-lime-dark group-hover:w-full group-hover:left-0 transition-all duration-300 rounded-full" />
-          </a>
-          <a href="#about" className="relative group hover:text-lime-dark hover:-translate-y-0.5 transition-all duration-300">
-            About
-            <span className="absolute -bottom-1 left-1/2 w-0 h-[2px] bg-lime-dark group-hover:w-full group-hover:left-0 transition-all duration-300 rounded-full" />
-          </a>
+        <div className="hidden md:flex items-center gap-10 text-sm font-bold uppercase tracking-widest text-text-faint">
+          {['Features', 'Intelligence', 'Architecture'].map((item) => (
+             <a key={item} href={`#${item.toLowerCase()}`} className="relative group hover:text-white transition-colors duration-300">
+               {item}
+               <span className="absolute -bottom-2 left-1/2 w-0 h-0.5 bg-lime group-hover:w-full group-hover:left-0 transition-all duration-300 rounded-full" />
+             </a>
+          ))}
         </div>
         
         <div className="flex items-center gap-4">
-          <Button variant="outline" onClick={() => navigate('/login')} className="h-9 px-4 text-xs">
+          <Button variant="ghost" onClick={() => navigate('/login')} className="h-10 px-5 text-sm font-bold text-white hover:bg-white/10">
             Sign in
           </Button>
-          <Button variant="primary" onClick={() => navigate('/register')} className="h-9 px-4 text-xs bg-dark text-white border-dark hover:bg-dark/90">
-            Apply now
+          <Button variant="primary" onClick={() => navigate('/register')} className="h-10 px-6 text-sm font-bold shadow-[0_0_20px_rgba(200,241,53,0.2)]">
+            Get early access
           </Button>
         </div>
       </nav>
 
-      {/* 2. HERO */}
-      <section className="px-12 py-[88px] max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-        <motion.div 
-          className="space-y-8"
-          variants={staggerContainer}
-          initial="hidden"
-          animate="show"
-        >
-          <motion.div variants={fadeInUp} className="inline-flex items-center gap-3 bg-dark p-1.5 pr-4 rounded-full border border-dark/10">
-            <span className="bg-lime text-dark text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full">ML-Powered</span>
-            <span className="text-white/80 text-xs font-medium">Decisions in under 2 seconds</span>
-          </motion.div>
-          
-          <motion.h1 variants={fadeInUp} className="font-heading font-extrabold text-[58px] leading-[1.1] tracking-tight">
-            <span className="block text-dark">Loans decided.</span>
-            <span className="block text-transparent bg-clip-text" style={{ WebkitTextStroke: '1px var(--lime-dark)', color: 'transparent' }}>Reasons</span>
-            <span className="block text-dark">included.</span>
-          </motion.h1>
-          
-          <motion.p variants={fadeInUp} className="text-base text-muted max-w-md leading-relaxed">
-            LoanSense uses machine learning to predict loan approvals instantly — and shows you exactly why, so every decision feels fair and transparent.
-          </motion.p>
-          
-          <motion.div variants={fadeInUp} className="flex items-center gap-4 pt-4">
-            <Button onClick={() => navigate('/register')} className="h-12 px-6 bg-dark text-white hover:bg-dark/90 text-sm">
-              Check your eligibility
-            </Button>
-            <Button variant="outline" onClick={() => navigate('/login')} className="h-12 px-6 text-sm border-dark text-dark flex items-center gap-2">
-              Officer portal <ArrowRight size={16} />
-            </Button>
-          </motion.div>
-          
-          <motion.div variants={fadeInUp} className="grid grid-cols-3 border border-border rounded-[20px] divide-x divide-border mt-12 overflow-hidden">
-            <div className="p-4 text-center">
-              <div className="font-heading font-bold text-2xl text-dark mb-1">94%</div>
-              <div className="text-[11px] text-muted font-bold uppercase tracking-wider">Model Accuracy</div>
-            </div>
-            <div className="p-4 text-center">
-              <div className="font-heading font-bold text-2xl text-dark mb-1">&lt;2s</div>
-              <div className="text-[11px] text-muted font-bold uppercase tracking-wider">Decision Time</div>
-            </div>
-            <div className="p-4 text-center">
-              <div className="font-heading font-bold text-2xl text-dark mb-1">4x</div>
-              <div className="text-[11px] text-muted font-bold uppercase tracking-wider">Models Compared</div>
-            </div>
-          </motion.div>
-        </motion.div>
+      {/* 2. ADVANCED HERO */}
+      <AdvancedHero />
 
-        {/* Right Col mock UI */}
-        <motion.div 
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1], delay: 0.2 }}
-          className="relative"
-        >
-          <div className="bg-[#111111] rounded-[20px] p-8 shadow-2xl border border-white/10 relative z-10 overflow-hidden">
-            <motion.div 
-              initial={{ scaleX: 0 }}
-              animate={{ scaleX: 1 }}
-              transition={{ duration: 1, delay: 0.8 }}
-              className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-lime to-success origin-left"
-            ></motion.div>
-            <h3 className="text-white font-heading font-bold text-xl mb-6">SHAP Decision Breakdown</h3>
-            <div className="mb-8 flex items-center gap-3">
-              <div className="bg-success/20 text-success border border-success/30 px-3 py-1 rounded-full text-sm font-bold flex items-center gap-2">
-                <Check size={14} /> Approved
-              </div>
-              <span className="text-white/60 text-sm font-medium">91% confidence</span>
-            </div>
-            
-            <div className="space-y-5">
-              {[
-                { label: "Credit Score (780)", val: 85, pos: true },
-                { label: "Total Income ($120k)", val: 65, pos: true },
-                { label: "Debt Ratio (42%)", val: 40, pos: false },
-                { label: "Loan Amount ($300k)", val: 20, pos: false }
-              ].map((item, i) => (
-                <div key={i}>
-                  <div className="flex justify-between text-xs text-white/70 mb-2 font-medium">
-                    <span>{item.label}</span>
-                    <span className={item.pos ? 'text-lime' : 'text-danger'}>{item.pos ? '+ Impact' : '- Impact'}</span>
-                  </div>
-                  <div className="w-full bg-white/10 h-2 rounded-full overflow-hidden">
-                    <motion.div 
-                      initial={{ width: 0 }}
-                      animate={{ width: `${item.val}%` }}
-                      transition={{ duration: 1, delay: 1 + i * 0.1, type: 'spring' }}
-                      className={`h-full rounded-full ${item.pos ? 'bg-lime' : 'bg-danger'}`} 
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-          
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 1.5 }}
-            className="absolute -bottom-6 -right-6 bg-page border border-border rounded-xl p-4 pr-12 shadow-lg z-20 flex items-center gap-4 cursor-pointer hover:-translate-y-1 transition-transform" 
-            onClick={() => navigate('/register')}
-          >
-            <div className="w-8 h-8 rounded-full bg-dark flex items-center justify-center text-lime">
-              <Activity size={16} />
-            </div>
-            <span className="text-sm font-bold text-dark tracking-tight">What-if simulator — Live ↗</span>
-          </motion.div>
-        </motion.div>
-      </section>
-
-      {/* 3. FEATURES SECTION */}
-      <section id="features" className="bg-page py-24 px-12 border-y border-border">
+      {/* 3. BENTO GRID FEATURES SECTION */}
+      <section id="features" className="py-32 px-6 md:px-12 relative z-10 border-t border-white/5 bg-dark">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center max-w-2xl mx-auto mb-16">
-            <span className="text-[10px] font-bold text-lime-dark uppercase tracking-widest bg-lime/20 px-3 py-1 rounded-full border border-lime/30 mb-4 inline-block">Features</span>
-            <h2 className="font-heading font-extrabold text-[40px] text-dark leading-tight">Everything a modern loan system needs</h2>
+          <div className="text-center max-w-3xl mx-auto mb-20">
+            <motion.div initial={{ opacity: 0, scale: 0.8 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }}>
+               <Badge variant="outline" className="mb-6 opacity-80" icon={<Sparkles size={14} />}>Next Gen Toolkit</Badge>
+            </motion.div>
+            <motion.h2 initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="font-heading font-black text-5xl md:text-6xl text-white leading-tight">
+               Built for <span className="text-transparent bg-clip-text bg-gradient-to-r from-lime to-success">algorithmic fairness</span> & transparency.
+            </motion.h2>
           </div>
           
           <motion.div 
@@ -198,197 +112,240 @@ export default function Landing() {
             initial="hidden"
             whileInView="show"
             viewport={{ once: true, margin: "-100px" }}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+            className="grid grid-cols-1 md:grid-cols-3 gap-6"
           >
-            {[
-              { title: 'SHAP explainability', desc: 'Stop guessing why models make decisions. Get feature-level breakdown for every applicant.', tag: 'Transparent AI', icon: <Code /> },
-              { title: 'What-if simulator', desc: 'Let applicants adjust their financial parameters live to see how it affects their approval odds.', tag: 'Interactive', icon: <Activity /> },
-              { title: 'Self-improving model', desc: 'Automated ML pipelines re-train XGBoost classifiers when new verified data thresholds are met.', tag: 'Adaptive ML', icon: <Database /> },
-              { title: 'PDF decision letters', desc: 'Generate compliance-ready decision documents with embedded charts at the click of a button.', tag: 'Auto-generated', icon: <FileText /> },
-              { title: '4-model comparison', desc: 'The backend continuously evaluates RandomForest, XGBoost, and Logistic Regression to deploy the best.', tag: 'Multi-model', icon: <Zap /> },
-              { title: 'Fairness audit', desc: 'Real-time demographic tracking ensures your approval rates remain unbiased and compliant.', tag: 'Compliance', icon: <Shield /> }
-            ].map((f, i) => (
-              <motion.div 
-                key={i} 
-                variants={scaleIn}
-                whileHover={{ y: -5, transition: { type: 'spring', stiffness: 400 } }}
-                className="bg-white p-8 rounded-[20px] border border-border shadow-sm hover:shadow-xl hover:border-dark/20 transition-all group cursor-default"
-              >
-                <div className="w-12 h-12 bg-dark rounded-xl flex items-center justify-center text-lime mb-6 group-hover:scale-110 transition-transform">
-                  {f.icon}
-                </div>
-                <h3 className="font-bold text-lg text-dark mb-3">{f.title}</h3>
-                <p className="text-sm text-muted leading-relaxed mb-6">{f.desc}</p>
-                <span className="text-[10px] font-bold text-lime-dark bg-page px-2.5 py-1 rounded border border-border uppercase tracking-wide">{f.tag}</span>
-              </motion.div>
-            ))}
+            {/* Bento Box 1 - Span 2 */}
+            <motion.div variants={scaleIn} className="md:col-span-2 glass rounded-[32px] p-10 border border-white/10 hover:border-lime/30 transition-all group overflow-hidden relative">
+               <div className="absolute right-0 top-0 w-64 h-64 bg-lime/10 blur-[80px] rounded-full group-hover:bg-lime/20 transition-all pointer-events-none" />
+               <div className="w-14 h-14 bg-dark2 border border-white/10 rounded-2xl flex items-center justify-center text-lime mb-8 group-hover:scale-110 transition-transform shadow-[0_0_15px_rgba(200,241,53,0.1)]">
+                 <Code size={24} />
+               </div>
+               <h3 className="font-bold text-3xl text-white mb-4 font-heading tracking-tight">SHAP Explainability Maps</h3>
+               <p className="text-lg text-text-muted leading-relaxed mb-6 max-w-md">Eliminate black-box lending. Our infrastructure automatically generates feature-level waterfalls indicating exact approval weights.</p>
+               <Button variant="ghost" className="px-0 hover:bg-transparent hover:text-lime text-white">Explore the tech <MoveRight size={16} className="ml-2" /></Button>
+            </motion.div>
+
+            {/* Bento Box 2 */}
+            <motion.div variants={scaleIn} className="glass rounded-[32px] p-10 border border-white/10 hover:border-warning/30 transition-all group overflow-hidden relative">
+               <div className="absolute right-0 bottom-0 w-32 h-32 bg-warning/10 blur-[50px] rounded-full group-hover:bg-warning/20 transition-all pointer-events-none" />
+               <div className="w-14 h-14 bg-dark2 border border-white/10 rounded-2xl flex items-center justify-center text-warning mb-8 group-hover:scale-110 transition-transform">
+                 <Activity size={24} />
+               </div>
+               <h3 className="font-bold text-2xl text-white mb-4 font-heading tracking-tight">Live Parameter Sweeps</h3>
+               <p className="text-md text-text-muted leading-relaxed">Applicants can drag sliders to understand what financial targets yield favorable outcomes instantly.</p>
+            </motion.div>
+
+            {/* Bento Box 3 */}
+            <motion.div variants={scaleIn} className="glass rounded-[32px] p-10 border border-white/10 hover:border-info/30 transition-all group overflow-hidden relative">
+               <div className="absolute left-0 top-0 w-48 h-48 bg-info/10 blur-[60px] rounded-full group-hover:bg-info/20 transition-all pointer-events-none" />
+               <div className="w-14 h-14 bg-dark2 border border-white/10 rounded-2xl flex items-center justify-center text-info mb-8 group-hover:scale-110 transition-transform">
+                 <Database size={24} />
+               </div>
+               <h3 className="font-bold text-2xl text-white mb-4 font-heading tracking-tight">XGBoost Retraining</h3>
+               <p className="text-md text-text-muted leading-relaxed">System automatically forks new model iterations against incoming distribution drifts.</p>
+            </motion.div>
+
+             {/* Bento Box 4 - Span 2 */}
+             <motion.div variants={scaleIn} className="md:col-span-2 glass rounded-[32px] p-10 border border-white/10 hover:border-danger/30 transition-all group overflow-hidden relative">
+               <div className="absolute right-0 top-0 w-64 h-64 bg-danger/10 blur-[80px] rounded-full group-hover:bg-danger/20 transition-all pointer-events-none" />
+               <div className="w-14 h-14 bg-dark2 border border-white/10 rounded-2xl flex items-center justify-center text-danger mb-8 group-hover:scale-110 transition-transform shadow-[0_0_15px_rgba(248,113,113,0.1)]">
+                 <Shield size={24} />
+               </div>
+               <h3 className="font-bold text-3xl text-white mb-4 font-heading tracking-tight">Hardened Audit Enforcement</h3>
+               <p className="text-lg text-text-muted leading-relaxed mb-6 max-w-md">Every manual override requires certified justifications linked securely directly to the ML baseline snapshot.</p>
+            </motion.div>
+
           </motion.div>
         </div>
       </section>
 
-      {/* 4. HOW IT WORKS */}
-      <section id="how-it-works" className="py-24 px-12 bg-white max-w-7xl mx-auto">
-        <div className="mb-16">
-          <span className="text-[10px] font-bold text-muted uppercase tracking-widest mb-3 block">Workflow</span>
-          <h2 className="font-heading font-extrabold text-[40px] text-dark leading-tight max-w-md">From application to decision in minutes</h2>
+      {/* 4. HORIZONTAL SCROLL / TIMELINE (Simulated with staggered vertical for now) */}
+      <section id="intelligence" className="py-32 px-6 md:px-12 bg-dark2 border-t border-white/5 overflow-hidden">
+        <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-20 items-center">
+           <motion.div 
+             className="lg:w-1/2"
+             initial={{ opacity: 0, x: -50 }}
+             whileInView={{ opacity: 1, x: 0 }}
+             viewport={{ once: true, margin: "-100px" }}
+           >
+             <Badge className="mb-6 opacity-80" icon={<Binary size={14} />}>Inference Architecture</Badge>
+             <h2 className="font-heading font-black text-5xl text-white leading-tight mb-6">Frictionless data, <br/>instant routing.</h2>
+             <p className="text-xl text-text-muted leading-relaxed mb-10 max-w-lg">From applicant entry to final disbursement, the pipeline never bottlenecks. Random Forests parse 22 dimensions of credit history in 60 milliseconds.</p>
+             
+             <div className="space-y-8">
+               {[
+                 { num: '01', title: 'Feature Extraction', desc: 'Raw financial inputs are scaled & normalized via ScikitLearn transformers.' },
+                 { num: '02', title: 'Inference Graph', desc: 'Live prediction against memory-resident optimized ONNX/Pickle models.' },
+                 { num: '03', title: 'Officer Queue', desc: 'Flags risky anomalies for human intervention while auto-clearing prime applicants.' }
+               ].map((step, i) => (
+                 <motion.div key={i} className="flex gap-6 group">
+                    <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center font-heading font-black text-lime group-hover:scale-110 transition-transform shrink-0">
+                       {step.num}
+                    </div>
+                    <div>
+                       <h4 className="text-lg font-bold text-white mb-2">{step.title}</h4>
+                       <p className="text-text-muted text-sm leading-relaxed">{step.desc}</p>
+                    </div>
+                 </motion.div>
+               ))}
+             </div>
+           </motion.div>
+           
+           <motion.div 
+             style={{ y: yParallax1 }}
+             className="lg:w-1/2 relative bg-dark border border-white/10 rounded-[32px] p-8 shadow-2xl h-[600px] w-full hidden md:block"
+           >
+             {/* Decorative UI elements mimicking the dashboard */}
+             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(200,241,53,0.1),transparent_50%)]" />
+             <div className="w-full h-8 flex items-center gap-2 mb-8 border-b border-white/10 pb-4">
+                <div className="w-3 h-3 rounded-full bg-danger" />
+                <div className="w-3 h-3 rounded-full bg-warning" />
+                <div className="w-3 h-3 rounded-full bg-success" />
+             </div>
+
+             <div className="space-y-4">
+                {[...Array(5)].map((_, i) => (
+                  <motion.div 
+                     key={i}
+                     initial={{ opacity: 0, x: 20 }}
+                     whileInView={{ opacity: 1, x: 0 }}
+                     transition={{ delay: i * 0.1 }}
+                     className="w-full h-16 bg-white/5 rounded-xl border border-white/10 flex items-center px-4 gap-4"
+                  >
+                     <div className="w-10 h-10 rounded-lg bg-lime/10" />
+                     <div className="flex-1 space-y-2">
+                        <div className="w-1/3 h-2 bg-white/20 rounded-full" />
+                        <div className="w-1/4 h-2 bg-white/10 rounded-full" />
+                     </div>
+                     <div className={`w-16 h-6 rounded-full ${i % 2 === 0 ? 'bg-success/20' : 'bg-danger/20'}`} />
+                  </motion.div>
+                ))}
+             </div>
+             
+             {/* Floating overlay card */}
+             <motion.div 
+               animate={{ y: [0, -10, 0] }} 
+               transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
+               className="absolute -left-12 bottom-20 bg-dark2/90 backdrop-blur-xl border border-white/10 p-6 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
+             >
+                <div className="text-[10px] text-lime font-bold uppercase tracking-widest mb-2">Automated Alert</div>
+                <div className="text-white font-bold text-lg mb-1">DTI Threshold Crossed</div>
+                <div className="text-text-muted text-sm">Routed to strict manual review.</div>
+             </motion.div>
+           </motion.div>
         </div>
-        
-        <motion.div 
-          variants={staggerContainer}
-          initial="hidden"
-          whileInView="show"
-          viewport={{ once: true, margin: "-100px" }}
-          className="grid grid-cols-1 md:grid-cols-2 gap-6"
-        >
-          {[
-            { num: '01', title: 'Fill your profile', desc: 'A clean 5-step wizard captures your financial footprint securely.' },
-            { num: '02', title: 'Get an instant prediction', desc: 'Our ML engine scores your application in milliseconds.' },
-            { num: '03', title: 'Officer reviews', desc: 'A certified loan officer audits the AI suggestion against your timeline.' },
-            { num: '04', title: 'Receive your decision', desc: 'Get your final letter with transparent reasons included.' }
-          ].map((step, i) => (
-            <motion.div 
-              key={i} 
-              variants={fadeInUp}
-              className="bg-[#111111] p-10 rounded-[20px] relative overflow-hidden group hover:bg-dark transition-colors"
-            >
-              <div className="absolute top-6 right-6 text-[80px] font-heading font-extrabold text-white/[0.03] leading-none group-hover:text-white/[0.08] transition-colors pointer-events-none">
-                {step.num}
-              </div>
-              <h3 className="text-white font-bold text-xl mb-3 relative z-10">{step.title}</h3>
-              <p className="text-white/60 text-sm max-w-xs leading-relaxed relative z-10">{step.desc}</p>
-            </motion.div>
-          ))}
-        </motion.div>
       </section>
 
-      {/* 5. TWO PORTALS SECTION */}
-      <section id="portals" className="py-24 px-12 bg-page border-y border-border">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <span className="text-[10px] font-bold text-muted uppercase tracking-widest mb-3 block">Architecture</span>
-            <h2 className="font-heading font-extrabold text-[40px] text-dark leading-tight">Built for applicants and officers</h2>
+      {/* 5. ARCHITECTURE SECTION */}
+      <section id="architecture" className="py-32 px-6 md:px-12 border-y border-white/5 relative overflow-hidden bg-dark">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-lime/5 blur-[150px] rounded-full pointer-events-none" />
+        
+        <div className="max-w-7xl mx-auto relative z-10">
+          <div className="text-center mb-20">
+            <Badge variant="outline" className="mb-6 opacity-80" icon={<Check size={14} />}>Dual Interface</Badge>
+            <h2 className="font-heading font-black text-5xl text-white leading-tight">One platform.<br/>Two perspectives.</h2>
           </div>
           
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Applicant Card */}
-            <div className="bg-white p-12 rounded-[24px] border border-border">
-              <h3 className="font-heading font-extrabold text-3xl mb-8 text-dark">For applicants</h3>
-              <ul className="space-y-5">
-                {[
-                  "Guided 5-step loan wizard",
-                  "Real-time dynamic decisioning",
-                  "SHAP visualizations of logic",
-                  "Interactive What-If score simulator",
-                  "Secure dashboard tracking",
-                  "Downloadable PDF outcome letters"
-                ].map((item, i) => (
-                  <li key={i} className="flex items-center gap-4 text-dark font-medium text-sm">
-                    <div className="w-6 h-6 rounded-full bg-lime/20 flex items-center justify-center text-lime-dark shrink-0">
-                      <Check size={12} strokeWidth={3} />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="glass-strong p-12 rounded-[32px] border border-white/10 hover:border-lime/20 transition-all">
+              <h3 className="font-heading font-black text-3xl mb-8 text-white">The Applicant</h3>
+              <ul className="space-y-6">
+                {["Guided 5-step semantic form", "Instant machine inference execution", "SHAP interpretability graphs", "Interactive financial sliders"].map((item, i) => (
+                  <li key={i} className="flex items-center gap-4 text-white/80 font-bold text-md">
+                    <div className="w-8 h-8 rounded-full bg-lime/10 flex items-center justify-center text-lime shrink-0 shadow-[0_0_10px_rgba(200,241,53,0.1)]">
+                      <Check size={14} strokeWidth={3} />
                     </div>
                     {item}
                   </li>
                 ))}
               </ul>
-            </div>
+            </motion.div>
             
-            {/* Officer Card */}
-            <div className="bg-[#111111] p-12 rounded-[24px]">
-              <h3 className="font-heading font-extrabold text-3xl mb-8 text-white">For loan officers</h3>
-              <ul className="space-y-5">
-                {[
-                  "FIFO priority queue dashboard",
-                  "Full application audit trails",
-                  "Side-by-side ML verification",
-                  "Mandatory override justifications",
-                  "Demographic bias monitoring",
-                  "1-click XGBoost retraining pipeline"
-                ].map((item, i) => (
-                  <li key={i} className="flex items-center gap-4 text-white/90 font-medium text-sm">
-                    <div className="w-6 h-6 rounded-full bg-lime flex items-center justify-center text-dark shrink-0">
-                      <Check size={12} strokeWidth={3} />
+            <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} viewport={{ once: true }} className="bg-dark2 p-12 rounded-[32px] border border-white/5 hover:border-white/20 transition-all">
+              <h3 className="font-heading font-black text-3xl mb-8 text-white">The Officer</h3>
+              <ul className="space-y-6">
+                {["Live priority SLA queueing", "Side-by-side audit telemetry", "Mandatory override protocols", "Macro-level dataset drift analytics"].map((item, i) => (
+                  <li key={i} className="flex items-center gap-4 text-white/80 font-bold text-md">
+                    <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white shrink-0">
+                      <ArrowRight size={14} strokeWidth={3} />
                     </div>
                     {item}
                   </li>
                 ))}
               </ul>
-            </div>
+            </motion.div>
           </div>
         </div>
       </section>
 
       {/* 6. CTA BAND */}
-      <section className="py-24 px-12">
-        <div className="bg-[#111111] rounded-[24px] max-w-7xl mx-auto p-16 text-center shadow-2xl relative overflow-hidden">
-          <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(var(--lime) 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
+      <section className="py-32 px-6 md:px-12 bg-dark">
+        <motion.div 
+           initial={{ opacity: 0, scale: 0.95 }}
+           whileInView={{ opacity: 1, scale: 1 }}
+           viewport={{ once: true }}
+           className="glass-strong rounded-[48px] max-w-5xl mx-auto p-16 md:p-24 pl-16 text-center shadow-2xl relative overflow-hidden border border-white/10"
+        >
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(200,241,53,0.15),transparent_70%)] pointer-events-none" />
           <div className="relative z-10">
-            <h2 className="font-heading font-extrabold text-[48px] text-white mb-4">Ready to find out?</h2>
-            <p className="text-white/60 text-lg mb-10 max-w-md mx-auto">Check your eligibility in under 3 minutes. No commitment required.</p>
-            <Button onClick={() => navigate('/register')} className="h-14 px-8 bg-lime text-dark hover:bg-lime/90 font-bold text-base border-0">
-              Get started free
+            <h2 className="font-heading font-black text-5xl md:text-6xl text-white mb-6 tracking-tight">Deploy inference.</h2>
+            <p className="text-xl text-text-muted mb-12 max-w-2xl mx-auto leading-relaxed">Join edge-tier lending institutions processing risk matrices securely and transparently in milliseconds.</p>
+            <Button onClick={() => navigate('/register')} variant="primary" className="h-16 px-10 text-lg font-bold shadow-[0_0_30px_rgba(200,241,53,0.3)] hover:scale-105 transition-transform bg-lime text-dark border-none">
+              Initialize Workspace
             </Button>
           </div>
-        </div>
+        </motion.div>
       </section>
 
       {/* 7. FOOTER */}
-      <footer className="bg-[#0A0A0A] pt-20 pb-12 px-12 mt-auto">
+      <footer className="bg-[#050508] pt-24 pb-12 px-6 md:px-12 mt-auto border-t border-white/5">
         <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
-            <div className="md:col-span-1">
-              <div className="flex items-center gap-2 mb-6">
-                <div className="w-6 h-6 bg-lime rounded flex items-center justify-center">
-                  <span className="text-dark text-xs font-bold leading-none">+</span>
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-12 lg:gap-8 mb-16">
+            <div className="lg:col-span-2">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-8 h-8 bg-lime rounded-lg flex items-center justify-center">
+                  <span className="text-dark text-xl font-bold leading-none">+</span>
                 </div>
-                <span className="font-heading font-extrabold text-white text-xl tracking-tight">LoanSense</span>
+                <span className="font-heading font-black text-white text-2xl tracking-tight">LoanSense</span>
               </div>
-              <p className="text-[13px] text-white/50 leading-relaxed max-w-[240px]">
-                Democratizing financial decisions through transparent, machine-learning-driven lending logic.
+              <p className="text-sm text-text-muted leading-relaxed max-w-xs font-medium">
+                Democratizing structured financial analysis workflows via modern interpretable algorithms.
               </p>
             </div>
             
             <div>
-              <h4 className="text-white font-bold text-sm mb-6">Product</h4>
-              <ul className="space-y-4 text-[13px] text-white/50">
-                <li><a href="#features" className="hover:text-lime transition-colors">Features</a></li>
-                <li><a href="#how-it-works" className="hover:text-lime transition-colors">How it works</a></li>
-                <li><a href="#portals" className="hover:text-lime transition-colors">For officers</a></li>
-                <li><a href="#" className="hover:text-lime transition-colors">What-if Simulator</a></li>
+              <h4 className="text-white font-bold text-sm uppercase tracking-widest mb-6">Platform</h4>
+              <ul className="space-y-4 text-sm font-bold text-text-muted">
+                <li><a href="#features" className="hover:text-lime transition-colors">Risk Assessment</a></li>
+                <li><a href="#intelligence" className="hover:text-lime transition-colors">Data Pipelines</a></li>
+                <li><a href="#architecture" className="hover:text-lime transition-colors">Officer Portals</a></li>
+                <li><a href="#" className="hover:text-lime transition-colors">Model Metrics</a></li>
               </ul>
             </div>
 
             <div>
-              <h4 className="text-white font-bold text-sm mb-6">Company</h4>
-              <ul className="space-y-4 text-[13px] text-white/50">
-                <li><a href="#" className="hover:text-lime transition-colors">About us</a></li>
+              <h4 className="text-white font-bold text-sm uppercase tracking-widest mb-6">Organization</h4>
+              <ul className="space-y-4 text-sm font-bold text-text-muted">
+                <li><a href="#" className="hover:text-lime transition-colors">Research Labs</a></li>
                 <li><a href="#" className="hover:text-lime transition-colors">Careers</a></li>
+                <li><a href="#" className="hover:text-lime transition-colors">Press Config</a></li>
                 <li><a href="#" className="hover:text-lime transition-colors">Contact</a></li>
-                <li><a href="#" className="hover:text-lime transition-colors">Blog</a></li>
               </ul>
             </div>
 
             <div>
-              <h4 className="text-white font-bold text-sm mb-6">Legal</h4>
-              <ul className="space-y-4 text-[13px] text-white/50">
-                <li><a href="#" className="hover:text-lime transition-colors">Privacy Policy</a></li>
+              <h4 className="text-white font-bold text-sm uppercase tracking-widest mb-6">Compliance</h4>
+              <ul className="space-y-4 text-sm font-bold text-text-muted">
+                <li><a href="#" className="hover:text-lime transition-colors">Privacy Node</a></li>
                 <li><a href="#" className="hover:text-lime transition-colors">Terms of Service</a></li>
-                <li><a href="#" className="hover:text-lime transition-colors">Security Center</a></li>
+                <li><a href="#" className="hover:text-lime transition-colors">Security Certs</a></li>
               </ul>
             </div>
           </div>
           
           <div className="pt-8 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="text-[11px] text-white/30 font-medium tracking-wide">
-              &copy; {new Date().getFullYear()} LoanSense Financial Technologies. All rights reserved.
-            </div>
-            <div className="flex items-center gap-4 text-white/30">
-              {/* Social placeholders */}
-              <div className="w-8 h-8 rounded-full border border-white/10 flex items-center justify-center hover:text-white hover:border-white/30 transition-colors cursor-pointer">
-                in
-              </div>
-              <div className="w-8 h-8 rounded-full border border-white/10 flex items-center justify-center hover:text-white hover:border-white/30 transition-colors cursor-pointer">
-                x
-              </div>
+            <div className="text-xs text-text-faint font-bold tracking-widest uppercase">
+              &copy; {new Date().getFullYear()} LoanSense Architecture. All rights reserved.
             </div>
           </div>
         </div>
