@@ -1,46 +1,48 @@
 import React, { useRef } from 'react';
 import { motion } from 'framer-motion';
 
-export function Card({ 
-  children, 
-  title, 
-  icon, 
-  badge,
-  interactive = false,
-  className = '',
-  ...props 
-}) {
+export function Card({ children, title, icon, badge, interactive = false, style: extraStyle = {}, ...props }) {
   const cardRef = useRef(null);
 
   const handleMouseMove = (e) => {
     if (!cardRef.current || !interactive) return;
     const rect = cardRef.current.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width) * 100;
-    const y = ((e.clientY - rect.top) / rect.height) * 100;
-    
-    cardRef.current.style.setProperty('--mouse-x', `${x}%`);
-    cardRef.current.style.setProperty('--mouse-y', `${y}%`);
+    cardRef.current.style.setProperty('--mouse-x', `${((e.clientX - rect.left) / rect.width) * 100}%`);
+    cardRef.current.style.setProperty('--mouse-y', `${((e.clientY - rect.top) / rect.height) * 100}%`);
   };
 
   return (
     <motion.div
       ref={cardRef}
       onMouseMove={handleMouseMove}
-      whileHover={interactive ? { y: -5, scale: 1.01 } : {}}
+      whileHover={interactive ? { y: -4, scale: 1.01 } : {}}
       transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-      className={`glass-card ${interactive ? 'interactive cursor-pointer' : ''} p-6 flex flex-col gap-4 ${className}`}
+      style={{
+        backgroundColor: 'white',
+        border: '1px solid var(--glass-border)',
+        borderRadius: 20,
+        padding: 28,
+        boxShadow: 'var(--shadow-sm)',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 16,
+        cursor: interactive ? 'pointer' : 'default',
+        position: 'relative',
+        overflow: 'hidden',
+        ...extraStyle,
+      }}
       {...props}
     >
       {(title || icon || badge) && (
-        <div className="flex justify-between items-center mb-2 relative z-10">
-          <h3 className="text-white/90 font-bold text-lg flex items-center gap-2">
-            {icon && <span className="text-lime">{icon}</span>}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative', zIndex: 1 }}>
+          <h3 style={{ fontWeight: 700, fontSize: 16, color: 'var(--text)', display: 'flex', alignItems: 'center', gap: 8, margin: 0 }}>
+            {icon && <span style={{ color: 'var(--lime-dark)', display: 'flex' }}>{icon}</span>}
             {title}
           </h3>
           {badge && <div>{badge}</div>}
         </div>
       )}
-      <div className="relative z-10 w-full">
+      <div style={{ position: 'relative', zIndex: 1, width: '100%' }}>
         {children}
       </div>
     </motion.div>
@@ -49,18 +51,34 @@ export function Card({
 
 export function ActionCard({ title, description, icon, onClick, glowColor = 'var(--lime)' }) {
   return (
-    <Card interactive onClick={onClick} className="group overflow-hidden">
-       {/* Animated border using pseudo element simulation */}
-       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[var(--glow-color)] to-transparent opacity-0 group-hover:opacity-10 transition-opacity duration-500 blur-xl pointer-events-none" style={{ '--glow-color': glowColor }} />
-       <div className="flex items-center gap-4 relative z-10">
-          <div className="w-12 h-12 rounded-xl border border-white/10 flex items-center justify-center bg-white/5 text-white/50 group-hover:text-lime transition-colors">
-            {icon}
-          </div>
-          <div>
-            <h4 className="font-bold text-lg text-white group-hover:text-lime transition-colors">{title}</h4>
-            <p className="text-sm text-text-muted">{description}</p>
-          </div>
-       </div>
-    </Card>
-  )
+    <motion.div
+      whileHover={{ y: -4, boxShadow: 'var(--shadow-lg)' }}
+      onClick={onClick}
+      style={{
+        backgroundColor: 'white', border: '1px solid var(--glass-border)',
+        borderRadius: 20, padding: 28, cursor: 'pointer',
+        boxShadow: 'var(--shadow-sm)', transition: 'box-shadow 0.2s',
+        position: 'relative', overflow: 'hidden',
+        display: 'flex', flexDirection: 'column', gap: 12,
+      }}
+    >
+      <div style={{
+        position: 'absolute', top: -24, right: -24, width: 100, height: 100,
+        backgroundColor: glowColor, borderRadius: '50%', opacity: 0.08, filter: 'blur(24px)', pointerEvents: 'none',
+      }} />
+      <div style={{ display: 'flex', alignItems: 'center', gap: 16, position: 'relative', zIndex: 1 }}>
+        <div style={{
+          width: 46, height: 46, borderRadius: 12,
+          border: '1px solid var(--glass-border)', backgroundColor: '#f8fafc',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--lime-dark)',
+        }}>
+          {icon}
+        </div>
+        <div>
+          <h4 style={{ fontWeight: 700, fontSize: 15, color: 'var(--text)', margin: '0 0 4px 0' }}>{title}</h4>
+          <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>{description}</p>
+        </div>
+      </div>
+    </motion.div>
+  );
 }

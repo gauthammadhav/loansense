@@ -3,38 +3,53 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/useAuthStore';
 import api from '../../api/client';
-import { Card, ActionCard } from '../../components/ui/Card';
 import { AnimatedTable } from '../../components/ui/Table';
 import { Badge } from '../../components/ui/Badge';
-
-import { FileText, CheckCircle, Clock, PlusCircle } from 'lucide-react';
+import { FileText, CheckCircle, Clock, PlusCircle, ArrowRight } from 'lucide-react';
 
 function StatCard({ icon, label, value, color, pulse }) {
   return (
     <motion.div
-      className="glass-card p-6 relative overflow-hidden group"
-      whileHover={{ y: -5, scale: 1.02 }}
-      initial={{ opacity: 0, scale: 0.8 }}
+      whileHover={{ y: -4, scale: 1.02 }}
+      initial={{ opacity: 0, scale: 0.92 }}
       animate={{ opacity: 1, scale: 1 }}
+      style={{
+        backgroundColor: 'white',
+        border: '1px solid var(--glass-border)',
+        borderRadius: 20,
+        padding: 24,
+        position: 'relative',
+        overflow: 'hidden',
+        boxShadow: 'var(--shadow-sm)',
+        cursor: 'default',
+      }}
     >
-      <div className="flex justify-between items-start mb-4 relative z-10">
-        <motion.div 
-          className="w-12 h-12 rounded-xl border border-white/10 flex items-center justify-center bg-white/5"
-          style={{ color }}
-          animate={pulse ? { scale: [1, 1.1, 1] } : {}}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16, position: 'relative', zIndex: 1 }}>
+        <motion.div
+          animate={pulse ? { scale: [1, 1.12, 1] } : {}}
           transition={{ duration: 2, repeat: Infinity }}
+          style={{
+            width: 46, height: 46, borderRadius: 12,
+            border: '1px solid var(--glass-border)',
+            backgroundColor: 'white',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color, boxShadow: 'var(--shadow-sm)',
+          }}
         >
           {icon}
         </motion.div>
       </div>
-      <div className="relative z-10">
-        <div className="text-[40px] leading-none font-heading font-extrabold text-white mb-2">
+      <div style={{ position: 'relative', zIndex: 1 }}>
+        <div style={{ fontSize: 38, lineHeight: 1, fontFamily: 'var(--font-display)', fontWeight: 900, color: 'var(--text)', marginBottom: 6 }}>
           {value.toLocaleString()}
         </div>
-        <p className="text-sm text-text-muted font-medium">{label}</p>
+        <p style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500, margin: 0 }}>{label}</p>
       </div>
-      {/* Dynamic interactive glow mapping to the color property */}
-      <div className="absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-500 blur-2xl pointer-events-none" style={{ backgroundColor: color }} />
+      {/* Hover glow */}
+      <div style={{ position: 'absolute', inset: 0, opacity: 0, backgroundColor: color, filter: 'blur(40px)', pointerEvents: 'none', transition: 'opacity 0.4s' }}
+        onMouseEnter={e => e.currentTarget.style.opacity = '0.06'}
+        onMouseLeave={e => e.currentTarget.style.opacity = '0'}
+      />
     </motion.div>
   );
 }
@@ -54,10 +69,10 @@ export default function Dashboard() {
         setStats({
           total: apps.length,
           approved: apps.filter(a => a.status === 'approved' || a.ml_prediction === 'Y').length,
-          pending: apps.filter(a => a.status === 'pending').length
+          pending: apps.filter(a => a.status === 'pending').length,
         });
       } catch (e) {
-        console.error("Dashboard fetch error", e);
+        console.error('Dashboard fetch error', e);
       }
     };
     fetchDashboard();
@@ -66,48 +81,86 @@ export default function Dashboard() {
   const formatCurrency = (val) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(val);
 
   return (
-    <div className="space-y-10">
-      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: 'easeOut' }}>
-        <h1 className="text-[40px] tracking-tight font-heading font-extrabold mb-2">
-          Welcome back, <span className="text-lime">{user?.full_name || user?.email?.split('@')?.[0] || 'Applicant'}</span>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
+
+      {/* Greeting */}
+      <motion.div initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 38, fontWeight: 900, letterSpacing: '-0.02em', color: 'var(--text)', margin: '0 0 8px 0', lineHeight: 1.1 }}>
+          Welcome back,{' '}
+          <span style={{ color: 'var(--lime-dark)' }}>
+            {user?.full_name || user?.email?.split('@')?.[0] || 'Applicant'}
+          </span>
         </h1>
-        <p className="text-text-muted text-lg font-light">Here is the latest overview of your workspace.</p>
+        <p style={{ fontSize: 16, color: 'var(--text-muted)', fontWeight: 400, margin: 0 }}>
+          Here is the latest overview of your workspace.
+        </p>
       </motion.div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <StatCard icon={<FileText />} label="Total Applications" value={stats.total} color="var(--info)" />
-        <StatCard icon={<CheckCircle />} label="Approved Loans" value={stats.approved} color="var(--success)" />
-        <StatCard icon={<Clock />} label="Pending Verification" value={stats.pending} color="var(--warning)" pulse={stats.pending > 0} />
+      {/* Stat cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}>
+        <StatCard icon={<FileText size={20} />} label="Total Applications" value={stats.total} color="var(--info)" />
+        <StatCard icon={<CheckCircle size={20} />} label="Approved Loans" value={stats.approved} color="var(--success)" />
+        <StatCard icon={<Clock size={20} />} label="Pending Verification" value={stats.pending} color="var(--warning)" pulse={stats.pending > 0} />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <ActionCard
-          title="Start Application Pipeline"
-          description="Initialize a new application request using our 5-step ML verification wizard."
-          icon={<PlusCircle size={24} />}
+      {/* Action card */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+        <motion.div
+          whileHover={{ y: -3, boxShadow: 'var(--shadow-lg)' }}
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
           onClick={() => navigate('/applicant/apply')}
-          glowColor="var(--lime)"
-        />
+          style={{
+            backgroundColor: 'white', border: '1px solid var(--glass-border)',
+            borderRadius: 20, padding: 28, cursor: 'pointer',
+            boxShadow: 'var(--shadow-sm)', transition: 'box-shadow 0.2s',
+            display: 'flex', flexDirection: 'column', gap: 12,
+            position: 'relative', overflow: 'hidden',
+          }}
+        >
+          <div style={{ position: 'absolute', top: -20, right: -20, width: 100, height: 100, backgroundColor: 'rgba(200,241,53,0.12)', borderRadius: '50%', filter: 'blur(20px)', pointerEvents: 'none' }} />
+          <div style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: 'rgba(200,241,53,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--lime-dark)' }}>
+            <PlusCircle size={22} />
+          </div>
+          <div>
+            <h3 style={{ fontWeight: 700, fontSize: 16, color: 'var(--text)', margin: '0 0 6px 0' }}>Start Application Pipeline</h3>
+            <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0, lineHeight: 1.6 }}>Initialize a new application request using our 5-step ML verification wizard.</p>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--lime-dark)', fontWeight: 600, fontSize: 13, marginTop: 4 }}>
+            Get started <ArrowRight size={14} />
+          </div>
+        </motion.div>
       </div>
 
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-        <Card title="Applications History">
+      {/* Applications table */}
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
+        <div style={{
+          backgroundColor: 'white', border: '1px solid var(--glass-border)',
+          borderRadius: 20, padding: 28, boxShadow: 'var(--shadow-sm)',
+        }}>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 18, color: 'var(--text)', margin: '0 0 20px 0' }}>
+            Applications History
+          </h2>
           <AnimatedTable
             data={applications}
             columns={[
               { key: 'id', label: 'ID', render: (row) => <Badge variant="outline">#{row.id}</Badge> },
               { key: 'loan_amount', label: 'Amount', format: formatCurrency },
-              { key: 'status', label: 'Status', render: (row) => (
-                  <Badge variant={row.ml_prediction === 'Y' ? 'success' : row.status === 'pending' ? 'warning' : 'danger'} pulse={row.status === 'pending'}>
+              {
+                key: 'status', label: 'Status', render: (row) => (
+                  <Badge
+                    variant={row.ml_prediction === 'Y' ? 'success' : row.status === 'pending' ? 'warning' : 'danger'}
+                    pulse={row.status === 'pending'}
+                  >
                     {row.status === 'pending' ? 'Pending' : row.ml_prediction === 'Y' ? 'Approved' : 'Rejected'}
                   </Badge>
-                ) 
+                )
               },
               { key: 'submitted_at', label: 'Submission Date', render: (row) => new Date(row.submitted_at).toLocaleDateString() }
             ]}
             onRowClick={(app) => navigate(`/applicant/result/${app.id}`)}
           />
-        </Card>
+        </div>
       </motion.div>
     </div>
   );

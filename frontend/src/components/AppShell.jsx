@@ -3,81 +3,147 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import { LogOut, Home, User, Bell, Command } from 'lucide-react';
-import { Button } from './ui/Button';
+
+const SIDEBAR_WIDTH = 240;
 
 export default function AppShell({ role }) {
   const navigate = useNavigate();
   const location = useLocation();
   const { logout, user } = useAuthStore();
-  
+
   const handleLogout = () => {
     logout();
     navigate('/login');
   };
 
   return (
-    <div className="min-h-screen bg-dark text-white flex">
-      {/* Sidebar */}
-      <motion.aside 
-        initial={{ x: -300 }}
+    <div style={{ minHeight: '100vh', backgroundColor: 'var(--light)', color: 'var(--text)', display: 'flex' }}>
+
+      {/* ── Sidebar ── */}
+      <motion.aside
+        initial={{ x: -SIDEBAR_WIDTH }}
         animate={{ x: 0 }}
-        className="w-64 border-r border-white/10 bg-dark2/50 backdrop-blur-3xl flex flex-col fixed inset-y-0 z-40"
+        transition={{ duration: 0.4, ease: 'easeOut' }}
+        style={{
+          width: SIDEBAR_WIDTH,
+          position: 'fixed',
+          top: 0, bottom: 0, left: 0,
+          zIndex: 40,
+          display: 'flex',
+          flexDirection: 'column',
+          backgroundColor: 'rgba(255,255,255,0.92)',
+          backdropFilter: 'blur(24px)',
+          borderRight: '1px solid var(--glass-border)',
+        }}
       >
-        <div className="p-6 flex items-center gap-3">
-          <div className="w-8 h-8 bg-lime rounded-lg flex items-center justify-center text-dark font-bold text-xl">+</div>
-          <span className="font-heading font-bold text-xl tracking-tight text-white">LoanSense</span>
+        {/* Logo */}
+        <div style={{ padding: '24px 20px', display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }} onClick={() => navigate('/')}>
+          <div style={{ width: 32, height: 32, backgroundColor: 'var(--lime)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 18, flexShrink: 0 }}>+</div>
+          <span style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 18, letterSpacing: '-0.02em', color: 'var(--text)' }}>LoanSense</span>
         </div>
-        
-        <nav className="flex-1 px-4 space-y-2 mt-4">
-          <NavItem icon={<Home size={18} />} label="Dashboard" active={location.pathname.includes('dashboard')} onClick={() => navigate(`/${role}/dashboard`)} />
-          {role === 'applicant' && <NavItem icon={<Command size={18} />} label="New Application" active={location.pathname.includes('apply')} onClick={() => navigate('/applicant/apply')} />}
-          {role === 'officer' && <NavItem icon={<User size={18} />} label="Analytics" active={location.pathname.includes('analytics')} onClick={() => navigate('/officer/analytics')} />}
+
+        {/* Nav */}
+        <nav style={{ flex: 1, padding: '8px 12px', display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <NavItem
+            icon={<Home size={17} />}
+            label="Dashboard"
+            active={location.pathname.includes('dashboard')}
+            onClick={() => navigate(`/${role}/dashboard`)}
+          />
+          {role === 'applicant' && (
+            <NavItem
+              icon={<Command size={17} />}
+              label="New Application"
+              active={location.pathname.includes('apply')}
+              onClick={() => navigate('/applicant/apply')}
+            />
+          )}
+          {role === 'officer' && (
+            <NavItem
+              icon={<User size={17} />}
+              label="Analytics"
+              active={location.pathname.includes('analytics')}
+              onClick={() => navigate('/officer/analytics')}
+            />
+          )}
         </nav>
-        
-        <div className="p-4 border-t border-white/10">
-          <div className="flex items-center gap-3 mb-4 px-2">
-            <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-lime font-bold">
+
+        {/* User footer */}
+        <div style={{ padding: '16px 12px', borderTop: '1px solid var(--glass-border)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px', marginBottom: 8 }}>
+            <div style={{
+              width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
+              backgroundColor: 'rgba(200,241,53,0.15)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontWeight: 700, fontSize: 14, color: 'var(--lime-dark)',
+            }}>
               {user?.email?.charAt(0).toUpperCase() || 'U'}
             </div>
-            <div className="overflow-hidden">
-              <div className="text-sm font-bold truncate">{user?.email || 'User'}</div>
-              <div className="text-[10px] text-text-muted uppercase tracking-wider">{role}</div>
+            <div style={{ overflow: 'hidden', minWidth: 0 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {user?.email || 'User'}
+              </div>
+              <div style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{role}</div>
             </div>
           </div>
-          <Button variant="ghost" className="w-full justify-start text-danger hover:text-danger hover:bg-danger/10" icon={<LogOut size={16} />} onClick={handleLogout}>
-            Sign Out
-          </Button>
+          <button
+            onClick={handleLogout}
+            style={{
+              width: '100%', display: 'flex', alignItems: 'center', gap: 8,
+              padding: '9px 12px', borderRadius: 10, border: 'none',
+              backgroundColor: 'transparent', cursor: 'pointer',
+              color: 'var(--danger-dark)', fontSize: 13, fontWeight: 600,
+              transition: 'background 0.15s',
+            }}
+            onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(248,113,113,0.08)'}
+            onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+          >
+            <LogOut size={15} /> Sign Out
+          </button>
         </div>
       </motion.aside>
 
-      {/* Main Content */}
-      <main className="flex-1 ml-64 flex flex-col min-h-screen relative overflow-x-hidden">
-        <header className="h-16 border-b border-white/10 bg-dark/50 backdrop-blur-md sticky top-0 z-30 flex items-center justify-between px-8">
-           <div className="text-sm text-text-muted font-medium flex items-center gap-2">
-              <span className="capitalize">{role}</span>
-              <span>/</span>
-              <span className="text-white capitalize">{location.pathname.split('/').pop()}</span>
-           </div>
-           
-           <div className="flex items-center gap-4">
-             <button className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center text-text-muted hover:text-lime hover:border-lime/50 transition-colors cursor-pointer">
-               <Bell size={18} />
-             </button>
-           </div>
+      {/* ── Main Content ── */}
+      <main style={{ flex: 1, marginLeft: SIDEBAR_WIDTH, display: 'flex', flexDirection: 'column', minHeight: '100vh', position: 'relative', overflowX: 'hidden' }}>
+
+        {/* Top header */}
+        <header style={{
+          height: 60, position: 'sticky', top: 0, zIndex: 30,
+          backgroundColor: 'rgba(255,255,255,0.88)', backdropFilter: 'blur(16px)',
+          borderBottom: '1px solid var(--glass-border)',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '0 32px',
+        }}>
+          <div style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ textTransform: 'capitalize' }}>{role}</span>
+            <span>/</span>
+            <span style={{ color: 'var(--text)', textTransform: 'capitalize' }}>{location.pathname.split('/').pop()}</span>
+          </div>
+          <button style={{
+            width: 38, height: 38, borderRadius: '50%',
+            border: '1px solid var(--glass-border)', backgroundColor: 'white',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color: 'var(--text-muted)', cursor: 'pointer', transition: 'color 0.15s, border-color 0.15s',
+          }}
+            onMouseEnter={e => { e.currentTarget.style.color = 'var(--lime-dark)'; e.currentTarget.style.borderColor = 'var(--lime)'; }}
+            onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.borderColor = 'var(--glass-border)'; }}
+          >
+            <Bell size={16} />
+          </button>
         </header>
 
-        <div className="flex-1 p-8 relative">
-          {/* Subtle global gradient underlying dashboard */}
-          <div className="fixed inset-0 bg-[radial-gradient(circle_at_top_right,var(--lime-glow),transparent_30%)] pointer-events-none opacity-40 z-0" />
-          
+        {/* Page content */}
+        <div style={{ flex: 1, padding: 32, position: 'relative' }}>
+          {/* Subtle bg gradient */}
+          <div style={{ position: 'fixed', inset: 0, background: 'radial-gradient(circle at top right, rgba(200,241,53,0.06), transparent 30%)', pointerEvents: 'none', zIndex: 0 }} />
           <AnimatePresence mode="wait">
             <motion.div
               key={location.pathname}
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.3, ease: "easeOut" }}
-              className="relative z-10 max-w-7xl mx-auto w-full h-full pb-20"
+              exit={{ opacity: 0, y: -16 }}
+              transition={{ duration: 0.25, ease: 'easeOut' }}
+              style={{ position: 'relative', zIndex: 1, maxWidth: 1200, margin: '0 auto', width: '100%', paddingBottom: 80 }}
             >
               <Outlet />
             </motion.div>
@@ -91,16 +157,33 @@ export default function AppShell({ role }) {
 function NavItem({ icon, label, active, onClick }) {
   return (
     <motion.button
-      whileHover={{ x: 5 }}
+      whileHover={{ x: 4 }}
       whileTap={{ scale: 0.98 }}
       onClick={onClick}
-      className={`relative w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all outline-none cursor-pointer ${active ? 'bg-white/10 text-white' : 'text-text-muted hover:text-white hover:bg-white/5'}`}
+      style={{
+        width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+        padding: '10px 14px', borderRadius: 10, border: 'none', cursor: 'pointer',
+        backgroundColor: active ? 'rgba(200,241,53,0.12)' : 'transparent',
+        color: active ? 'var(--text)' : 'var(--text-muted)',
+        fontSize: 13, fontWeight: 600,
+        position: 'relative', transition: 'background 0.15s, color 0.15s',
+        textAlign: 'left',
+      }}
+      onMouseEnter={e => { if (!active) { e.currentTarget.style.backgroundColor = 'var(--light3)'; e.currentTarget.style.color = 'var(--text)'; } }}
+      onMouseLeave={e => { if (!active) { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = 'var(--text-muted)'; } }}
     >
-      <span className={active ? 'text-lime' : ''}>{icon}</span>
-      <span className="font-medium text-sm tracking-wide">{label}</span>
+      {/* Active indicator bar */}
       {active && (
-        <motion.div layoutId="navIndicator" className="absolute left-0 w-1 h-6 bg-lime rounded-r-full shadow-[0_0_10px_var(--lime)]" />
+        <motion.div
+          layoutId="navIndicator"
+          style={{
+            position: 'absolute', left: 0, width: 3, height: 20,
+            backgroundColor: 'var(--lime-dark)', borderRadius: '0 3px 3px 0',
+          }}
+        />
       )}
+      <span style={{ color: active ? 'var(--lime-dark)' : 'inherit', display: 'flex' }}>{icon}</span>
+      <span>{label}</span>
     </motion.button>
   );
 }

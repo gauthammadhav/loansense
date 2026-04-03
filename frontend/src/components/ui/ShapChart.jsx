@@ -7,19 +7,30 @@ export function ShapChart({ data }) {
 
   const CustomTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {
-      const data = payload[0].payload;
+      const item = payload[0].payload;
       return (
-        <div className="bg-dark2/90 border border-white/10 rounded-xl shadow-2xl backdrop-blur-xl p-4 min-w-[220px]">
-          <p className="font-bold text-white mb-3 text-sm tracking-wide">{data.feature}</p>
-          <div className="flex justify-between items-center text-xs mb-2">
-            <span className="text-text-muted uppercase tracking-wider">Impact Shift</span>
-            <span className={`font-mono font-bold  px-2 py-0.5 rounded-sm ${data.value >= 0 ? "bg-success/20 text-success" : "bg-warning/20 text-warning"}`}>
-              {data.value >= 0 ? '+' : ''}{data.value.toFixed(4)}
+        <div style={{
+          backgroundColor: 'white', border: '1px solid var(--glass-border)',
+          borderRadius: 12, padding: '14px 16px', minWidth: 220,
+          boxShadow: '0 8px 32px rgba(0,0,0,0.10)',
+        }}>
+          <p style={{ fontWeight: 700, color: 'var(--text)', marginBottom: 10, fontSize: 13, margin: '0 0 10px 0' }}>
+            {item.feature}
+          </p>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+            <span style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Impact Shift</span>
+            <span style={{
+              fontWeight: 700, fontFamily: 'monospace', fontSize: 12,
+              padding: '2px 8px', borderRadius: 6,
+              backgroundColor: item.value >= 0 ? 'rgba(34,197,94,0.12)' : 'rgba(251,191,36,0.12)',
+              color: item.value >= 0 ? 'var(--success-dark)' : '#92400e',
+            }}>
+              {item.value >= 0 ? '+' : ''}{item.value.toFixed(4)}
             </span>
           </div>
-          <div className="flex justify-between items-center text-xs">
-            <span className="text-text-muted uppercase tracking-wider">Input Value</span>
-            <span className="text-white font-mono font-medium">{data.feature_value}</span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Input Value</span>
+            <span style={{ fontFamily: 'monospace', fontSize: 12, fontWeight: 600, color: 'var(--text)' }}>{item.feature_value}</span>
           </div>
         </div>
       );
@@ -28,36 +39,30 @@ export function ShapChart({ data }) {
   };
 
   return (
-    <motion.div 
-      initial={{ opacity: 0, y: 20 }}
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.8, type: 'spring', delay: 0.2 }}
-      className="w-full h-80 mt-2 relative group"
+      transition={{ duration: 0.6, type: 'spring', delay: 0.2 }}
+      style={{ width: '100%', height: 320, marginTop: 8, position: 'relative' }}
     >
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.02),transparent)] pointer-events-none rounded-xl transition-opacity duration-500 opacity-50 group-hover:opacity-100" />
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data} layout="vertical" margin={{ top: 20, right: 30, left: 120, bottom: 5 }}>
+        <BarChart data={data} layout="vertical" margin={{ top: 16, right: 24, left: 130, bottom: 4 }}>
           <XAxis type="number" hide />
-          <YAxis 
-            dataKey="feature" 
-            type="category" 
-            axisLine={false} 
-            tickLine={false} 
-            tick={{ fill: '#888896', fontSize: 11, fontFamily: 'var(--font-ui)' }} 
-            width={110}
+          <YAxis
+            dataKey="feature"
+            type="category"
+            axisLine={false}
+            tickLine={false}
+            tick={{ fill: '#94a3b8', fontSize: 11, fontFamily: 'var(--font-ui)' }}
+            width={120}
           />
-          <Tooltip 
-             cursor={{ fill: 'rgba(255,255,255,0.03)' }} 
-             content={<CustomTooltip />} 
-             animationDuration={200}
-          />
-          <ReferenceLine x={0} stroke="rgba(255,255,255,0.15)" strokeDasharray="3 3" />
-          <Bar dataKey="value" radius={[0, 4, 4, 0]} animationDuration={1500} animationEasing="ease-out">
+          <Tooltip cursor={{ fill: 'rgba(0,0,0,0.03)' }} content={<CustomTooltip />} animationDuration={200} />
+          <ReferenceLine x={0} stroke="#e2e8f0" strokeDasharray="4 4" />
+          <Bar dataKey="value" radius={[0, 4, 4, 0]} animationDuration={1400} animationEasing="ease-out">
             {data.map((entry, index) => (
-              <Cell 
-                key={`cell-${index}`} 
-                fill={entry.value >= 0 ? 'var(--success)' : 'var(--warning)'} 
-                className="transition-all duration-300 hover:opacity-80 cursor-crosshair"
+              <Cell
+                key={`cell-${index}`}
+                fill={entry.value >= 0 ? 'var(--success)' : 'var(--warning)'}
               />
             ))}
           </Bar>

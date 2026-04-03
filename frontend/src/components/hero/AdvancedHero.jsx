@@ -1,7 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Points, PointMaterial, Float, MeshDistortMaterial, Environment } from '@react-three/drei';
-import * as THREE from 'three';
 import { motion } from 'framer-motion';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -11,114 +10,69 @@ import * as random from 'maath/random/dist/maath-random.esm';
 
 gsap.registerPlugin(ScrollTrigger);
 
-// Particle System
 function ParticleField() {
   const ref = useRef();
   const [sphere] = useState(() => random.inSphere(new Float32Array(3000), { radius: 15 }));
-  
   useFrame((state, delta) => {
     if (ref.current) {
-        ref.current.rotation.x -= delta / 10;
-        ref.current.rotation.y -= delta / 15;
+      ref.current.rotation.x -= delta / 10;
+      ref.current.rotation.y -= delta / 15;
     }
   });
-
   return (
     <group rotation={[0, 0, Math.PI / 4]}>
       <Points ref={ref} positions={sphere} stride={3} frustumCulled={false}>
-        <PointMaterial transparent color="#C8F135" size={0.05} sizeAttenuation={true} depthWrite={false} opacity={0.4} />
+        <PointMaterial transparent color="#C8F135" size={0.04} sizeAttenuation depthWrite={false} opacity={0.25} />
       </Points>
     </group>
   );
 }
 
-// Organic Morphing Sphere (ML Brain / Blob)
 function MorphingBlob() {
   const meshRef = useRef();
-  
   useFrame((state) => {
     const t = state.clock.getElapsedTime();
-    if(meshRef.current) {
-        meshRef.current.position.y = Math.sin(t / 2) * 1;
-        meshRef.current.rotation.x = t * 0.2;
-        meshRef.current.rotation.y = t * 0.3;
+    if (meshRef.current) {
+      meshRef.current.position.y = Math.sin(t / 2) * 0.8;
+      meshRef.current.rotation.x = t * 0.15;
+      meshRef.current.rotation.y = t * 0.2;
     }
   });
-
   return (
-    <Float speed={2} rotationIntensity={1} floatIntensity={2}>
-      <mesh ref={meshRef} position={[3, 1, -5]} scale={1.5}>
+    <Float speed={1.5} rotationIntensity={0.8} floatIntensity={1.5}>
+      <mesh ref={meshRef} position={[3.5, 0, -4]} scale={1.1}>
         <icosahedronGeometry args={[2, 20]} />
-        <MeshDistortMaterial 
-          color="#151515" 
-          distort={0.4} 
-          speed={2} 
-          roughness={0.1} 
-          metalness={0.8}
-          clearcoat={1}
-        />
+        <MeshDistortMaterial color="#F5F5F7" distort={0.35} speed={2} roughness={0.1} metalness={0.05} clearcoat={1} />
       </mesh>
-      
-      {/* Floating mini geometry */}
-      <mesh position={[-4, 2, -2]} scale={0.5}>
-         <octahedronGeometry args={[1, 0]} />
-         <meshStandardMaterial color="#C8F135" wireframe opacity={0.3} transparent />
-      </mesh>
-      <mesh position={[2, -3, -1]} scale={0.7}>
-         <torusGeometry args={[1, 0.4, 16, 32]} />
-         <meshStandardMaterial color="#C8F135" wireframe opacity={0.3} transparent />
+      <mesh position={[1.5, -2.5, -1]} scale={0.5}>
+        <torusGeometry args={[1, 0.4, 16, 32]} />
+        <meshStandardMaterial color="#C8F135" wireframe opacity={0.2} transparent />
       </mesh>
     </Float>
   );
 }
 
-// Background Shader (GLSL)
-const vertexShader = `
-  varying vec2 vUv;
-  void main() {
-    vUv = uv;
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-  }
-`;
-
+const vertexShader = `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`;
 const fragmentShader = `
-  uniform float u_time;
-  varying vec2 vUv;
-  
+  uniform float u_time; varying vec2 vUv;
   void main() {
     vec2 uv = vUv;
-    uv.x += sin(u_time * 0.1 + uv.y * 2.0) * 0.2;
-    uv.y += cos(u_time * 0.1 + uv.x * 2.0) * 0.2;
-    
-    vec3 color1 = vec3(0.02, 0.02, 0.02); // Deep Space Black
-    vec3 color2 = vec3(0.08, 0.12, 0.02); // Deep Lime / Bio-green
-    
-    float mixValue = (sin(uv.x * 5.0 + u_time * 0.5) + cos(uv.y * 5.0 + u_time * 0.4)) * 0.5 + 0.5;
-    vec3 finalColor = mix(color1, color2, mixValue);
-    
-    gl_FragColor = vec4(finalColor, 1.0);
+    uv.x += sin(u_time * 0.08 + uv.y * 2.0) * 0.15;
+    uv.y += cos(u_time * 0.08 + uv.x * 2.0) * 0.15;
+    vec3 c1 = vec3(0.98, 0.98, 0.98);
+    vec3 c2 = vec3(0.955, 0.99, 0.94);
+    float mix_v = (sin(uv.x * 4.0 + u_time * 0.4) + cos(uv.y * 4.0 + u_time * 0.3)) * 0.5 + 0.5;
+    gl_FragColor = vec4(mix(c1, c2, mix_v), 1.0);
   }
 `;
 
 function BackgroundShader() {
-  const materialRef = useRef();
-
-  useFrame((state) => {
-    if (materialRef.current) {
-      materialRef.current.uniforms.u_time.value = state.clock.elapsedTime;
-    }
-  });
-
+  const matRef = useRef();
+  useFrame((state) => { if (matRef.current) matRef.current.uniforms.u_time.value = state.clock.elapsedTime; });
   return (
     <mesh position={[0, 0, -20]} scale={[100, 100, 1]}>
       <planeGeometry />
-      <shaderMaterial
-        ref={materialRef}
-        vertexShader={vertexShader}
-        fragmentShader={fragmentShader}
-        uniforms={{ u_time: { value: 0 } }}
-        depthWrite={false}
-      />
+      <shaderMaterial ref={matRef} vertexShader={vertexShader} fragmentShader={fragmentShader} uniforms={{ u_time: { value: 0 } }} depthWrite={false} />
     </mesh>
   );
 }
@@ -128,63 +82,43 @@ export default function AdvancedHero() {
   const heroRef = useRef();
   const textRef = useRef();
   const glassRef = useRef();
-
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
-  
+
   const handleMouseMove = (e) => {
-    const { clientX, clientY } = e;
-    const x = (clientX / window.innerWidth - 0.5) * 20;
-    const y = (clientY / window.innerHeight - 0.5) * 20;
+    const x = (e.clientX / window.innerWidth - 0.5) * 16;
+    const y = (e.clientY / window.innerHeight - 0.5) * 16;
     setMousePos({ x, y });
   };
 
   useEffect(() => {
     const tl = gsap.timeline();
-    
-    // Animate text children
-    if(textRef.current) {
-      const children = Array.from(textRef.current.children);
-      tl.fromTo(children, 
-        { y: 100, opacity: 0, rotationX: -10 },
-        { y: 0, opacity: 1, rotationX: 0, duration: 1.2, stagger: 0.1, ease: 'power4.out', delay: 0.2 }
+    if (textRef.current) {
+      tl.fromTo(Array.from(textRef.current.children),
+        { y: 80, opacity: 0 },
+        { y: 0, opacity: 1, duration: 1.1, stagger: 0.1, ease: 'power4.out', delay: 0.2 }
       );
     }
-    
-    if(glassRef.current) {
+    if (glassRef.current) {
       gsap.fromTo(glassRef.current,
-        { y: 150, opacity: 0, scale: 0.9, rotateY: 15 },
-        { y: 0, opacity: 1, scale: 1, rotateY: 0, duration: 1.5, ease: 'expo.out', delay: 0.6 }
+        { y: 100, opacity: 0, scale: 0.92 },
+        { y: 0, opacity: 1, scale: 1, duration: 1.4, ease: 'expo.out', delay: 0.5 }
       );
-    }
-    
-    if(textRef.current && heroRef.current) {
-      gsap.to(textRef.current, {
-        y: -150,
-        opacity: 0,
-        scrollTrigger: {
-          trigger: heroRef.current,
-          start: 'top top',
-          end: 'bottom top',
-          scrub: 1
-        }
-      });
     }
   }, []);
 
   return (
-    <section 
-      ref={heroRef} 
-      className="relative w-full h-[100vh] min-h-[850px] overflow-hidden bg-[#050505]"
+    <section
+      ref={heroRef}
       onMouseMove={handleMouseMove}
+      style={{ position: 'relative', width: '100%', height: '100vh', minHeight: 800, overflow: 'hidden', backgroundColor: 'var(--light)' }}
     >
-      {/* 3D Canvas Background */}
-      <div className="absolute inset-0 z-0">
-        <Canvas camera={{ position: [0, 0, 10], fov: 50 }} dpr={[1, 2]}>
-          <color attach="background" args={['#050505']} />
-          <ambientLight intensity={0.5} />
-          <directionalLight position={[10, 10, 10]} intensity={1} color="#C8F135" />
-          <pointLight position={[-10, -10, -10]} intensity={0.5} color="#ffffff" />
-          
+      {/* 3D Canvas */}
+      <div style={{ position: 'absolute', inset: 0, zIndex: 0, opacity: 0.65 }}>
+        <Canvas camera={{ position: [0, 0, 10], fov: 50 }} dpr={[1, 1.5]}>
+          <color attach="background" args={['#FAFAFA']} />
+          <ambientLight intensity={1.2} />
+          <directionalLight position={[10, 10, 10]} intensity={0.8} color="#C8F135" />
+          <pointLight position={[-10, -10, -10]} intensity={0.4} color="#ffffff" />
           <BackgroundShader />
           <ParticleField />
           <MorphingBlob />
@@ -192,171 +126,266 @@ export default function AdvancedHero() {
         </Canvas>
       </div>
 
-      {/* Grid overlay for math/ML aesthetic */}
-      <div 
-        className="absolute inset-0 z-1 pointer-events-none opacity-[0.04]"
-        style={{ backgroundImage: 'linear-gradient(#C8F135 1px, transparent 1px), linear-gradient(90deg, #C8F135 1px, transparent 1px)', backgroundSize: '40px 40px' }}
-      />
-      <div className="absolute inset-0 z-1 pointer-events-none bg-gradient-to-b from-transparent to-white translate-y-full" />
+      {/* Grid overlay */}
+      <div style={{
+        position: 'absolute', inset: 0, zIndex: 1, pointerEvents: 'none', opacity: 0.15,
+        backgroundImage: 'linear-gradient(rgba(155,191,0,0.4) 1px, transparent 1px), linear-gradient(90deg, rgba(155,191,0,0.4) 1px, transparent 1px)',
+        backgroundSize: '40px 40px'
+      }} />
 
-      {/* Hero Content */}
-      <div className="relative z-10 w-full h-full max-w-7xl mx-auto px-12 flex flex-col lg:flex-row items-center justify-between pt-16">
-        
-        {/* Left Column: Text Content */}
-        <div className="w-full lg:w-1/2 flex flex-col items-start text-white space-y-8" ref={textRef} style={{ perspective: '1000px' }}>
-          
-          <div className="inline-flex items-center gap-3 bg-white/5 backdrop-blur-md border border-white/10 p-1.5 pr-4 rounded-full overflow-hidden relative group cursor-default">
-            <div className="absolute inset-0 bg-lime/10 translate-x-[-100%] group-hover:translate-x-0 transition-transform duration-500 ease-in-out" />
-            <span className="relative z-10 bg-lime text-black text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full flex items-center gap-1.5 shadow-[0_0_10px_rgba(200,241,53,0.5)]">
-               <Activity size={12} className="animate-pulse" />
-               ML-Powered API
+      {/* Hero Content — properly padded */}
+      <div style={{
+        position: 'relative', zIndex: 10,
+        width: '100%', height: '100%',
+        maxWidth: 1280, margin: '0 auto',
+        padding: '0 48px',
+        display: 'flex',
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: 48,
+        paddingTop: 80,
+        boxSizing: 'border-box',
+      }}>
+
+        {/* Left: Text */}
+        <div ref={textRef} style={{ flex: '0 0 48%', maxWidth: 560, display: 'flex', flexDirection: 'column', gap: 24 }}>
+
+          {/* Badge */}
+          <div style={{
+            display: 'inline-flex', alignItems: 'center', gap: 10,
+            backgroundColor: 'rgba(250,250,250,0.9)', backdropFilter: 'blur(12px)',
+            border: '1px solid var(--glass-border)', borderRadius: 999,
+            padding: '6px 16px 6px 6px', alignSelf: 'flex-start',
+            boxShadow: 'var(--shadow-sm)',
+          }}>
+            <span style={{
+              backgroundColor: 'var(--lime)', color: 'var(--text)',
+              fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em',
+              padding: '4px 10px', borderRadius: 999,
+              display: 'flex', alignItems: 'center', gap: 5,
+            }}>
+              <Activity size={11} style={{ animation: 'pulse 2s infinite' }} />
+              ML-Powered API
             </span>
-            <span className="relative z-10 text-white/80 text-xs font-medium tracking-wide">Decisions under 2 seconds</span>
+            <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-muted)' }}>Decisions under 2 seconds</span>
           </div>
-          
-          <h1 className="text-[72px] lg:text-[84px] leading-[0.9] font-extrabold tracking-[-0.03em] relative w-full">
-            <span className="block text-white w-full">Loans decided.</span>
-            <span className="block italic font-bold w-full" style={{ 
-               WebkitTextStroke: '2px #C8F135', 
-               color: 'transparent',
-               textShadow: '0 0 40px rgba(200, 241, 53, 0.2)'
-            }}>Reasons included.</span>
-          </h1>
-          
-          <p className="text-lg text-white/50 max-w-lg leading-relaxed font-light mt-4">
+
+          {/* Headline */}
+          <div style={{ margin: 0 }}>
+            <h1 style={{
+              fontFamily: 'var(--font-display)', fontWeight: 900,
+              fontSize: 'clamp(52px, 5vw, 80px)',
+              lineHeight: 1.05,
+              color: 'var(--text)',
+              margin: 0,
+            }}>
+              Loans decided.
+            </h1>
+            <h1 style={{
+              fontFamily: 'var(--font-display)', fontWeight: 700,
+              fontStyle: 'italic',
+              fontSize: 'clamp(52px, 5vw, 80px)',
+              lineHeight: 1.05,
+              color: 'var(--text-muted)',
+              margin: '4px 0 0 0',
+            }}>
+              Reasons included.
+            </h1>
+          </div>
+
+          {/* Subtitle */}
+          <p style={{ fontSize: 16, color: 'var(--text-muted)', lineHeight: 1.75, margin: 0, maxWidth: 460 }}>
             LoanSense predicts application outcomes instantly via SHAP-enabled XGBoost pipelines. Radically transparent lending architecture for the modern financial web.
           </p>
-          
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5 pt-4 w-full max-w-md">
-            <motion.button 
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
+
+          {/* CTAs */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginTop: 8 }}>
+            <button
               onClick={() => navigate('/register')}
-              className="group relative h-14 w-full flex-1 bg-lime text-black font-bold flex items-center justify-center gap-2 rounded-xl overflow-hidden shadow-[0_0_20px_rgba(200,241,53,0.3)] transition-all hover:shadow-[0_0_30px_rgba(200,241,53,0.5)] border-0 cursor-pointer"
+              style={{
+                height: 52, padding: '0 32px', borderRadius: 12,
+                backgroundColor: 'var(--lime)', color: 'var(--text)',
+                fontWeight: 700, fontSize: 15, cursor: 'pointer',
+                border: 'none', boxShadow: 'var(--shadow-md)',
+                display: 'flex', alignItems: 'center', gap: 8,
+                transition: 'transform 0.15s, box-shadow 0.15s',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.03)'; e.currentTarget.style.boxShadow = 'var(--shadow-lg)'; }}
+              onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = 'var(--shadow-md)'; }}
             >
-              <span className="relative z-10 flex items-center gap-2 text-[15px]">Check eligibility <ArrowRight size={18} /></span>
-              <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out" />
-            </motion.button>
-            
-            <motion.button 
-              whileHover={{ scale: 1.03, backgroundColor: 'rgba(255,255,255,0.05)' }}
-              whileTap={{ scale: 0.97 }}
+              Check eligibility <ArrowRight size={17} />
+            </button>
+            <button
               onClick={() => navigate('/login')}
-              className="h-14 px-8 w-full sm:w-auto rounded-xl border border-white/20 text-white font-medium backdrop-blur-md flex items-center justify-center gap-2 transition-all cursor-pointer text-[15px]"
+              style={{
+                height: 52, padding: '0 28px', borderRadius: 12,
+                backgroundColor: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(10px)',
+                color: 'var(--text)', fontWeight: 600, fontSize: 15, cursor: 'pointer',
+                border: '1px solid var(--glass-border)', boxShadow: 'var(--shadow-sm)',
+                transition: 'background 0.15s',
+              }}
+              onMouseEnter={e => e.currentTarget.style.backgroundColor = 'var(--light3)'}
+              onMouseLeave={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.85)'}
             >
               For Officers
-            </motion.button>
+            </button>
           </div>
         </div>
 
-        {/* Right Column: Glassmorphism 2.0 ML Visualization */}
-        <div className="w-full lg:w-1/2 flex justify-center lg:justify-end mt-16 lg:mt-0 relative" style={{ perspective: '1200px' }}>
-          
-          <motion.div 
+        {/* Right: Glass Card */}
+        <div style={{ flex: '0 0 44%', maxWidth: 480, position: 'relative' }}>
+          <motion.div
             ref={glassRef}
-            animate={{ x: mousePos.x * -1, y: mousePos.y * -1 }}
-            transition={{ type: 'spring', stiffness: 50, damping: 20 }}
-            className="w-full max-w-md relative z-10"
+            animate={{ x: mousePos.x * -0.6, y: mousePos.y * -0.6 }}
+            transition={{ type: 'spring', stiffness: 60, damping: 22 }}
+            style={{ position: 'relative' }}
           >
-            <div className="absolute inset-0 bg-gradient-to-tr from-lime/30 via-transparent to-lime/10 rounded-[30px] blur-3xl opacity-50 translate-x-4 translate-y-4" />
-            
-            <div 
-              className="relative rounded-[28px] overflow-hidden p-8 border border-white/10 shadow-[0_30px_60px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.2)] backdrop-blur-2xl bg-black/40"
-              style={{
-                backgroundImage: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.01) 100%)'
-              }}
-            >
-              <motion.div 
+            {/* Glow backdrop */}
+            <div style={{
+              position: 'absolute', inset: -8,
+              background: 'linear-gradient(135deg, rgba(200,241,53,0.25), rgba(129,140,248,0.15))',
+              borderRadius: 36, filter: 'blur(30px)', opacity: 0.7,
+              transform: 'translate(8px, 8px)',
+            }} />
+
+            {/* Main card */}
+            <div style={{
+              position: 'relative',
+              backgroundColor: 'rgba(255,255,255,0.92)',
+              backdropFilter: 'blur(40px)',
+              border: '1px solid var(--glass-border)',
+              borderRadius: 28,
+              padding: 32,
+              boxShadow: 'var(--shadow-xl)',
+              overflow: 'hidden',
+            }}>
+              {/* Scanning line animation */}
+              <motion.div
                 initial={{ x: '-100%' }}
-                animate={{ x: '100%' }}
+                animate={{ x: '200%' }}
                 transition={{ repeat: Infinity, duration: 3, ease: 'linear' }}
-                className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-lime to-transparent"
+                style={{ position: 'absolute', top: 0, left: 0, width: '50%', height: 2, background: 'linear-gradient(90deg, transparent, var(--lime-dark), transparent)' }}
               />
 
-              <div className="mb-8 relative z-10">
-                <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-white/90 font-bold text-lg tracking-wide flex items-center gap-2">
-                    <Database size={16} className="text-lime" /> Live SHAP Analysis
-                  </h3>
-                  <div className="animate-pulse bg-lime/20 text-lime px-2 py-0.5 rounded text-[10px] font-bold border border-lime/30">
-                     PROCESSING
-                  </div>
-                </div>
+              {/* Header */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+                <h3 style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 700, fontSize: 16, color: 'var(--text)', margin: 0 }}>
+                  <Database size={15} style={{ color: 'var(--lime-dark)', flexShrink: 0 }} />
+                  Live SHAP Analysis
+                </h3>
+                <span style={{
+                  backgroundColor: 'rgba(200,241,53,0.15)', color: 'var(--lime-dark)',
+                  border: '1px solid var(--lime)', borderRadius: 5,
+                  fontSize: 10, fontWeight: 700, padding: '3px 8px', letterSpacing: '0.05em',
+                  animation: 'pulse 2s infinite',
+                }}>PROCESSING</span>
+              </div>
 
-                <div className="flex items-center gap-4 mb-8 bg-white/5 p-4 rounded-xl border border-white/5 backdrop-blur-md">
-                  <div className="w-12 h-12 rounded-full border border-lime/50 flex items-center justify-center bg-lime/10 shadow-[0_0_15px_rgba(200,241,53,0.3)] shrink-0">
-                    <Check size={20} className="text-lime" />
-                  </div>
-                  <div>
-                    <div className="text-white font-bold text-[22px] leading-tight mb-0.5">91.4% Confidence</div>
-                    <div className="text-white/40 text-[11px] font-mono tracking-wide uppercase">XGBoost DMatrix Inference</div>
-                  </div>
+              {/* Confidence row */}
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 14, marginBottom: 24,
+                backgroundColor: 'white', padding: '14px 16px', borderRadius: 14,
+                border: '1px solid var(--glass-border)', boxShadow: 'var(--shadow-sm)',
+              }}>
+                <div style={{
+                  width: 44, height: 44, borderRadius: '50%', flexShrink: 0,
+                  backgroundColor: 'rgba(200,241,53,0.12)', border: '1px solid var(--lime-light)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <Check size={18} style={{ color: 'var(--lime-dark)' }} />
                 </div>
-
-                <div className="space-y-6">
-                  {[
-                    { label: "Credit Depth (780)", val: 85, pos: true },
-                    { label: "DTI Ratio (42%)", val: 55, pos: false },
-                    { label: "Verified Income", val: 70, pos: true },
-                  ].map((item, i) => (
-                    <div key={i} className="relative">
-                      <div className="flex justify-between text-[11px] text-white/50 mb-2 font-mono uppercase">
-                        <span>{item.label}</span>
-                        <span className={item.pos ? 'text-lime font-bold' : 'text-rose-400 font-bold'}>
-                          {item.pos ? '+' : '-'} {item.val}
-                        </span>
-                      </div>
-                      <div className="w-full bg-black/50 h-[6px] rounded-full overflow-hidden flex inset-shadow-sm">
-                        <motion.div 
-                          initial={{ width: 0 }}
-                          animate={{ width: `${item.val}%` }}
-                          transition={{ duration: 1.5, delay: 1 + i * 0.2, type: 'spring', damping: 15 }}
-                          className={`h-full ${item.pos ? 'bg-gradient-to-r from-lime/50 to-lime' : 'bg-gradient-to-r from-rose-500/50 to-rose-400'} shadow-[0_0_10px_currentColor]`}
-                        />
-                      </div>
-                    </div>
-                  ))}
+                <div>
+                  <div style={{ fontWeight: 800, fontSize: 22, color: 'var(--text)', lineHeight: 1.2 }}>91.4% Confidence</div>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'monospace', textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: 2 }}>XGBoost DMatrix Inference</div>
                 </div>
               </div>
-              
-              <div className="pt-6 border-t border-white/10 flex items-center justify-between text-white/40 text-[10px] font-mono tracking-wider">
-                <span className="flex items-center gap-1.5"><MousePointer2 size={10} /> INTERACTIVE VERIFIED</span>
-                <span className="bg-white/10 px-2 py-0.5 rounded">ID: LNS-998A-0X</span>
+
+              {/* SHAP bars */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+                {[
+                  { label: 'Credit Depth (780)', val: 85, pos: true },
+                  { label: 'DTI Ratio (42%)', val: 55, pos: false },
+                  { label: 'Verified Income', val: 70, pos: true },
+                ].map((item, i) => (
+                  <div key={i}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 7, fontSize: 11, fontFamily: 'monospace', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      <span style={{ color: 'var(--text-muted)' }}>{item.label}</span>
+                      <span style={{ fontWeight: 700, color: item.pos ? 'var(--success-dark)' : 'var(--danger-dark)' }}>{item.pos ? '+' : '-'} {item.val}</span>
+                    </div>
+                    <div style={{ width: '100%', height: 6, backgroundColor: 'var(--light3)', borderRadius: 99, overflow: 'hidden' }}>
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${item.val}%` }}
+                        transition={{ duration: 1.5, delay: 1 + i * 0.2, type: 'spring', damping: 15 }}
+                        style={{ height: '100%', borderRadius: 99, backgroundColor: item.pos ? 'var(--success)' : 'var(--danger)' }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Footer */}
+              <div style={{
+                marginTop: 24, paddingTop: 18, borderTop: '1px solid var(--glass-border)',
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                fontSize: 10, fontFamily: 'monospace', letterSpacing: '0.06em', color: 'var(--text-muted)',
+              }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <MousePointer2 size={10} /> INTERACTIVE VERIFIED
+                </span>
+                <span style={{ backgroundColor: 'var(--light3)', padding: '3px 8px', borderRadius: 5 }}>ID: LNS-998A-0X</span>
               </div>
             </div>
 
-            <motion.div 
+            {/* What-if Simulator chip */}
+            <motion.div
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 2, duration: 0.5, type: 'spring' }}
-              className="absolute -bottom-6 -right-6 lg:-right-12 bg-white text-black p-4 pr-12 rounded-[20px] shadow-2xl z-20 cursor-pointer hover:scale-105 transition-transform"
               onClick={() => navigate('/register')}
+              style={{
+                position: 'absolute', bottom: -20, right: -20,
+                backgroundColor: 'white', border: '1px solid var(--glass-border)',
+                borderRadius: 18, padding: '14px 48px 14px 16px',
+                boxShadow: 'var(--shadow-xl)', cursor: 'pointer',
+                zIndex: 20, overflow: 'hidden',
+                transition: 'transform 0.2s',
+              }}
+              onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'}
+              onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
             >
-              <div className="text-sm font-bold tracking-tight mb-1 text-black">What-if Simulator</div>
-              <div className="text-[11px] text-black/50 font-medium">Adjust risk parameters live</div>
-              <div className="absolute top-0 right-0 w-10 h-10 bg-lime rounded-tr-[20px] rounded-bl-[20px] flex items-center justify-center">
-                <ArrowRight size={16} className="-rotate-45" />
+              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', marginBottom: 3 }}>What-if Simulator</div>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Adjust risk parameters live</div>
+              <div style={{
+                position: 'absolute', top: 0, right: 0, width: 38, height: 38,
+                backgroundColor: 'var(--lime)', borderRadius: '0 18px 0 18px',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                <ArrowRight size={15} style={{ transform: 'rotate(-45deg)' }} />
               </div>
             </motion.div>
-
           </motion.div>
         </div>
       </div>
-      
+
       {/* Scroll indicator */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 2.5, duration: 1 }}
-        className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 z-10"
+        transition={{ delay: 3, duration: 1 }}
+        style={{
+          position: 'absolute', bottom: 32, left: '50%', transform: 'translateX(-50%)',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, zIndex: 10,
+        }}
       >
-        <span className="text-[10px] text-white/30 uppercase tracking-[0.2em] font-bold">Scroll to explore</span>
-        <div className="w-px h-12 bg-gradient-to-b from-white/30 to-transparent">
-           <motion.div 
-              animate={{ y: [0, 24, 48], opacity: [0, 1, 0] }}
-              transition={{ repeat: Infinity, duration: 1.5, ease: 'linear' }}
-              className="w-px h-4 bg-lime"
-           />
+        <span style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.2em', fontWeight: 700 }}>Scroll to explore</span>
+        <div style={{ width: 1, height: 48, background: 'linear-gradient(to bottom, var(--glass-border), transparent)', position: 'relative' }}>
+          <motion.div
+            animate={{ y: [0, 32, 48], opacity: [0, 1, 0] }}
+            transition={{ repeat: Infinity, duration: 1.5, ease: 'linear' }}
+            style={{ width: 1, height: 14, backgroundColor: 'var(--lime-dark)' }}
+          />
         </div>
       </motion.div>
     </section>

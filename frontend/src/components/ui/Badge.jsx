@@ -2,56 +2,61 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 
-export function Badge({ 
-  children, 
-  variant = 'default', 
-  pulse = false, 
-  icon, 
-  onRemove,
-  size = 'md',
-  className = ''
-}) {
-  const variants = {
-    default: 'bg-white/10 text-white border-white/20',
-    success: 'bg-success/10 text-success border-success/30 shadow-[0_0_10px_rgba(74,222,128,0.2)]',
-    danger: 'bg-danger/10 text-danger border-danger/30 shadow-[0_0_10px_rgba(248,113,113,0.2)]',
-    warning: 'bg-warning/10 text-warning border-warning/30 shadow-[0_0_10px_rgba(251,191,36,0.2)]',
-    info: 'bg-info/10 text-info border-info/30 shadow-[0_0_10px_rgba(129,140,248,0.2)]',
-    lime: 'bg-lime/10 text-lime border-lime/30 shadow-[0_0_10px_rgba(200,241,53,0.2)]',
-    outline: 'bg-transparent text-text-muted border-white/20'
-  };
+const VARIANT_MAP = {
+  default:  { bg: '#f1f5f9',                        color: 'var(--text)',         border: '#e2e8f0' },
+  success:  { bg: 'rgba(34,197,94,0.1)',             color: 'var(--success-dark)', border: 'rgba(34,197,94,0.3)' },
+  danger:   { bg: 'rgba(248,113,113,0.1)',           color: 'var(--danger-dark)',  border: 'rgba(248,113,113,0.3)' },
+  warning:  { bg: 'rgba(251,191,36,0.1)',            color: '#92400e',             border: 'rgba(251,191,36,0.4)' },
+  info:     { bg: 'rgba(59,130,246,0.08)',           color: '#1e40af',             border: 'rgba(59,130,246,0.25)' },
+  lime:     { bg: 'rgba(200,241,53,0.15)',           color: 'var(--lime-dark)',    border: 'var(--lime)' },
+  outline:  { bg: 'transparent',                    color: 'var(--text-muted)',   border: 'var(--glass-border)' },
+};
 
-  const sizes = {
-    sm: 'text-[10px] px-2 py-0.5 font-bold uppercase tracking-wider',
-    md: 'text-xs px-2.5 py-1 font-medium',
-    lg: 'text-sm px-3 py-1 font-medium',
-  };
+export function Badge({ children, variant = 'default', pulse = false, icon, onRemove, size = 'md' }) {
+  const v = VARIANT_MAP[variant] || VARIANT_MAP.default;
+
+  const sizeStyle = size === 'sm'
+    ? { fontSize: 10, padding: '2px 8px', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' }
+    : size === 'lg'
+    ? { fontSize: 13, padding: '4px 12px', fontWeight: 500 }
+    : { fontSize: 11, padding: '3px 10px', fontWeight: 600 };
 
   return (
     <AnimatePresence>
       <motion.div
         layout
-        initial={{ opacity: 0, scale: 0.8 }}
+        initial={{ opacity: 0, scale: 0.85 }}
         animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.5 }}
-        className={`inline-flex items-center gap-1.5 border rounded-full relative overflow-hidden shrink-0 ${variants[variant]} ${sizes[size]} ${className}`}
+        exit={{ opacity: 0, scale: 0.6 }}
+        style={{
+          display: 'inline-flex', alignItems: 'center', gap: 5,
+          border: `1px solid ${v.border}`,
+          borderRadius: 99, padding: sizeStyle.padding,
+          backgroundColor: v.bg, color: v.color,
+          fontSize: sizeStyle.fontSize, fontWeight: sizeStyle.fontWeight,
+          letterSpacing: sizeStyle.letterSpacing, textTransform: sizeStyle.textTransform,
+          position: 'relative', overflow: 'hidden', flexShrink: 0,
+          lineHeight: 1.4,
+        }}
       >
         {pulse && (
           <motion.div
-            animate={{ scale: [1, 2, 1], opacity: [0.3, 0, 0.3] }}
-            transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
-            className={`absolute inset-0 bg-current opacity-20 origin-center`}
+            animate={{ scale: [1, 2, 1], opacity: [0.25, 0, 0.25] }}
+            transition={{ duration: 2, repeat: Infinity }}
+            style={{ position: 'absolute', inset: 0, backgroundColor: 'currentColor', opacity: 0.15, transformOrigin: 'center' }}
           />
         )}
-        <span className="relative z-10 flex items-center gap-1.5">
-          {icon && <span className="opacity-80 flex items-center">{icon}</span>}
+        <span style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', gap: 5 }}>
+          {icon && <span style={{ opacity: 0.8, display: 'flex', alignItems: 'center' }}>{icon}</span>}
           {children}
           {onRemove && (
-            <button 
+            <button
               onClick={onRemove}
-              className="hover:scale-125 hover:text-white transition-all ml-1 outline-none pointer-events-auto cursor-pointer"
+              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginLeft: 2, color: 'inherit', display: 'flex', alignItems: 'center', transition: 'transform 0.15s' }}
+              onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.3)'}
+              onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
             >
-              <X size={12} />
+              <X size={11} />
             </button>
           )}
         </span>

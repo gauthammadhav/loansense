@@ -2,61 +2,89 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Eye, EyeOff, AlertCircle } from 'lucide-react';
 
-export function Input({ 
-  label, 
-  type = 'text', 
-  value, 
-  onChange, 
-  icon, 
+export function Input({
+  label,
+  type = 'text',
+  value,
+  onChange,
+  icon,
   error,
   maxLength,
   className = '',
-  ...props 
+  ...props
 }) {
   const [focused, setFocused] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const isPassword = type === 'password';
   const hasValue = value !== undefined && value !== null && value.toString().length > 0;
-  
   const currentType = isPassword && showPassword ? 'text' : type;
 
-  return (
-    <motion.div className={`relative w-full flex flex-col gap-1 ${className}`} layout>
-      <div className="relative flex items-center w-full">
-        {/* Glow effect */}
-        <AnimatePresence>
-          {focused && (
-            <motion.div
-              layoutId="inputGlow"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="absolute inset-0 -z-10 rounded-xl bg-lime/20 blur-md transition-all pointer-events-none"
-            />
-          )}
-        </AnimatePresence>
+  const borderColor = error
+    ? 'var(--danger)'
+    : focused
+    ? 'var(--lime)'
+    : '#e2e8f0';
 
-        {/* Input Wrapper */}
-        <div className={`relative w-full border rounded-xl overflow-hidden bg-white/5 backdrop-blur-md transition-colors ${focused ? 'border-lime shadow-[0_0_10px_rgba(200,241,53,0.3)]' : error ? 'border-danger' : 'border-white/10'}`}>
-          
+  const boxShadow = focused
+    ? '0 0 0 3px rgba(200,241,53,0.2), 0 1px 4px rgba(0,0,0,0.06)'
+    : '0 1px 3px rgba(0,0,0,0.05)';
+
+  return (
+    <div style={{ position: 'relative', width: '100%', display: 'flex', flexDirection: 'column', gap: 4 }}>
+      <div style={{ position: 'relative', width: '100%' }}>
+        {/* Wrapper box */}
+        <div
+          style={{
+            position: 'relative', width: '100%',
+            border: `1.5px solid ${borderColor}`,
+            borderRadius: 12,
+            backgroundColor: focused ? '#ffffff' : '#f8fafc',
+            boxShadow,
+            transition: 'border-color 0.2s, box-shadow 0.2s, background-color 0.2s',
+            overflow: 'hidden',
+            boxSizing: 'border-box',
+          }}
+        >
+          {/* Floating label */}
           <motion.label
             initial={false}
             animate={{
-              y: focused || hasValue ? -10 : 0,
-              scale: focused || hasValue ? 0.75 : 1,
-              color: error ? 'var(--danger)' : focused ? 'var(--lime)' : 'var(--text-muted)'
+              y: focused || hasValue ? -9 : 0,
+              scale: focused || hasValue ? 0.72 : 1,
+              color: error ? 'var(--danger)' : focused ? 'var(--lime-dark)' : '#94a3b8',
             }}
-            className={`absolute ${icon ? 'left-10' : 'left-4'} top-3 origin-left pointer-events-none transition-colors z-10 w-[calc(100%-2rem)] truncate`}
+            style={{
+              position: 'absolute',
+              left: icon ? 44 : 16,
+              top: 16,
+              originX: 0,
+              fontSize: 14,
+              fontWeight: 500,
+              pointerEvents: 'none',
+              zIndex: 1,
+              whiteSpace: 'nowrap',
+              transformOrigin: 'left center',
+            }}
           >
             {label}
           </motion.label>
 
+          {/* Icon */}
           {icon && (
-            <div className={`absolute left-4 top-3 transition-colors ${focused ? 'text-lime' : 'text-text-muted'} pointer-events-none`}>
+            <div
+              style={{
+                position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)',
+                color: focused ? 'var(--lime-dark)' : '#94a3b8',
+                transition: 'color 0.2s',
+                display: 'flex', alignItems: 'center',
+                pointerEvents: 'none',
+              }}
+            >
               {icon}
             </div>
           )}
 
+          {/* Actual Input */}
           <input
             type={currentType}
             value={value}
@@ -64,86 +92,117 @@ export function Input({
             onFocus={() => setFocused(true)}
             onBlur={() => setFocused(false)}
             maxLength={maxLength}
-            className={`w-full bg-transparent text-white pt-6 pb-2 outline-none ${icon ? 'pl-11' : 'pl-4'} ${isPassword ? 'pr-11' : 'pr-4'}`}
+            style={{
+              width: '100%',
+              background: 'transparent',
+              border: 'none',
+              outline: 'none',
+              paddingTop: 22,
+              paddingBottom: 8,
+              paddingLeft: icon ? 44 : 16,
+              paddingRight: isPassword ? 44 : 16,
+              fontSize: 14,
+              color: 'var(--text)',
+              boxSizing: 'border-box',
+              fontFamily: 'inherit',
+            }}
             {...props}
           />
 
+          {/* Password toggle */}
           {isPassword && (
             <button
               type="button"
-              className="absolute right-4 top-3 text-text-muted hover:text-white transition-colors outline-none cursor-pointer"
               onClick={() => setShowPassword(!showPassword)}
+              style={{
+                position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)',
+                background: 'none', border: 'none', cursor: 'pointer',
+                color: '#94a3b8', display: 'flex', alignItems: 'center',
+                padding: 0, transition: 'color 0.2s',
+              }}
+              onMouseEnter={e => e.currentTarget.style.color = 'var(--text)'}
+              onMouseLeave={e => e.currentTarget.style.color = '#94a3b8'}
             >
-              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
             </button>
           )}
         </div>
       </div>
 
-      <div className="flex justify-between items-center px-1 text-xs min-h-[16px]">
-         {/* Error msg */}
-         <AnimatePresence>
-           {error && (
-             <motion.span
-               initial={{ opacity: 0, y: -10 }}
-               animate={{ opacity: 1, y: 0 }}
-               exit={{ opacity: 0, y: -10 }}
-               className="text-danger flex items-center gap-1 font-medium"
-             >
-               <AlertCircle size={12} /> {error}
-             </motion.span>
-           )}
-         </AnimatePresence>
+      {/* Error message */}
+      <AnimatePresence>
+        {error && (
+          <motion.span
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 4,
+              fontSize: 12, fontWeight: 500, color: 'var(--danger)',
+              paddingLeft: 4,
+            }}
+          >
+            <AlertCircle size={12} /> {error}
+          </motion.span>
+        )}
+      </AnimatePresence>
 
-         {/* Char Count */}
-         {maxLength && (
-           <span className={`transition-colors font-mono tracking-wider ${value?.toString().length >= maxLength ? 'text-danger' : 'text-text-faint'} ml-auto`}>
-             {value?.toString().length || 0}/{maxLength}
-           </span>
-         )}
-      </div>
-    </motion.div>
+      {/* Char count */}
+      {maxLength && (
+        <span style={{
+          fontSize: 11, fontFamily: 'monospace', textAlign: 'right', paddingRight: 4,
+          color: value?.toString().length >= maxLength ? 'var(--danger)' : '#94a3b8',
+        }}>
+          {value?.toString().length || 0}/{maxLength}
+        </span>
+      )}
+    </div>
   );
 }
 
-// Password Strength component helper class
 export function PasswordInput({ label, showStrength, value, onChange, icon, ...props }) {
   const calculateStrength = (pw) => {
-    if(!pw) return 0;
+    if (!pw) return 0;
     let score = 0;
-    if(pw.length > 8) score += 30;
-    if(/[A-Z]/.test(pw)) score += 20;
-    if(/[0-9]/.test(pw)) score += 25;
-    if(/[^A-Za-z0-9]/.test(pw)) score += 25;
+    if (pw.length > 8) score += 30;
+    if (/[A-Z]/.test(pw)) score += 20;
+    if (/[0-9]/.test(pw)) score += 25;
+    if (/[^A-Za-z0-9]/.test(pw)) score += 25;
     return score;
   };
 
   const strength = calculateStrength(value);
 
+  const strengthColor =
+    strength < 40 ? 'var(--danger)' :
+    strength < 70 ? 'var(--warning)' :
+    'var(--success)';
+
+  const strengthLabel =
+    strength < 40 ? 'Weak' :
+    strength < 70 ? 'Fair' :
+    'Strong';
+
   return (
-    <div className="w-full flex flex-col gap-2">
+    <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 8 }}>
       <Input label={label} type="password" value={value} onChange={onChange} icon={icon} {...props} />
-      
+
       {showStrength && (
-        <motion.div 
-          className="w-full flex flex-col gap-1 mt-1"
+        <motion.div
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: value ? 1 : 0, height: value ? 'auto' : 0 }}
+          style={{ overflow: 'hidden' }}
         >
-          <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden flex">
+          <div style={{ width: '100%', height: 5, backgroundColor: '#e2e8f0', borderRadius: 99, overflow: 'hidden', marginBottom: 4 }}>
             <motion.div
-              className="h-full rounded-full"
               initial={{ width: 0 }}
               animate={{ width: `${strength}%` }}
-              style={{
-                background: strength < 40 ? 'var(--danger)' : strength < 70 ? 'var(--warning)' : 'var(--success)',
-                boxShadow: strength < 40 ? '0 0 10px var(--danger)' : strength < 70 ? '0 0 10px var(--warning)' : '0 0 10px var(--success)'
-              }}
-              transition={{ duration: 0.3 }}
+              transition={{ duration: 0.35 }}
+              style={{ height: '100%', borderRadius: 99, backgroundColor: strengthColor, transition: 'background-color 0.3s' }}
             />
           </div>
-          <div className="text-[10px] text-right text-text-muted font-medium uppercase tracking-wider">
-            {strength < 40 ? 'Weak' : strength < 70 ? 'Fair' : 'Strong'}
+          <div style={{ fontSize: 11, textAlign: 'right', fontWeight: 600, color: strengthColor, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            {strengthLabel}
           </div>
         </motion.div>
       )}

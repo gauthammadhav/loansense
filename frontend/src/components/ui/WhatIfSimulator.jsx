@@ -95,10 +95,10 @@ export default function WhatIfSimulator({ application }) {
           <div className="space-y-4">
             <div className="flex justify-between items-end">
               <div>
-                <label className="text-sm font-bold text-white tracking-wide block mb-1">MONTHLY INCOME</label>
-                <span className="text-xs text-text-muted">Adjust total provable monthly income</span>
+                <label className="text-sm font-bold text-[var(--text)] tracking-wide block mb-1">MONTHLY INCOME</label>
+                <span className="text-xs text-[var(--text-muted)]">Adjust total provable monthly income</span>
               </div>
-              <span className="text-xl font-bold text-lime tracking-tight">₹{params.applicant_income.toLocaleString('en-IN')}</span>
+              <span className="text-xl font-bold text-lime-dark tracking-tight">₹{params.applicant_income.toLocaleString('en-IN')}</span>
             </div>
             <div className="relative group/slider pb-2">
               <input 
@@ -114,10 +114,10 @@ export default function WhatIfSimulator({ application }) {
           <div className="space-y-4">
             <div className="flex justify-between items-end">
               <div>
-                <label className="text-sm font-bold text-white tracking-wide block mb-1">LOAN AMOUNT REQUIRED</label>
-                <span className="text-xs text-text-muted">Total capital required (INR)</span>
+                <label className="text-sm font-bold text-[var(--text)] tracking-wide block mb-1">LOAN AMOUNT REQUIRED</label>
+                <span className="text-xs text-[var(--text-muted)]">Total capital required (INR)</span>
               </div>
-              <span className="text-xl font-bold text-lime tracking-tight">₹{params.loan_amount.toLocaleString('en-IN')}</span>
+              <span className="text-xl font-bold text-lime-dark tracking-tight">₹{params.loan_amount.toLocaleString('en-IN')}</span>
             </div>
             <div className="relative group/slider pb-2">
               <input 
@@ -133,10 +133,10 @@ export default function WhatIfSimulator({ application }) {
           <div className="space-y-4">
             <div className="flex justify-between items-end">
               <div>
-                <label className="text-sm font-bold text-white tracking-wide block mb-1">CREDIT SCORE</label>
-                <span className="text-xs text-text-muted">FICO/Vantage score equivalent</span>
+                <label className="text-sm font-bold text-[var(--text)] tracking-wide block mb-1">CREDIT SCORE</label>
+                <span className="text-xs text-[var(--text-muted)]">FICO/Vantage score equivalent</span>
               </div>
-              <span className={`text-xl font-bold tracking-tight ${params.credit_score >= 750 ? 'text-success' : params.credit_score >= 650 ? 'text-warning' : 'text-danger'}`}>
+              <span className={`text-xl font-bold tracking-tight ${params.credit_score >= 750 ? 'text-[var(--success-dark)]' : params.credit_score >= 650 ? 'text-[var(--warning-dark)]' : 'text-[var(--danger-dark)]'}`}>
                 {params.credit_score}
               </span>
             </div>
@@ -172,21 +172,21 @@ export default function WhatIfSimulator({ application }) {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="absolute inset-0 bg-dark/60 backdrop-blur-md flex flex-col items-center justify-center z-20"
+                className="absolute inset-0 bg-white/60 backdrop-blur-md flex flex-col items-center justify-center z-20"
               >
                 <div className="relative">
-                   <div className="absolute inset-0 bg-lime/30 blur-xl rounded-full" />
-                   <div className="w-16 h-16 rounded-full border border-lime/30 flex items-center justify-center bg-dark/50 mb-4 relative z-10">
-                     <Loader2 size={24} className="text-lime animate-spin" />
+                   <div className="absolute inset-0 bg-[var(--lime-glow)] blur-xl rounded-full" />
+                   <div className="w-16 h-16 rounded-full border border-[var(--lime-subtle)] flex items-center justify-center bg-[var(--light)] mb-4 relative z-10 shadow-sm">
+                     <Loader2 size={24} className="text-[var(--lime-dark)] animate-spin" />
                    </div>
                 </div>
-                <span className="text-xs font-bold text-lime uppercase tracking-[0.3em]">Running Inference</span>
+                <span className="text-xs font-bold text-[var(--lime-dark)] uppercase tracking-[0.3em]">Running Inference</span>
               </motion.div>
             )}
           </AnimatePresence>
           
           <div className="relative z-10 w-full flex flex-col items-center text-center">
-            <h4 className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] mb-6 shadow-sm">Live Outcome Prediction</h4>
+            <h4 className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-[0.2em] mb-6">Live Outcome Prediction</h4>
             
             <AnimatePresence mode="wait">
               {simResult ? (
@@ -197,12 +197,12 @@ export default function WhatIfSimulator({ application }) {
                   exit={{ opacity: 0, y: -10, filter: 'blur(10px)' }}
                   className="w-full flex flex-col items-center"
                 >
-                  <div className={`text-[42px] leading-tight font-heading font-black mb-4 tracking-tight ${simResult.prediction === 'Y' ? 'text-success drop-shadow-[0_0_15px_rgba(74,222,128,0.3)]' : 'text-danger drop-shadow-[0_0_15px_rgba(248,113,113,0.3)]'}`}>
+                  <div className={`text-[42px] leading-tight font-heading font-black mb-4 tracking-tight ${simResult.prediction === 'Y' ? 'text-[var(--success)] drop-shadow-sm' : 'text-[var(--danger)] drop-shadow-sm'}`}>
                     {simResult.prediction === 'Y' ? 'Favorable' : 'High Risk'}
                   </div>
-                  <div className="bg-dark2/80 border border-white/10 rounded-full px-5 py-2 flex items-center gap-3 mb-6 shadow-xl backdrop-blur-xl">
-                    <span className="text-[10px] text-text-muted uppercase tracking-widest">Confidence</span>
-                    <span className="text-sm font-bold text-white font-mono object-tabular-nums">{(simResult.confidence * 100).toFixed(1)}%</span>
+                  <div className="bg-white/80 border border-[var(--glass-border)] rounded-full px-5 py-2 flex items-center gap-3 mb-6 shadow-sm backdrop-blur-xl">
+                    <span className="text-[10px] text-[var(--text-muted)] uppercase tracking-widest">Confidence</span>
+                    <span className="text-sm font-bold text-[var(--text)] font-mono object-tabular-nums">{(simResult.confidence * 100).toFixed(1)}%</span>
                   </div>
                   {getDiffStatus()}
                 </motion.div>
@@ -214,10 +214,10 @@ export default function WhatIfSimulator({ application }) {
                    exit={{ opacity: 0 }}
                    className="flex flex-col items-center px-4"
                 >
-                  <div className="w-16 h-16 rounded-3xl bg-white/5 border border-white/10 flex items-center justify-center mb-6 text-white/20 shadow-inner">
+                  <div className="w-16 h-16 rounded-3xl bg-[var(--light3)] border border-[var(--glass-border)] flex items-center justify-center mb-6 text-[var(--text-muted)] shadow-sm">
                     <ShieldCheck size={28} />
                   </div>
-                  <p className="text-text-muted text-sm max-w-[200px] leading-relaxed mb-6">
+                  <p className="text-[var(--text-muted)] text-sm max-w-[200px] leading-relaxed mb-6">
                     Adjust the sliders to see how live data variations affect the Random Forest algorithm.
                   </p>
                   <Badge variant="outline" className="opacity-50 tracking-widest border-dashed">BASELINE ACTIVE</Badge>

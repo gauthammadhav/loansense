@@ -1,26 +1,31 @@
 /* Disable Default Fonts and Inject Google Fonts from PRD */
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Montserrat:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 
 @import "tailwindcss";
-@import "./styles/tokens.css";
 
 @theme {
   /* Font Family Mapping */
   --font-heading: 'Playfair Display', serif;
-  --font-body: 'Montserrat', sans-serif;
+  --font-body: 'Inter', sans-serif;
   --font-ui: 'Space Grotesk', system-ui, sans-serif;
 
   /* Strict Token-Only Color Palette */
-  --color-dark: var(--dark);
-  --color-dark2: var(--dark2);
-  --color-dark3: var(--dark3);
-  --color-page: var(--page);
-  --color-white: var(--white);
-  --color-border: var(--border);
+  --color-light: var(--light);
+  --color-light2: var(--light2);
+  --color-light3: var(--light3);
+  --color-light4: var(--light4);
+  --color-surface: var(--surface-raised);
+  --color-overlay: var(--surface-overlay);
+  
   --color-lime: var(--lime);
   --color-lime-dark: var(--lime-dark);
-  --color-muted: var(--muted);
-  --color-faint: var(--faint);
+  --color-lime-light: var(--lime-light);
+  
+  --color-text: var(--text);
+  --color-text-muted: var(--text-muted);
+  --color-text-faint: var(--text-faint);
+  --color-text-inverse: var(--text-inverse);
+  
   --color-success: var(--success);
   --color-danger: var(--danger);
   --color-warning: var(--warning);
@@ -31,67 +36,128 @@
 }
 
 :root {
-  --dark: #0A0A0F;
-  --dark2: #111118;
-  --dark3: #1A1A24;
+  /* Core backgrounds */
+  --light: #FAFAFA;
+  --light2: #FFFFFF;
+  --light3: #F5F5F7;
+  --light4: #E8E8EA;
+  --surface-raised: #FFFFFF;
+  --surface-overlay: rgba(255, 255, 255, 0.95);
+  
+  /* Accent */
   --lime: #C8F135;
   --lime-dark: #9BBF00;
-  --lime-glow: rgba(200,241,53,0.15);
-  --glass: rgba(255,255,255,0.04);
-  --glass-border: rgba(255,255,255,0.08);
-  --text: #F0F0EC;
-  --text-muted: #888896;
-  --text-faint: #444450;
+  --lime-light: #E5F9A3;
+  --lime-glow: rgba(200, 241, 53, 0.20);
+  --lime-subtle: rgba(200, 241, 53, 0.08);
+  
+  /* Text */
+  --text: #0A0A0F;
+  --text-muted: #6B6B78;
+  --text-faint: #A1A1AA;
+  --text-inverse: #FAFAFA;
+  
+  /* Glass */
+  --glass: rgba(255, 255, 255, 0.70);
+  --glass-hover: rgba(255, 255, 255, 0.85);
+  --glass-border: rgba(0, 0, 0, 0.08);
+  --glass-strong: rgba(255, 255, 255, 0.90);
+  --glass-shadow: rgba(0, 0, 0, 0.04);
+  
+  /* Semantic */
   --success: #4ADE80;
+  --success-dark: #22C55E;
   --danger: #F87171;
+  --danger-dark: #EF4444;
   --warning: #FBBF24;
+  --warning-dark: #F59E0B;
   --info: #818CF8;
+  --info-dark: #6366F1;
+  
+  /* Semantic backgrounds */
+  --success-bg: rgba(74, 222, 128, 0.12);
+  --success-border: rgba(74, 222, 128, 0.25);
+  --danger-bg: rgba(248, 113, 113, 0.12);
+  --danger-border: rgba(248, 113, 113, 0.25);
+  --warning-bg: rgba(251, 191, 36, 0.12);
+  --warning-border: rgba(251, 191, 36, 0.25);
+  --info-bg: rgba(129, 140, 248, 0.12);
+  --info-border: rgba(129, 140, 248, 0.25);
+  
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.08);
+  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.10);
+  --shadow-glow: 0 0 20px rgba(200, 241, 53, 0.25);
+  
+  /* Fonts */
+  --font-display: 'Playfair Display', serif;
+  --font-ui: 'Space Grotesk', sans-serif;
+  --font-body: 'Inter', sans-serif;
+
+  /* Gradients */
+  --gradient-hero: linear-gradient(135deg, #FAFAFA 0%, #F5F5F7 100%);
+  --gradient-lime: linear-gradient(135deg, #C8F135 0%, #9BBF00 100%);
+  --gradient-mesh: radial-gradient(at 20% 30%, rgba(200,241,53,0.15) 0%, transparent 50%),
+                   radial-gradient(at 80% 70%, rgba(129,140,248,0.12) 0%, transparent 50%),
+                   radial-gradient(at 50% 50%, rgba(74,222,128,0.10) 0%, transparent 50%);
+  --gradient-card: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.7) 100%);
 }
 
-/* Global Strict PRD Styling */
+/* Base styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
 body {
   font-family: var(--font-body);
-  background-color: var(--dark); /* Master prompt: Dark page background */
+  background: var(--light);
   color: var(--text);
+  line-height: 1.6;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-heading);
+  font-family: var(--font-display);
 }
 
-/* Glass variants */
+/* Glass card variants */
 .glass-card {
   background: var(--glass);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--glass-border);
   border-radius: 16px;
+  box-shadow: var(--shadow-md);
   position: relative;
   overflow: hidden;
 }
 
 .glass-strong {
-  background: rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: var(--glass-strong);
+  backdrop-filter: blur(40px);
+  -webkit-backdrop-filter: blur(40px);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-lg);
 }
 
 .glass-lime {
-  background: var(--lime-glow);
-  backdrop-filter: blur(10px);
+  background: var(--lime-subtle);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--lime);
+  box-shadow: 0 4px 6px var(--lime-glow);
 }
 
-/* Hover glow effect (Magnetic) */
+/* Hover glow effect */
 .glass-card::before {
   content: '';
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
   background: radial-gradient(
     circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
     var(--lime-glow) 0%,
@@ -105,6 +171,43 @@ h1, h2, h3, h4, h5, h6 {
 .glass-card:hover::before {
   opacity: 1;
 }
+
+/* Animations */
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes shimmer {
+  0% { background-position: -1000px 0; }
+  100% { background-position: 1000px 0; }
+}
+
+.anim-fade-up { animation: fadeUp 0.5s ease-out; }
+.anim-fade-in { animation: fadeIn 0.4s ease-out; }
+.anim-scale-in { animation: scaleIn 0.3s ease-out; }
 
 /* Animated gradient border */
 @keyframes rotate-gradient {
@@ -134,9 +237,58 @@ h1, h2, h3, h4, h5, h6 {
   opacity: 1;
 }
 
+/* Skeleton loading */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--light3) 0%,
+    var(--light4) 50%,
+    var(--light3) 100%
+  );
+  background-size: 2000px 100%;
+  animation: shimmer 2s infinite;
+  border-radius: 8px;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--light3);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--lime);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--lime-dark);
+}
+
+/* Utility classes */
+.text-display { font-family: var(--font-display); }
+.text-ui { font-family: var(--font-ui); }
+.text-body { font-family: var(--font-body); }
+
+.text-lime { color: var(--lime-dark); }
+.text-success { color: var(--success-dark); }
+.text-danger { color: var(--danger-dark); }
+.text-warning { color: var(--warning-dark); }
+.text-info { color: var(--info-dark); }
+
+.bg-lime { background: var(--lime); }
+.bg-success { background: var(--success-bg); }
+.bg-danger { background: var(--danger-bg); }
+.bg-warning { background: var(--warning-bg); }
+.bg-info { background: var(--info-bg); }
+
 /* Recharts styling to match theme */
 .recharts-cartesian-grid-horizontal line, .recharts-cartesian-grid-vertical line {
-  stroke: rgba(255,255,255,0.05);
+  stroke: var(--glass-border);
 }
 .recharts-text {
   fill: var(--text-muted);

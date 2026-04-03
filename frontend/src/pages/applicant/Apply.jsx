@@ -6,6 +6,14 @@ import apiClient from '../../api/client';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 
+const STEPS = [
+  { id: 1, title: 'Financial Profile', desc: 'Income and monthly expenses' },
+  { id: 2, title: 'Loan Details', desc: 'Amount, tenure and purpose' },
+  { id: 3, title: 'Credit History', desc: 'CIBIL score and payment record' },
+  { id: 4, title: 'Employment', desc: 'Work type and stability' },
+  { id: 5, title: 'Review & Submit', desc: 'Verify and finalize' },
+];
+
 export default function ApplyWizard() {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
@@ -13,7 +21,7 @@ export default function ApplyWizard() {
   const [error, setError] = useState('');
   const [consent, setConsent] = useState(false);
   const [eligibilityResult, setEligibilityResult] = useState(null);
-  
+
   const [formData, setFormData] = useState({
     monthly_income: '',
     monthly_expenses: '',
@@ -25,49 +33,46 @@ export default function ApplyWizard() {
     employment_type: 'salaried',
     employment_years: '',
     late_payment_history: 0,
-    loan_purpose: 'General'
+    loan_purpose: 'General',
   });
 
-  const updateForm = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
-
+  const updateForm = (field, value) => setFormData(prev => ({ ...prev, [field]: value }));
   const parseNum = (val) => val === '' ? '' : Number(val);
+  const formatINR = (val) => new Intl.NumberFormat('en-IN').format(val);
 
-  const calculatePreview = () => {
-    const d = {
-      income: Number(formData.monthly_income) || 0,
-      expenses: Number(formData.monthly_expenses) || 0,
-      loan: Number(formData.loan_amount) || 0,
-      tenure: Number(formData.loan_tenure_months) || 1,
-      emi: Number(formData.total_existing_emi) || 0
+  const preview = (() => {
+    const income = Number(formData.monthly_income) || 0;
+    const expenses = Number(formData.monthly_expenses) || 0;
+    const loan = Number(formData.loan_amount) || 0;
+    const tenure = Number(formData.loan_tenure_months) || 1;
+    const emi = Number(formData.total_existing_emi) || 0;
+    const newEmi = loan / tenure;
+    return {
+      savings: income - expenses,
+      newEmi,
+      dti: income > 0 ? (emi + newEmi) / income : 0,
+      disposable: income - expenses - emi - newEmi,
     };
-    const savings = d.income - d.expenses;
-    const newEmi = d.loan / d.tenure;
-    const dti = d.income > 0 ? (d.emi + newEmi) / d.income : 0;
-    const disposable = d.income - d.expenses - d.emi - newEmi;
-    return { savings, newEmi, dti, disposable };
-  };
-
-  const preview = calculatePreview();
+  })();
 
   const checkEligibility = async () => {
     try {
+      setLoading(true);
       const payload = {
         ...formData,
         monthly_income: Number(formData.monthly_income) || 0,
         monthly_expenses: Number(formData.monthly_expenses) || 0,
         loan_amount: Number(formData.loan_amount) || 0,
         credit_score: Number(formData.credit_score) || 300,
-        employment_years: Number(formData.employment_years) || 0
+        employment_years: Number(formData.employment_years) || 0,
       };
-      setLoading(true);
       const res = await apiClient.post('/applications/new/whatif', payload);
       setEligibilityResult(res.data);
     } catch (err) {
-      console.error(err);
       const detail = err.response?.data?.detail;
-      setError(Array.isArray(detail) ? detail.map(d => `${d.loc[d.loc.length-1]}: ${d.msg}`).join(' | ') : (typeof detail === 'string' ? detail : 'Validation failed. Please check your inputs.'));
+      setError(Array.isArray(detail)
+        ? detail.map(d => `${d.loc[d.loc.length - 1]}: ${d.msg}`).join(' | ')
+        : (typeof detail === 'string' ? detail : 'Validation failed. Please check your inputs.'));
     } finally {
       setLoading(false);
     }
@@ -77,7 +82,6 @@ export default function ApplyWizard() {
     if (!consent) return;
     setLoading(true);
     setError('');
-    
     try {
       const payload = {
         ...formData,
@@ -85,14 +89,15 @@ export default function ApplyWizard() {
         monthly_expenses: Number(formData.monthly_expenses) || 0,
         loan_amount: Number(formData.loan_amount) || 0,
         credit_score: Number(formData.credit_score) || 300,
-        employment_years: Number(formData.employment_years) || 0
+        employment_years: Number(formData.employment_years) || 0,
       };
       const res = await apiClient.post('/applications/new', payload);
       navigate(`/applicant/result/${res.data.id}`, { state: { application: res.data } });
     } catch (err) {
-      console.error(err);
       const detail = err.response?.data?.detail;
-      setError(Array.isArray(detail) ? detail.map(d => `${d.loc[d.loc.length-1]}: ${d.msg}`).join(' | ') : (typeof detail === 'string' ? detail : 'Submission failed. Please check your inputs.'));
+      setError(Array.isArray(detail)
+        ? detail.map(d => `${d.loc[d.loc.length - 1]}: ${d.msg}`).join(' | ')
+        : (typeof detail === 'string' ? detail : 'Submission failed. Please check your inputs.'));
     } finally {
       setLoading(false);
     }
@@ -101,118 +106,148 @@ export default function ApplyWizard() {
   const handleNext = () => setStep(s => Math.min(s + 1, 5));
   const handleBack = () => setStep(s => Math.max(s - 1, 1));
 
-  const formatINR = (val) => new Intl.NumberFormat('en-IN').format(val);
-
-  const steps = [
-    { id: 1, title: 'Financial Profile', desc: 'Income and expenses' },
-    { id: 2, title: 'Loan Details', desc: 'Requirements and purpose' },
-    { id: 3, title: 'Credit History', desc: 'CIBIL and behavior' },
-    { id: 4, title: 'Employment', desc: 'Work and stability' },
-    { id: 5, title: 'Review', desc: 'Verify and submit' }
-  ];
-
-  const slideVariants = {
-    enter: (direction) => ({ x: direction > 0 ? 50 : -50, opacity: 0 }),
-    center: { zIndex: 1, x: 0, opacity: 1 },
-    exit: (direction) => ({ zIndex: 0, x: direction < 0 ? 50 : -50, opacity: 0 })
+  // Shared select style
+  const selectStyle = {
+    width: '100%', backgroundColor: 'transparent', border: 'none',
+    padding: '14px 16px', outline: 'none', appearance: 'none',
+    cursor: 'pointer', fontSize: 14, color: 'var(--text)', fontFamily: 'inherit',
   };
+  const selectWrap = (focused) => ({
+    border: `1.5px solid ${focused ? 'var(--lime)' : '#e2e8f0'}`,
+    borderRadius: 12, backgroundColor: '#f8fafc',
+    boxShadow: focused ? '0 0 0 3px rgba(200,241,53,0.2)' : '0 1px 3px rgba(0,0,0,0.05)',
+    transition: 'border-color 0.2s, box-shadow 0.2s',
+    overflow: 'hidden',
+  });
 
   return (
-    <div className="max-w-3xl mx-auto pb-20 mt-4">
+    <div style={{ maxWidth: 720, margin: '0 auto', paddingBottom: 80 }}>
+
       {/* Header */}
-      <div className="mb-12">
-        <h1 className="text-4xl font-heading font-black mb-3">Loan Application</h1>
-        <p className="text-text-muted">Complete the following steps to initialize your machine-learning risk assessment.</p>
+      <div style={{ marginBottom: 36 }}>
+        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 36, fontWeight: 900, color: 'var(--text)', margin: '0 0 8px 0', letterSpacing: '-0.02em' }}>
+          Loan Application
+        </h1>
+        <p style={{ fontSize: 14, color: 'var(--text-muted)', margin: 0 }}>
+          Complete the following steps to initialize your machine-learning risk assessment.
+        </p>
       </div>
 
       {/* Progress Stepper */}
-      <div className="flex justify-between items-center relative mb-12">
-        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-white/5 z-0 rounded-full" />
-        <motion.div 
-          className="absolute left-0 top-1/2 -translate-y-1/2 h-1 bg-lime z-0 rounded-full" 
+      <div style={{ position: 'relative', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 48 }}>
+        {/* Track */}
+        <div style={{ position: 'absolute', left: 0, right: 0, top: '50%', transform: 'translateY(-50%)', height: 3, backgroundColor: '#e2e8f0', borderRadius: 99, zIndex: 0 }} />
+        <motion.div
+          style={{ position: 'absolute', left: 0, top: '50%', transform: 'translateY(-50%)', height: 3, backgroundColor: 'var(--lime)', borderRadius: 99, zIndex: 0 }}
           initial={{ width: 0 }}
-          animate={{ width: `${((step - 1) / (steps.length - 1)) * 100}%` }}
-          transition={{ ease: "easeInOut", duration: 0.5 }}
+          animate={{ width: `${((step - 1) / (STEPS.length - 1)) * 100}%` }}
+          transition={{ ease: 'easeInOut', duration: 0.5 }}
         />
-        
-        {steps.map((s, index) => {
+        {STEPS.map((s) => {
           const isCompleted = step > s.id;
           const isCurrent = step === s.id;
           return (
-            <div key={s.id} className="relative z-10 flex flex-col items-center">
-              <motion.div 
-                animate={{ 
-                  backgroundColor: isCurrent ? 'var(--lime)' : isCompleted ? 'var(--lime-dark)' : 'var(--dark2)',
-                  borderColor: isCurrent || isCompleted ? 'var(--lime)' : 'var(--border)'
+            <div key={s.id} style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <motion.div
+                animate={{
+                  backgroundColor: isCurrent ? 'var(--lime)' : isCompleted ? 'var(--lime-dark)' : 'white',
+                  borderColor: isCurrent || isCompleted ? 'var(--lime)' : '#e2e8f0',
+                  scale: isCurrent ? 1.15 : 1,
                 }}
-                className={`w-10 h-10 rounded-full border-2 flex items-center justify-center font-bold text-sm ${isCurrent ? 'text-dark shadow-[0_0_15px_rgba(200,241,53,0.3)]' : isCompleted ? 'text-dark' : 'text-text-muted'}`}
+                style={{
+                  width: 38, height: 38, borderRadius: '50%',
+                  border: '2.5px solid #e2e8f0',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontWeight: 800, fontSize: 13,
+                  color: isCurrent || isCompleted ? 'var(--text)' : 'var(--text-muted)',
+                  boxShadow: isCurrent ? '0 0 0 4px rgba(200,241,53,0.25)' : 'none',
+                }}
               >
-                {isCompleted ? <Check size={16} /> : s.id}
+                {isCompleted ? <Check size={15} /> : s.id}
               </motion.div>
-              <div className="absolute top-12 whitespace-nowrap text-center">
-                 <div className={`text-xs font-bold font-heading hidden sm:block ${isCurrent ? 'text-lime' : isCompleted ? 'text-white' : 'text-text-muted'}`}>{s.title}</div>
+              <div style={{ position: 'absolute', top: 46, whiteSpace: 'nowrap', textAlign: 'center' }}>
+                <div style={{
+                  fontSize: 11, fontWeight: 700, letterSpacing: '0.01em',
+                  color: isCurrent ? 'var(--lime-dark)' : isCompleted ? 'var(--text)' : 'var(--text-muted)',
+                }}>
+                  {s.title}
+                </div>
               </div>
             </div>
           );
         })}
       </div>
 
+      {/* Error banner */}
       <AnimatePresence>
         {error && (
-          <motion.div 
-             initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-             className="mb-8 p-4 rounded-xl bg-danger/10 border border-danger/30 text-danger text-sm font-medium flex items-center gap-2"
+          <motion.div
+            initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+            style={{
+              marginBottom: 20, padding: '12px 16px', borderRadius: 12,
+              backgroundColor: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.3)',
+              color: 'var(--danger-dark)', fontSize: 13, fontWeight: 500,
+              display: 'flex', alignItems: 'center', gap: 8,
+            }}
           >
-            <AlertCircle size={18} /> {error}
+            <AlertCircle size={16} /> {error}
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Step Container */}
-      <div className="glass-strong rounded-[24px] p-8 sm:p-10 relative overflow-hidden min-h-[400px]">
-        
+      {/* Step container */}
+      <div style={{
+        backgroundColor: 'white', border: '1px solid var(--glass-border)',
+        borderRadius: 24, padding: '36px 40px',
+        boxShadow: 'var(--shadow-md)',
+        minHeight: 360, position: 'relative', overflow: 'hidden',
+      }}>
         <AnimatePresence mode="wait" custom={1}>
           <motion.div
             key={step}
             custom={1}
-            variants={slideVariants}
-            initial="enter"
-            animate="center"
-            exit="exit"
-            transition={{ duration: 0.4, ease: [0.43, 0.13, 0.23, 0.96] }}
-            className="w-full flex-1"
+            initial={{ x: 32, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: -32, opacity: 0 }}
+            transition={{ duration: 0.3, ease: [0.43, 0.13, 0.23, 0.96] }}
           >
-            <h2 className="text-2xl font-heading font-bold mb-1 text-white">{steps[step-1].title}</h2>
-            <p className="text-sm text-text-muted mb-8">{steps[step-1].desc}</p>
+            <div style={{ marginBottom: 28 }}>
+              <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, color: 'var(--text)', margin: '0 0 4px 0' }}>
+                {STEPS[step - 1].title}
+              </h2>
+              <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>{STEPS[step - 1].desc}</p>
+            </div>
 
-            {/* STEP 1: FINANCIALS */}
+            {/* STEP 1 */}
             {step === 1 && (
-              <div className="space-y-6">
-                <Input 
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+                <Input
                   label="Monthly Income"
                   value={formData.monthly_income}
                   onChange={e => updateForm('monthly_income', e.target.value.replace(/\D/g, ''))}
-                  icon={<span className="font-bold text-lg">₹</span>}
-                  placeholder="e.g. 75000"
+                  icon={<span style={{ fontWeight: 700, fontSize: 16 }}>₹</span>}
                 />
-                
-                <Input 
+                <Input
                   label="Monthly Expenses"
                   value={formData.monthly_expenses}
                   onChange={e => updateForm('monthly_expenses', e.target.value.replace(/\D/g, ''))}
-                  icon={<span className="font-bold text-lg">₹</span>}
-                  placeholder="e.g. 45000"
+                  icon={<span style={{ fontWeight: 700, fontSize: 16 }}>₹</span>}
                 />
-
                 <AnimatePresence>
                   {formData.monthly_income && formData.monthly_expenses && (
-                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="pt-2">
-                      <div className={`p-4 rounded-xl border flex items-center gap-3 ${preview.savings >= 0 ? 'bg-success/5 border-success/20 text-success' : 'bg-danger/5 border-danger/20 text-danger'}`}>
-                        <Activity size={20} />
-                        <div>
-                          <div className="text-xs font-bold uppercase tracking-wider mb-0.5">Estimated Savings Capacity</div>
-                          <div className="text-lg font-bold font-mono">₹{formatINR(preview.savings)}/mo</div>
-                        </div>
+                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}
+                      style={{
+                        padding: '14px 18px', borderRadius: 12,
+                        backgroundColor: preview.savings >= 0 ? 'rgba(34,197,94,0.08)' : 'rgba(248,113,113,0.08)',
+                        border: `1px solid ${preview.savings >= 0 ? 'rgba(34,197,94,0.3)' : 'rgba(248,113,113,0.3)'}`,
+                        color: preview.savings >= 0 ? 'var(--success-dark)' : 'var(--danger-dark)',
+                        display: 'flex', alignItems: 'center', gap: 12,
+                      }}
+                    >
+                      <Activity size={18} />
+                      <div>
+                        <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 2 }}>Estimated Savings Capacity</div>
+                        <div style={{ fontSize: 18, fontWeight: 800, fontFamily: 'monospace' }}>₹{formatINR(preview.savings)}/mo</div>
                       </div>
                     </motion.div>
                   )}
@@ -220,84 +255,107 @@ export default function ApplyWizard() {
               </div>
             )}
 
-            {/* STEP 2: LOAN DETAILS */}
+            {/* STEP 2 */}
             {step === 2 && (
-              <div className="space-y-8">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
                 <div>
-                  <Input 
+                  <Input
                     label="Loan Amount Required"
                     value={formData.loan_amount}
                     onChange={e => updateForm('loan_amount', e.target.value.replace(/\D/g, ''))}
-                    icon={<span className="font-bold text-lg">₹</span>}
-                    placeholder="e.g. 500000"
+                    icon={<span style={{ fontWeight: 700, fontSize: 16 }}>₹</span>}
                   />
-                  <div className="flex flex-wrap gap-2 mt-3">
-                    {[{l: '₹1L', v: 100000}, {l:'₹2L', v: 200000}, {l:'₹5L', v: 500000}, {l:'₹10L', v: 1000000}, {l:'₹20L', v: 2000000}].map(p => (
-                      <button key={p.l} onClick={() => updateForm('loan_amount', p.v)} className="px-3 py-1 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full text-xs font-bold transition-colors text-white">
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 12 }}>
+                    {[{ l: '₹1L', v: 100000 }, { l: '₹2L', v: 200000 }, { l: '₹5L', v: 500000 }, { l: '₹10L', v: 1000000 }, { l: '₹20L', v: 2000000 }].map(p => (
+                      <button
+                        key={p.l} onClick={() => updateForm('loan_amount', p.v)}
+                        style={{
+                          padding: '4px 14px', backgroundColor: '#f1f5f9',
+                          border: '1px solid #e2e8f0', borderRadius: 99,
+                          fontSize: 12, fontWeight: 700, cursor: 'pointer',
+                          color: 'var(--text)', transition: 'background 0.15s',
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.backgroundColor = '#e2e8f0'}
+                        onMouseLeave={e => e.currentTarget.style.backgroundColor = '#f1f5f9'}
+                      >
                         {p.l}
                       </button>
                     ))}
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  <div className="flex flex-col gap-1">
-                    <label className="text-xs text-text-muted font-bold uppercase tracking-wider ml-1">Repayment Tenure</label>
-                    <div className="relative border border-white/10 rounded-xl bg-white/5 hover:border-lime/50 transition-colors">
-                      <select value={formData.loan_tenure_months} onChange={e => updateForm('loan_tenure_months', parseNum(e.target.value))} className="w-full bg-transparent text-white p-4 outline-none appearance-none cursor-pointer">
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+                  <div>
+                    <label style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginBottom: 8 }}>Repayment Tenure</label>
+                    <div style={selectWrap(false)}>
+                      <select
+                        value={formData.loan_tenure_months}
+                        onChange={e => updateForm('loan_tenure_months', parseNum(e.target.value))}
+                        style={selectStyle}
+                      >
                         {[12, 24, 36, 60, 84, 120, 180, 240, 360].map(m => (
-                          <option key={m} value={m} className="bg-dark text-white">{m} months ({m/12} years)</option>
+                          <option key={m} value={m}>{m} months ({(m / 12).toFixed(0)} yrs)</option>
                         ))}
                       </select>
                     </div>
                   </div>
-
-                  <div className="flex flex-col gap-1">
-                    <label className="text-xs text-text-muted font-bold uppercase tracking-wider ml-1">Purpose of Loan</label>
-                    <div className="relative border border-white/10 rounded-xl bg-white/5 hover:border-lime/50 transition-colors">
-                      <select value={formData.loan_purpose} onChange={e => updateForm('loan_purpose', e.target.value)} className="w-full bg-transparent text-white p-4 outline-none appearance-none cursor-pointer">
-                        {['Home Purchase', 'Home Construction', 'Vehicle', 'Education', 'Business', 'Personal', 'Medical', 'Other'].map(type => (
-                          <option key={type} value={type} className="bg-dark text-white">{type}</option>
+                  <div>
+                    <label style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginBottom: 8 }}>Purpose of Loan</label>
+                    <div style={selectWrap(false)}>
+                      <select
+                        value={formData.loan_purpose}
+                        onChange={e => updateForm('loan_purpose', e.target.value)}
+                        style={selectStyle}
+                      >
+                        {['Home Purchase', 'Home Construction', 'Vehicle', 'Education', 'Business', 'Personal', 'Medical', 'Other'].map(t => (
+                          <option key={t} value={t}>{t}</option>
                         ))}
                       </select>
                     </div>
                   </div>
                 </div>
-                
+
                 {formData.loan_amount && (
-                   <div className="p-4 rounded-xl border bg-info/5 border-info/20 text-info flex items-center gap-3">
-                      <Activity size={20} />
-                      <div>
-                        <div className="text-xs font-bold uppercase tracking-wider mb-0.5">Estimated Monthly EMI</div>
-                        <div className="text-lg font-bold font-mono">₹{formatINR(preview.newEmi.toFixed(0))}</div>
-                      </div>
-                   </div>
+                  <div style={{
+                    padding: '14px 18px', borderRadius: 12,
+                    backgroundColor: 'rgba(59,130,246,0.06)', border: '1px solid rgba(59,130,246,0.2)',
+                    color: 'var(--info-dark)', display: 'flex', alignItems: 'center', gap: 12,
+                  }}>
+                    <Activity size={18} />
+                    <div>
+                      <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 2 }}>Estimated Monthly EMI</div>
+                      <div style={{ fontSize: 18, fontWeight: 800, fontFamily: 'monospace' }}>₹{formatINR(preview.newEmi.toFixed(0))}</div>
+                    </div>
+                  </div>
                 )}
               </div>
             )}
 
-            {/* STEP 3: CREDIT HISTORY */}
+            {/* STEP 3 */}
             {step === 3 && (
-              <div className="space-y-6">
-                <Input 
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+                <Input
                   label="Credit Score (CIBIL)"
                   value={formData.credit_score}
                   onChange={e => updateForm('credit_score', e.target.value)}
                   type="number"
-                  placeholder="Range 300 - 900"
                 />
-
-                <Input 
-                  label="Late Payment History"
+                <Input
+                  label="Late Payment History (last 2 years)"
                   value={formData.late_payment_history}
                   onChange={e => updateForm('late_payment_history', parseNum(e.target.value))}
                   type="number"
-                  placeholder="Number of missed EMIs in 2 years"
                 />
-
                 <AnimatePresence>
                   {formData.late_payment_history > 3 && (
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-3 bg-danger/10 border border-danger/20 text-danger rounded-xl flex items-center gap-2 text-sm font-bold">
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                      style={{
+                        padding: '12px 16px', borderRadius: 12,
+                        backgroundColor: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.3)',
+                        color: 'var(--danger-dark)', fontSize: 13, fontWeight: 600,
+                        display: 'flex', alignItems: 'center', gap: 8,
+                      }}
+                    >
                       <AlertCircle size={16} /> More than 3 late payments severely impacts ML approval probability.
                     </motion.div>
                   )}
@@ -305,17 +363,25 @@ export default function ApplyWizard() {
               </div>
             )}
 
-            {/* STEP 4: EMPLOYMENT */}
+            {/* STEP 4 */}
             {step === 4 && (
-              <div className="space-y-8">
-                <div className="flex flex-col gap-2">
-                  <label className="text-xs text-text-muted font-bold uppercase tracking-wider ml-1">Employment Type</label>
-                  <div className="grid grid-cols-3 gap-3">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+                <div>
+                  <label style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginBottom: 10 }}>Employment Type</label>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
                     {['salaried', 'self-employed', 'business'].map(type => (
-                      <div 
-                        key={type} 
+                      <div
+                        key={type}
                         onClick={() => updateForm('employment_type', type)}
-                        className={`p-3 rounded-xl border text-center cursor-pointer transition-all font-medium text-sm capitalize ${formData.employment_type === type ? 'bg-lime/10 border-lime text-lime shadow-[0_0_10px_rgba(200,241,53,0.1)]' : 'bg-white/5 border-white/10 text-white hover:bg-white/10'}`}
+                        style={{
+                          padding: '12px 8px', borderRadius: 12,
+                          border: `1.5px solid ${formData.employment_type === type ? 'var(--lime)' : '#e2e8f0'}`,
+                          backgroundColor: formData.employment_type === type ? 'rgba(200,241,53,0.1)' : '#f8fafc',
+                          textAlign: 'center', cursor: 'pointer',
+                          fontSize: 13, fontWeight: 600, textTransform: 'capitalize',
+                          color: formData.employment_type === type ? 'var(--lime-dark)' : 'var(--text)',
+                          transition: 'all 0.15s',
+                        }}
                       >
                         {type.replace('-', ' ')}
                       </div>
@@ -323,96 +389,106 @@ export default function ApplyWizard() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  <Input 
-                    label="Years Employed"
-                    value={formData.employment_years}
-                    onChange={e => updateForm('employment_years', e.target.value)}
-                    type="number"
-                  />
-                  <Input 
-                    label="Active Loans Count"
-                    value={formData.existing_loans_count}
-                    onChange={e => updateForm('existing_loans_count', parseNum(e.target.value))}
-                    type="number"
-                  />
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+                  <Input label="Years Employed" value={formData.employment_years} onChange={e => updateForm('employment_years', e.target.value)} type="number" />
+                  <Input label="Active Loans Count" value={formData.existing_loans_count} onChange={e => updateForm('existing_loans_count', parseNum(e.target.value))} type="number" />
                 </div>
 
-                <Input 
+                <Input
                   label="Total Active EMI Value"
                   value={formData.total_existing_emi}
                   onChange={e => updateForm('total_existing_emi', e.target.value.replace(/\D/g, ''))}
-                  icon={<span className="font-bold text-lg">₹</span>}
+                  icon={<span style={{ fontWeight: 700, fontSize: 16 }}>₹</span>}
                 />
               </div>
             )}
 
-            {/* STEP 5: REVIEW */}
+            {/* STEP 5 */}
             {step === 5 && (
-              <div className="space-y-6">
-                 
-                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    <div className="p-4 bg-white/5 rounded-xl border border-white/10">
-                      <div className="text-[10px] text-text-muted uppercase tracking-wider font-bold mb-1">Total Savings</div>
-                      <div className="text-lg font-bold font-mono text-white">₹{formatINR(preview.savings)}/mo</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+                {/* Summary metrics */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+                  {[
+                    { label: 'Total Savings', value: `₹${formatINR(preview.savings)}/mo`, color: 'var(--text)' },
+                    { label: 'DTI Ratio', value: `${(preview.dti * 100).toFixed(1)}%`, color: preview.dti > 0.6 ? 'var(--danger-dark)' : 'var(--success-dark)' },
+                    { label: 'Expected EMI', value: `₹${formatINR(preview.newEmi.toFixed(0))}`, color: 'var(--text)' },
+                  ].map(m => (
+                    <div key={m.label} style={{
+                      padding: '16px', backgroundColor: '#f8fafc',
+                      border: '1px solid var(--glass-border)', borderRadius: 14,
+                    }}>
+                      <div style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.08em', marginBottom: 6 }}>{m.label}</div>
+                      <div style={{ fontSize: 18, fontWeight: 800, fontFamily: 'monospace', color: m.color }}>{m.value}</div>
                     </div>
-                    <div className="p-4 bg-white/5 rounded-xl border border-white/10">
-                      <div className="text-[10px] text-text-muted uppercase tracking-wider font-bold mb-1">DTI Ratio</div>
-                      <div className={`text-lg font-bold font-mono ${preview.dti > 0.6 ? 'text-danger' : 'text-success'}`}>{Number(preview.dti * 100).toFixed(1)}%</div>
-                    </div>
-                    <div className="p-4 bg-white/5 rounded-xl border border-white/10 col-span-2 md:col-span-1">
-                      <div className="text-[10px] text-text-muted uppercase tracking-wider font-bold mb-1">Expected EMI</div>
-                      <div className="text-lg font-bold font-mono text-white">₹{formatINR(preview.newEmi.toFixed(0))}</div>
-                    </div>
-                 </div>
+                  ))}
+                </div>
 
-                 {/* Pre-flight Check */}
-                 <div className="pt-4 border-t border-white/10">
-                    <Button variant="secondary" onClick={checkEligibility} loading={loading && !eligibilityResult} className="w-full mb-4" icon={<Activity size={18} />}>
-                      Run Preliminary Assessment
-                    </Button>
+                {/* ML pre-check */}
+                <div style={{ paddingTop: 8, borderTop: '1px solid var(--glass-border)' }}>
+                  <Button variant="secondary" onClick={checkEligibility} loading={loading && !eligibilityResult} className="w-full" icon={<Activity size={17} />}>
+                    Run Preliminary ML Assessment
+                  </Button>
+                </div>
 
-                    <AnimatePresence>
-                      {eligibilityResult && (
-                        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className={`p-4 rounded-xl border mb-4 flex items-center gap-3 ${eligibilityResult.prediction === 'Y' ? 'bg-success/10 border-success/30 text-success' : 'bg-danger/10 border-danger/30 text-danger'}`}>
-                           {eligibilityResult.prediction === 'Y' ? <CheckCircle2 size={24} /> : <AlertCircle size={24} />}
-                           <div>
-                             <div className="font-bold">ML Model Pre-Approval: {eligibilityResult.prediction === 'Y' ? 'Favorable' : 'High Risk'}</div>
-                             <div className="text-xs opacity-80">Confidence: {(eligibilityResult.confidence * 100).toFixed(1)}%</div>
-                           </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                 </div>
+                <AnimatePresence>
+                  {eligibilityResult && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }}
+                      style={{
+                        padding: '16px 20px', borderRadius: 14,
+                        backgroundColor: eligibilityResult.prediction === 'Y' ? 'rgba(34,197,94,0.08)' : 'rgba(248,113,113,0.08)',
+                        border: `1px solid ${eligibilityResult.prediction === 'Y' ? 'rgba(34,197,94,0.3)' : 'rgba(248,113,113,0.3)'}`,
+                        color: eligibilityResult.prediction === 'Y' ? 'var(--success-dark)' : 'var(--danger-dark)',
+                        display: 'flex', alignItems: 'center', gap: 14,
+                      }}
+                    >
+                      {eligibilityResult.prediction === 'Y' ? <CheckCircle2 size={22} /> : <AlertCircle size={22} />}
+                      <div>
+                        <div style={{ fontWeight: 700, fontSize: 15 }}>
+                          ML Pre-Approval: {eligibilityResult.prediction === 'Y' ? 'Favorable' : 'High Risk'}
+                        </div>
+                        <div style={{ fontSize: 12, opacity: 0.8, marginTop: 2 }}>
+                          Confidence: {(eligibilityResult.confidence * 100).toFixed(1)}%
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
 
-                 <label className="flex items-start gap-3 p-4 rounded-xl bg-white/5 border border-white/10 cursor-pointer hover:bg-white/10 transition-colors">
-                    <input type="checkbox" className="mt-1 accent-lime w-4 h-4" checked={consent} onChange={e => setConsent(e.target.checked)} />
-                    <span className="text-xs text-text-muted leading-relaxed">I confirm the above financial information is truthful. I authorize LoanSense to utilize algorithmic fairness processing on this data to render an approval decision.</span>
-                 </label>
+                {/* Consent */}
+                <label style={{
+                  display: 'flex', alignItems: 'flex-start', gap: 14,
+                  padding: '16px 18px', borderRadius: 14,
+                  backgroundColor: '#f8fafc', border: '1px solid var(--glass-border)',
+                  cursor: 'pointer',
+                }}>
+                  <input type="checkbox" checked={consent} onChange={e => setConsent(e.target.checked)}
+                    style={{ width: 16, height: 16, marginTop: 2, accentColor: 'var(--lime-dark)', flexShrink: 0, cursor: 'pointer' }} />
+                  <span style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.7 }}>
+                    I confirm the above financial information is truthful. I authorize LoanSense to utilize algorithmic fairness processing on this data to render an approval decision.
+                  </span>
+                </label>
               </div>
             )}
-
           </motion.div>
         </AnimatePresence>
       </div>
 
-      {/* Navigation Footer */}
-      <div className="flex justify-between items-center mt-8">
+      {/* Navigation footer */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 24 }}>
         <Button variant="ghost" disabled={step === 1} onClick={handleBack} icon={<ArrowLeft size={16} />}>
           Previous
         </Button>
-        
         {step < 5 ? (
-          <Button variant="primary" onClick={handleNext} className="min-w-[120px]">
-            Continue <ArrowRight size={16} className="ml-2" />
+          <Button variant="primary" onClick={handleNext}>
+            Continue <ArrowRight size={16} style={{ marginLeft: 6 }} />
           </Button>
         ) : (
-          <Button variant="primary" onClick={handleSubmit} disabled={!consent || loading} loading={loading} className="min-w-[160px] bg-white text-dark hover:bg-white/90 focus-visible:ring-white">
-            Submit Application <ShieldCheck size={16} className="ml-2" />
+          <Button variant="primary" onClick={handleSubmit} disabled={!consent || loading} loading={loading}>
+            Submit Application <ShieldCheck size={16} style={{ marginLeft: 6 }} />
           </Button>
         )}
       </div>
-
     </div>
   );
 }
