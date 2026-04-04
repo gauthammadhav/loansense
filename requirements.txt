@@ -3,7 +3,7 @@ uvicorn[standard]
 sqlalchemy
 passlib[bcrypt]
 python-jose[cryptography]
-pydantic
+pydantic[email]
 pydantic-settings
 python-multipart
 scikit-learn
