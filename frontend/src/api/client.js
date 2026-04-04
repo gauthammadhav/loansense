@@ -1,8 +1,9 @@
 import axios from 'axios';
 import { useAuthStore } from '../store/useAuthStore';
 
-// Auto-detect environment to bypass Vercel environment variable issues
-const defaultBaseURL = import.meta.env.MODE === 'production' 
+// Aggressive environment detection for Vercel/Railway
+const isVercel = typeof window !== 'undefined' && window.location.hostname.includes('vercel.app');
+const defaultBaseURL = isVercel || import.meta.env.MODE === 'production' 
   ? 'https://loansense-production.up.railway.app' 
   : 'http://127.0.0.1:8000';
 
