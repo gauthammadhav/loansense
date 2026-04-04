@@ -1,9 +1,13 @@
 import axios from 'axios';
 import { useAuthStore } from '../store/useAuthStore';
 
-// Axios instance with base URL from environment
+// Auto-detect environment to bypass Vercel environment variable issues
+const defaultBaseURL = import.meta.env.MODE === 'production' 
+  ? 'https://loansense-production.up.railway.app' 
+  : 'http://127.0.0.1:8000';
+
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000',
+  baseURL: import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || defaultBaseURL,
   headers: {
     'Content-Type': 'application/json',
   },
