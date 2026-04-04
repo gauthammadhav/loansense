@@ -5,6 +5,7 @@ import { useAuthStore } from '../store/useAuthStore';
 import { Mail, Lock, ArrowRight, ShieldCheck } from 'lucide-react';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
+import apiClient from '../api/client';
 import { Canvas } from '@react-three/fiber';
 import { Environment, Float, MeshDistortMaterial, Stars } from '@react-three/drei';
 
@@ -22,24 +23,17 @@ export default function Login() {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch('http://localhost:8000/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.detail || 'Login failed');
-
-      const meResponse = await fetch('http://localhost:8000/auth/me', {
+      const { data } = await apiClient.post('/auth/login', { email, password });
+      
+      const meResponse = await apiClient.get('/auth/me', {
         headers: { 'Authorization': `Bearer ${data.access_token}` }
       });
-      if (!meResponse.ok) throw new Error('Failed to retrieve user profile');
-      const userData = await meResponse.json();
+      const userData = meResponse.data;
 
       setAuth(userData, data.access_token, userData.role);
       navigate(`/${userData.role}/dashboard`);
     } catch (err) {
-      setError(err.message);
+      setError(err.response?.data?.detail || err.message || 'Login failed');
     } finally {
       setIsLoading(false);
     }

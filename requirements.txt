@@ -16,3 +16,7 @@ numpy
 matplotlib
 requests
 traceback-with-variables
+PyPDF2
+pytesseract
+Pillow
+

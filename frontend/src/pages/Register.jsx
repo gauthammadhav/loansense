@@ -4,6 +4,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Mail, Lock, ArrowRight, ShieldCheck, User } from 'lucide-react';
 import { Input, PasswordInput } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
+import apiClient from '../api/client';
 import { Canvas } from '@react-three/fiber';
 import { Environment, Float, MeshDistortMaterial, Stars } from '@react-three/drei';
 
@@ -21,16 +22,10 @@ export default function Register() {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch('http://localhost:8000/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, full_name: fullName })
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.detail || 'Registration failed');
+      await apiClient.post('/auth/register', { email, password, full_name: fullName });
       navigate('/login');
     } catch (err) {
-      setError(err.message);
+      setError(err.response?.data?.detail || err.message || 'Registration failed');
     } finally {
       setIsLoading(false);
     }

@@ -1,17 +1,19 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, ArrowRight, ArrowLeft, ShieldCheck, CheckCircle2, AlertCircle, Activity } from 'lucide-react';
+import { Check, ArrowRight, ArrowLeft, ShieldCheck, CheckCircle2, AlertCircle, Activity, FileCheck } from 'lucide-react';
 import apiClient from '../../api/client';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
+import DocumentUpload from '../../components/ui/DocumentUpload';
 
 const STEPS = [
   { id: 1, title: 'Financial Profile', desc: 'Income and monthly expenses' },
-  { id: 2, title: 'Loan Details', desc: 'Amount, tenure and purpose' },
-  { id: 3, title: 'Credit History', desc: 'CIBIL score and payment record' },
-  { id: 4, title: 'Employment', desc: 'Work type and stability' },
-  { id: 5, title: 'Review & Submit', desc: 'Verify and finalize' },
+  { id: 2, title: 'Loan Details',      desc: 'Amount, tenure and purpose' },
+  { id: 3, title: 'Credit History',   desc: 'CIBIL score and payment record' },
+  { id: 4, title: 'Employment',       desc: 'Work type and stability' },
+  { id: 5, title: 'Review & Submit',  desc: 'Verify and finalize' },
+  { id: 6, title: 'Verify Docs',      desc: 'Optional — boost confidence' },
 ];
 
 export default function ApplyWizard() {
@@ -21,6 +23,7 @@ export default function ApplyWizard() {
   const [error, setError] = useState('');
   const [consent, setConsent] = useState(false);
   const [eligibilityResult, setEligibilityResult] = useState(null);
+  const [submittedAppId, setSubmittedAppId] = useState(null);  // set after successful submit
 
   const [formData, setFormData] = useState({
     monthly_income: '',
@@ -85,14 +88,16 @@ export default function ApplyWizard() {
     try {
       const payload = {
         ...formData,
-        monthly_income: Number(formData.monthly_income) || 0,
+        monthly_income:   Number(formData.monthly_income)   || 0,
         monthly_expenses: Number(formData.monthly_expenses) || 0,
-        loan_amount: Number(formData.loan_amount) || 0,
-        credit_score: Number(formData.credit_score) || 300,
+        loan_amount:      Number(formData.loan_amount)      || 0,
+        credit_score:     Number(formData.credit_score)     || 300,
         employment_years: Number(formData.employment_years) || 0,
       };
       const res = await apiClient.post('/applications/new', payload);
-      navigate(`/applicant/result/${res.data.id}`, { state: { application: res.data } });
+      setSubmittedAppId(res.data.id);
+      // Advance to Step 6 (optional doc upload) instead of navigating away
+      setStep(6);
     } catch (err) {
       const detail = err.response?.data?.detail;
       setError(Array.isArray(detail)
@@ -103,7 +108,7 @@ export default function ApplyWizard() {
     }
   };
 
-  const handleNext = () => setStep(s => Math.min(s + 1, 5));
+  const handleNext = () => setStep(s => Math.min(s + 1, 6));
   const handleBack = () => setStep(s => Math.max(s - 1, 1));
 
   // Shared select style
@@ -470,22 +475,59 @@ export default function ApplyWizard() {
                 </label>
               </div>
             )}
+            {/* STEP 6 — Optional Document Verification */}
+            {step === 6 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: 12,
+                  padding: '14px 18px', borderRadius: 14,
+                  backgroundColor: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.3)',
+                  color: 'var(--success-dark)',
+                }}>
+                  <CheckCircle2 size={20} />
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: 14 }}>Application Submitted!</div>
+                    <div style={{ fontSize: 12, opacity: 0.8, marginTop: 2 }}>Reference #{submittedAppId} · Upload documents below to boost your ML confidence score.</div>
+                  </div>
+                </div>
+                <DocumentUpload
+                  applicationId={submittedAppId}
+                  onUploadComplete={(result) => {
+                    console.log('[Apply] Doc uploaded:', result.document_type, 'Trust:', result.trust_score);
+                  }}
+                />
+              </div>
+            )}
           </motion.div>
         </AnimatePresence>
       </div>
 
       {/* Navigation footer */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 24 }}>
-        <Button variant="ghost" disabled={step === 1} onClick={handleBack} icon={<ArrowLeft size={16} />}>
-          Previous
-        </Button>
-        {step < 5 ? (
+        {step < 6 ? (
+          <Button variant="ghost" disabled={step === 1} onClick={handleBack} icon={<ArrowLeft size={16} />}>
+            Previous
+          </Button>
+        ) : (
+          <div />
+        )}
+        {step < 5 && (
           <Button variant="primary" onClick={handleNext}>
             Continue <ArrowRight size={16} style={{ marginLeft: 6 }} />
           </Button>
-        ) : (
+        )}
+        {step === 5 && (
           <Button variant="primary" onClick={handleSubmit} disabled={!consent || loading} loading={loading}>
             Submit Application <ShieldCheck size={16} style={{ marginLeft: 6 }} />
+          </Button>
+        )}
+        {step === 6 && (
+          <Button
+            variant="primary"
+            onClick={() => navigate(`/applicant/result/${submittedAppId}`)}
+            icon={<FileCheck size={16} />}
+          >
+            View My Results
           </Button>
         )}
       </div>

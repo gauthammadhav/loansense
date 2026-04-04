@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
-import { ArrowLeft, CheckCircle2, XCircle, Activity, Cpu, Percent, Wallet, FileText, Banknote } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, XCircle, Activity, Cpu, Percent, Wallet, FileText, Banknote, ShieldCheck } from 'lucide-react';
 
 import apiClient from '../../api/client';
 import { Card } from '../../components/ui/Card';
@@ -175,6 +175,34 @@ export default function ApplicantResult() {
           </p>
         </div>
       </motion.div>
+
+      {/* ── Document Verification Banner ── */}
+      <AnimatePresence>
+        {application.documents_uploaded && application.document_verification_status !== 'failed' && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
+            style={{
+              padding: '16px 20px', borderRadius: 16,
+              backgroundColor: application.document_verification_status === 'complete' ? 'rgba(34,197,94,0.08)' : 'rgba(245,158,11,0.08)',
+              border: `1px solid ${application.document_verification_status === 'complete' ? 'rgba(34,197,94,0.3)' : 'rgba(245,158,11,0.3)'}`,
+              display: 'flex', alignItems: 'center', gap: 16,
+            }}
+          >
+            <ShieldCheck size={32} style={{ color: application.document_verification_status === 'complete' ? 'var(--success-dark)' : '#d97706', flexShrink: 0 }} />
+            <div>
+              <div style={{ fontWeight: 800, fontSize: 16, color: 'var(--text)' }}>
+                {application.document_verification_status === 'complete' ? 'Documents Verified' : 'Partially Verified'}
+              </div>
+              <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 4 }}>
+                Trust Score: <strong style={{ color: application.document_verification_status === 'complete' ? 'var(--success-dark)' : '#d97706' }}>{(application.overall_trust_score || 0).toFixed(1)}%</strong>
+                {application.verification_boost > 0 && (
+                  <span style={{ marginLeft: 8 }}>· ML Confidence Boost: <strong style={{ color: 'var(--success-dark)' }}>+{(application.verification_boost * 100).toFixed(1)}%</strong></span>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ── ML Decision + Financial Capacity ── */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>

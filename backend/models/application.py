@@ -78,9 +78,18 @@ class LoanApplication(Base):
     # Prevents training data leakage (re-using the same application for training)
     fed_to_training = Column(Boolean, nullable=False, default=False, server_default="0")
 
+    # ── Document Verification (Optional) ──────────────────────────────────────
+    documents_uploaded          = Column(Boolean, nullable=False, default=False, server_default="0")
+    document_verification_status = Column(String(20), nullable=True)   # none | partial | complete | failed
+    overall_trust_score         = Column(Float,   nullable=True, default=0.0)
+    verified_income             = Column(Float,   nullable=True)
+    verified_credit_score       = Column(Integer, nullable=True)
+    verification_boost          = Column(Float,   nullable=True, default=0.0)
+
     # Relationships (Optional based on requirements, but added for convenience)
     applicant = relationship("User", foreign_keys=[applicant_id], backref="applications")
-    officer = relationship("User", foreign_keys=[officer_id], backref="reviews")
+    officer   = relationship("User", foreign_keys=[officer_id],   backref="reviews")
+    documents = relationship("DocumentUpload", back_populates="application", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<LoanApplication(id={self.id}, applicant_id={self.applicant_id}, status='{self.status}')>"
