@@ -6,6 +6,7 @@ import api from '../../api/client';
 import { AnimatedTable } from '../../components/ui/Table';
 import { Badge } from '../../components/ui/Badge';
 import { FileText, CheckCircle, Clock, PlusCircle, ArrowRight } from 'lucide-react';
+import { useIsMobile } from '../../hooks/useIsMobile';
 
 function StatCard({ icon, label, value, color, pulse }) {
   return (
@@ -59,6 +60,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const [stats, setStats] = useState({ total: 0, approved: 0, pending: 0 });
   const [applications, setApplications] = useState([]);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const fetchDashboard = async () => {
@@ -85,7 +87,7 @@ export default function Dashboard() {
 
       {/* Greeting */}
       <motion.div initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 38, fontWeight: 900, letterSpacing: '-0.02em', color: 'var(--text)', margin: '0 0 8px 0', lineHeight: 1.1 }}>
+        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: isMobile ? 28 : 38, fontWeight: 900, letterSpacing: '-0.02em', color: 'var(--text)', margin: '0 0 8px 0', lineHeight: 1.1 }}>
           Welcome back,{' '}
           <span style={{ color: 'var(--lime-dark)' }}>
             {user?.full_name || user?.email?.split('@')?.[0] || 'Applicant'}
@@ -97,14 +99,14 @@ export default function Dashboard() {
       </motion.div>
 
       {/* Stat cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: isMobile ? 12 : 20 }}>
         <StatCard icon={<FileText size={20} />} label="Total Applications" value={stats.total} color="var(--info)" />
         <StatCard icon={<CheckCircle size={20} />} label="Approved Loans" value={stats.approved} color="var(--success)" />
         <StatCard icon={<Clock size={20} />} label="Pending Verification" value={stats.pending} color="var(--warning)" pulse={stats.pending > 0} />
       </div>
 
       {/* Action card */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? 12 : 20 }}>
         <motion.div
           whileHover={{ y: -3, boxShadow: 'var(--shadow-lg)' }}
           initial={{ opacity: 0, y: 16 }}
@@ -136,11 +138,12 @@ export default function Dashboard() {
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
         <div style={{
           backgroundColor: 'white', border: '1px solid var(--glass-border)',
-          borderRadius: 20, padding: 28, boxShadow: 'var(--shadow-sm)',
+          borderRadius: isMobile ? 16 : 20, padding: isMobile ? 16 : 28, boxShadow: 'var(--shadow-sm)',
         }}>
           <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 18, color: 'var(--text)', margin: '0 0 20px 0' }}>
             Applications History
           </h2>
+          <div className={isMobile ? 'table-scroll-mobile' : ''}>
           <AnimatedTable
             data={applications}
             columns={[
@@ -160,6 +163,7 @@ export default function Dashboard() {
             ]}
             onRowClick={(app) => navigate(`/applicant/result/${app.id}`)}
           />
+          </div>
         </div>
       </motion.div>
     </div>

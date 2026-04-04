@@ -6,6 +6,7 @@ import apiClient from '../../api/client';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import DocumentUpload from '../../components/ui/DocumentUpload';
+import { useIsMobile } from '../../hooks/useIsMobile';
 
 const STEPS = [
   { id: 1, title: 'Financial Profile', desc: 'Income and monthly expenses' },
@@ -23,7 +24,8 @@ export default function ApplyWizard() {
   const [error, setError] = useState('');
   const [consent, setConsent] = useState(false);
   const [eligibilityResult, setEligibilityResult] = useState(null);
-  const [submittedAppId, setSubmittedAppId] = useState(null);  // set after successful submit
+  const [submittedAppId, setSubmittedAppId] = useState(null);
+  const isMobile = useIsMobile();
 
   const [formData, setFormData] = useState({
     monthly_income: '',
@@ -139,6 +141,23 @@ export default function ApplyWizard() {
       </div>
 
       {/* Progress Stepper */}
+      {isMobile ? (
+        /* Mobile: compact progress */
+        <div style={{ marginBottom: 24 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+            <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', fontFamily: 'var(--font-ui)' }}>Step {step} of {STEPS.length}</span>
+            <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>{STEPS[step - 1].title}</span>
+          </div>
+          <div style={{ height: 5, background: '#e2e8f0', borderRadius: 3, overflow: 'hidden' }}>
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: `${((step - 1) / (STEPS.length - 1)) * 100}%` }}
+              transition={{ ease: 'easeInOut', duration: 0.4 }}
+              style={{ height: '100%', background: 'var(--lime)', borderRadius: 3 }}
+            />
+          </div>
+        </div>
+      ) : (
       <div style={{ position: 'relative', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 48 }}>
         {/* Track */}
         <div style={{ position: 'absolute', left: 0, right: 0, top: '50%', transform: 'translateY(-50%)', height: 3, backgroundColor: '#e2e8f0', borderRadius: 99, zIndex: 0 }} />
@@ -182,6 +201,7 @@ export default function ApplyWizard() {
           );
         })}
       </div>
+      )}
 
       {/* Error banner */}
       <AnimatePresence>
@@ -203,7 +223,7 @@ export default function ApplyWizard() {
       {/* Step container */}
       <div style={{
         backgroundColor: 'white', border: '1px solid var(--glass-border)',
-        borderRadius: 24, padding: '36px 40px',
+        borderRadius: isMobile ? 16 : 24, padding: isMobile ? '24px 20px' : '36px 40px',
         boxShadow: 'var(--shadow-md)',
         minHeight: 360, position: 'relative', overflow: 'hidden',
       }}>
@@ -289,7 +309,7 @@ export default function ApplyWizard() {
                   </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 20 }}>
                   <div>
                     <label style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginBottom: 8 }}>Repayment Tenure</label>
                     <div style={selectWrap(false)}>
@@ -373,7 +393,7 @@ export default function ApplyWizard() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
                 <div>
                   <label style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginBottom: 10 }}>Employment Type</label>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: 10 }}>
                     {['salaried', 'self-employed', 'business'].map(type => (
                       <div
                         key={type}
@@ -394,7 +414,7 @@ export default function ApplyWizard() {
                   </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 20 }}>
                   <Input label="Years Employed" value={formData.employment_years} onChange={e => updateForm('employment_years', e.target.value)} type="number" />
                   <Input label="Active Loans Count" value={formData.existing_loans_count} onChange={e => updateForm('existing_loans_count', parseNum(e.target.value))} type="number" />
                 </div>
@@ -412,7 +432,7 @@ export default function ApplyWizard() {
             {step === 5 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
                 {/* Summary metrics */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: 16 }}>
                   {[
                     { label: 'Total Savings', value: `₹${formatINR(preview.savings)}/mo`, color: 'var(--text)' },
                     { label: 'DTI Ratio', value: `${(preview.dti * 100).toFixed(1)}%`, color: preview.dti > 0.6 ? 'var(--danger-dark)' : 'var(--success-dark)' },

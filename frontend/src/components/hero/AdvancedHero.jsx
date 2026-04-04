@@ -7,6 +7,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { Check, Activity, ArrowRight, MousePointer2, Database } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import * as random from 'maath/random/dist/maath-random.esm';
+import { useIsMobile } from '../../hooks/useIsMobile';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -83,6 +84,7 @@ export default function AdvancedHero() {
   const textRef = useRef();
   const glassRef = useRef();
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const isMobile = useIsMobile();
 
   const handleMouseMove = (e) => {
     const x = (e.clientX / window.innerWidth - 0.5) * 16;
@@ -110,46 +112,50 @@ export default function AdvancedHero() {
     <section
       ref={heroRef}
       onMouseMove={handleMouseMove}
-      style={{ position: 'relative', width: '100%', height: '100vh', minHeight: 800, overflow: 'hidden', backgroundColor: 'var(--light)' }}
+      style={{ position: 'relative', width: '100%', height: isMobile ? 'auto' : '100vh', minHeight: isMobile ? 'auto' : 800, overflow: 'hidden', backgroundColor: 'var(--light)', paddingBottom: isMobile ? 60 : 0 }}
     >
-      {/* 3D Canvas */}
-      <div style={{ position: 'absolute', inset: 0, zIndex: 0, opacity: 0.65 }}>
-        <Canvas camera={{ position: [0, 0, 10], fov: 50 }} dpr={[1, 1.5]}>
-          <color attach="background" args={['#FAFAFA']} />
-          <ambientLight intensity={1.2} />
-          <directionalLight position={[10, 10, 10]} intensity={0.8} color="#C8F135" />
-          <pointLight position={[-10, -10, -10]} intensity={0.4} color="#ffffff" />
-          <BackgroundShader />
-          <ParticleField />
-          <MorphingBlob />
-          <Environment preset="city" />
-        </Canvas>
-      </div>
+      {/* 3D Canvas — DISABLED on mobile for performance */}
+      {!isMobile && (
+        <div style={{ position: 'absolute', inset: 0, zIndex: 0, opacity: 0.65 }}>
+          <Canvas camera={{ position: [0, 0, 10], fov: 50 }} dpr={[1, 1.5]}>
+            <color attach="background" args={['#FAFAFA']} />
+            <ambientLight intensity={1.2} />
+            <directionalLight position={[10, 10, 10]} intensity={0.8} color="#C8F135" />
+            <pointLight position={[-10, -10, -10]} intensity={0.4} color="#ffffff" />
+            <BackgroundShader />
+            <ParticleField />
+            <MorphingBlob />
+            <Environment preset="city" />
+          </Canvas>
+        </div>
+      )}
 
       {/* Grid overlay */}
-      <div style={{
-        position: 'absolute', inset: 0, zIndex: 1, pointerEvents: 'none', opacity: 0.15,
-        backgroundImage: 'linear-gradient(rgba(155,191,0,0.4) 1px, transparent 1px), linear-gradient(90deg, rgba(155,191,0,0.4) 1px, transparent 1px)',
-        backgroundSize: '40px 40px'
-      }} />
+      {!isMobile && (
+        <div style={{
+          position: 'absolute', inset: 0, zIndex: 1, pointerEvents: 'none', opacity: 0.15,
+          backgroundImage: 'linear-gradient(rgba(155,191,0,0.4) 1px, transparent 1px), linear-gradient(90deg, rgba(155,191,0,0.4) 1px, transparent 1px)',
+          backgroundSize: '40px 40px'
+        }} />
+      )}
 
       {/* Hero Content — properly padded */}
       <div style={{
         position: 'relative', zIndex: 10,
-        width: '100%', height: '100%',
+        width: '100%', height: isMobile ? 'auto' : '100%',
         maxWidth: 1280, margin: '0 auto',
-        padding: '0 48px',
+        padding: isMobile ? '100px 20px 40px' : '0 48px',
         display: 'flex',
-        flexDirection: 'row',
+        flexDirection: isMobile ? 'column' : 'row',
         alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: 48,
-        paddingTop: 80,
+        justifyContent: isMobile ? 'flex-start' : 'space-between',
+        gap: isMobile ? 32 : 48,
+        paddingTop: isMobile ? 100 : 80,
         boxSizing: 'border-box',
       }}>
 
         {/* Left: Text */}
-        <div ref={textRef} style={{ flex: '0 0 48%', maxWidth: 560, display: 'flex', flexDirection: 'column', gap: 24 }}>
+        <div ref={textRef} style={{ flex: isMobile ? 'none' : '0 0 48%', maxWidth: isMobile ? '100%' : 560, width: '100%', display: 'flex', flexDirection: 'column', gap: isMobile ? 18 : 24, textAlign: isMobile ? 'center' : 'left', alignItems: isMobile ? 'center' : 'flex-start' }}>
 
           {/* Badge */}
           <div style={{
@@ -175,7 +181,7 @@ export default function AdvancedHero() {
           <div style={{ margin: 0 }}>
             <h1 style={{
               fontFamily: 'var(--font-display)', fontWeight: 900,
-              fontSize: 'clamp(52px, 5vw, 80px)',
+              fontSize: isMobile ? 'clamp(32px, 8vw, 48px)' : 'clamp(52px, 5vw, 80px)',
               lineHeight: 1.05,
               color: 'var(--text)',
               margin: 0,
@@ -185,7 +191,7 @@ export default function AdvancedHero() {
             <h1 style={{
               fontFamily: 'var(--font-display)', fontWeight: 700,
               fontStyle: 'italic',
-              fontSize: 'clamp(52px, 5vw, 80px)',
+              fontSize: isMobile ? 'clamp(32px, 8vw, 48px)' : 'clamp(52px, 5vw, 80px)',
               lineHeight: 1.05,
               color: 'var(--text-muted)',
               margin: '4px 0 0 0',
@@ -200,11 +206,11 @@ export default function AdvancedHero() {
           </p>
 
           {/* CTAs */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginTop: 8 }}>
+          <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: 'center', gap: isMobile ? 12 : 16, marginTop: 8, width: isMobile ? '100%' : 'auto' }}>
             <button
               onClick={() => navigate('/register')}
               style={{
-                height: 52, padding: '0 32px', borderRadius: 12,
+                height: 52, padding: '0 32px', borderRadius: 12, width: isMobile ? '100%' : 'auto',
                 backgroundColor: 'var(--lime)', color: 'var(--text)',
                 fontWeight: 700, fontSize: 15, cursor: 'pointer',
                 border: 'none', boxShadow: 'var(--shadow-md)',
@@ -219,7 +225,7 @@ export default function AdvancedHero() {
             <button
               onClick={() => navigate('/login')}
               style={{
-                height: 52, padding: '0 28px', borderRadius: 12,
+                height: 52, padding: '0 28px', borderRadius: 12, width: isMobile ? '100%' : 'auto',
                 backgroundColor: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(10px)',
                 color: 'var(--text)', fontWeight: 600, fontSize: 15, cursor: 'pointer',
                 border: '1px solid var(--glass-border)', boxShadow: 'var(--shadow-sm)',
@@ -234,7 +240,7 @@ export default function AdvancedHero() {
         </div>
 
         {/* Right: Glass Card */}
-        <div style={{ flex: '0 0 44%', maxWidth: 480, position: 'relative' }}>
+        {!isMobile && <div style={{ flex: '0 0 44%', maxWidth: 480, position: 'relative' }}>
           <motion.div
             ref={glassRef}
             animate={{ x: mousePos.x * -0.6, y: mousePos.y * -0.6 }}
@@ -366,28 +372,30 @@ export default function AdvancedHero() {
               </div>
             </motion.div>
           </motion.div>
-        </div>
+        </div>}
       </div>
 
-      {/* Scroll indicator */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 3, duration: 1 }}
-        style={{
-          position: 'absolute', bottom: 32, left: '50%', transform: 'translateX(-50%)',
-          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, zIndex: 10,
-        }}
-      >
-        <span style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.2em', fontWeight: 700 }}>Scroll to explore</span>
-        <div style={{ width: 1, height: 48, background: 'linear-gradient(to bottom, var(--glass-border), transparent)', position: 'relative' }}>
-          <motion.div
-            animate={{ y: [0, 32, 48], opacity: [0, 1, 0] }}
-            transition={{ repeat: Infinity, duration: 1.5, ease: 'linear' }}
-            style={{ width: 1, height: 14, backgroundColor: 'var(--lime-dark)' }}
-          />
-        </div>
-      </motion.div>
+      {/* Scroll indicator — hide on mobile */}
+      {!isMobile && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 3, duration: 1 }}
+          style={{
+            position: 'absolute', bottom: 32, left: '50%', transform: 'translateX(-50%)',
+            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, zIndex: 10,
+          }}
+        >
+          <span style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.2em', fontWeight: 700 }}>Scroll to explore</span>
+          <div style={{ width: 1, height: 48, background: 'linear-gradient(to bottom, var(--glass-border), transparent)', position: 'relative' }}>
+            <motion.div
+              animate={{ y: [0, 32, 48], opacity: [0, 1, 0] }}
+              transition={{ repeat: Infinity, duration: 1.5, ease: 'linear' }}
+              style={{ width: 1, height: 14, backgroundColor: 'var(--lime-dark)' }}
+            />
+          </div>
+        </motion.div>
+      )}
     </section>
   );
 }

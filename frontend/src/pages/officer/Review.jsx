@@ -11,6 +11,7 @@ import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { ShapChart } from '../../components/ui/ShapChart';
+import { useIsMobile } from '../../hooks/useIsMobile';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -79,6 +80,7 @@ export default function OfficerReview() {
   const [overrideReason, setOverrideReason] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (!navApp && id) {
@@ -189,7 +191,7 @@ export default function OfficerReview() {
           <ArrowLeft size={20} />
         </button>
         <div style={{ flex: 1 }}>
-          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 32, fontWeight: 900, color: 'var(--text)', margin: '0 0 4px 0', letterSpacing: '-0.02em' }}>
+          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: isMobile ? 24 : 32, fontWeight: 900, color: 'var(--text)', margin: '0 0 4px 0', letterSpacing: '-0.02em' }}>
             Manual Audit Panel
           </h1>
           <p style={{ margin: 0, fontSize: 12, fontWeight: 700, color: 'var(--lime-dark)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>
@@ -202,7 +204,7 @@ export default function OfficerReview() {
       </motion.div>
 
       {/* ── Two-column layout ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: 28, alignItems: 'start' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 380px', gap: isMobile ? 20 : 28, alignItems: 'start' }}>
 
         {/* ── LEFT COLUMN ── */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
@@ -211,7 +213,7 @@ export default function OfficerReview() {
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
             <Card title="Applicant Profile" icon={<User size={18} />}>
               {Object.keys(formData).length > 0 ? (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, paddingTop: 8 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: 12, paddingTop: 8 }}>
                   <DataField label="Monthly Income"  value={formatINR(formData.monthly_income)} />
                   <DataField label="Monthly Expenses" value={formatINR(formData.monthly_expenses)} />
                   <DataField label="Credit Score"
@@ -249,7 +251,7 @@ export default function OfficerReview() {
           {/* Derived Metrics */}
           {Object.keys(formData).length > 0 && (
             <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: 16 }}>
                 <MetricCard
                   icon={<Calculator size={18} />}
                   label="Projected EMI"
@@ -361,7 +363,7 @@ export default function OfficerReview() {
             </motion.div>
 
             <h2 style={{
-              fontFamily: 'var(--font-display)', fontSize: 48, fontWeight: 900,
+              fontFamily: 'var(--font-display)', fontSize: isMobile ? 36 : 48, fontWeight: 900,
               color: isFavorable ? 'var(--success)' : '#ef4444',
               margin: 0, letterSpacing: '-0.02em', lineHeight: 1,
             }}>

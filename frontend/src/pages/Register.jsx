@@ -7,6 +7,7 @@ import { Button } from '../components/ui/Button';
 import apiClient from '../api/client';
 import { Canvas } from '@react-three/fiber';
 import { Environment, Float, MeshDistortMaterial, Stars } from '@react-three/drei';
+import { useIsMobile } from '../hooks/useIsMobile';
 
 export default function Register() {
   const [email, setEmail] = useState('');
@@ -14,6 +15,7 @@ export default function Register() {
   const [fullName, setFullName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const isMobile = useIsMobile();
 
   const navigate = useNavigate();
 
@@ -42,10 +44,12 @@ export default function Register() {
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.6, ease: [0.43, 0.13, 0.23, 0.96] }}
         style={{
-          width: '45%', minWidth: 420, maxWidth: 560,
-          minHeight: '100vh',
+          width: isMobile ? '100%' : '45%',
+          minWidth: isMobile ? 'auto' : 420,
+          maxWidth: isMobile ? '100%' : 560,
+          minHeight: isMobile ? 'auto' : '100vh',
           display: 'flex', flexDirection: 'column', justifyContent: 'center',
-          padding: '48px 64px',
+          padding: isMobile ? '40px 24px' : '48px 64px',
           position: 'relative', zIndex: 10,
           boxSizing: 'border-box',
         }}
@@ -104,7 +108,8 @@ export default function Register() {
         </motion.p>
       </motion.div>
 
-      {/* Right 3D Panel */}
+      {/* Right 3D Panel — HIDDEN on mobile */}
+      {!isMobile && (
       <div style={{ flex: 1, position: 'relative', zIndex: 0, overflow: 'hidden' }}>
         <div style={{ position: 'absolute', inset: 0, backgroundColor: 'var(--light)', opacity: 0.15, zIndex: 10, pointerEvents: 'none' }} />
         <Canvas camera={{ position: [0, 0, 15], fov: 45 }} style={{ width: '100%', height: '100%' }}>
@@ -145,6 +150,7 @@ export default function Register() {
           <p style={{ fontSize: 15, color: 'var(--text-muted)', lineHeight: 1.65, margin: 0, maxWidth: 420 }}>Get instant pre-approvals backed by automated SHAP reasoning and algorithmic fairness validation.</p>
         </motion.div>
       </div>
+      )}
     </div>
   );
 }

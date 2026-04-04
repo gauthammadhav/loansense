@@ -9,6 +9,7 @@ import {
 import apiClient from '../../api/client';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
+import { useIsMobile } from '../../hooks/useIsMobile';
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -189,6 +190,7 @@ function QuickPreview({ app, onClose, onAssignAndReview }) {
 
 export default function OfficerDashboard() {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
 
   const [stats, setStats] = useState(null);
   const [queue, setQueue] = useState([]);
@@ -294,16 +296,16 @@ export default function OfficerDashboard() {
   }
 
   return (
-    <div style={{ maxWidth: 1200, margin: '0 auto', paddingBottom: 80, display: 'flex', flexDirection: 'column', gap: 32 }}>
+    <div style={{ maxWidth: 1200, margin: '0 auto', paddingBottom: 80, display: 'flex', flexDirection: 'column', gap: isMobile ? 20 : 32 }}>
 
       {/* ── Header ── */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid var(--glass-border)', paddingBottom: 24 }}>
+      <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'stretch' : 'flex-start', gap: isMobile ? 16 : 0, borderBottom: '1px solid var(--glass-border)', paddingBottom: 24 }}>
         <motion.div initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
             <span style={{ width: 7, height: 7, borderRadius: '50%', backgroundColor: '#f59e0b', display: 'inline-block' }} />
             <span style={{ color: '#d97706', fontWeight: 700, fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase' }}>Live Action Queue</span>
           </div>
-          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 34, fontWeight: 900, color: 'var(--text)', margin: '0 0 6px 0', letterSpacing: '-0.02em' }}>Decision Pipeline</h1>
+          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: isMobile ? 26 : 34, fontWeight: 900, color: 'var(--text)', margin: '0 0 6px 0', letterSpacing: '-0.02em' }}>Decision Pipeline</h1>
           <p style={{ fontSize: 14, color: 'var(--text-muted)', margin: 0 }}>Applications awaiting review and officer decisions.</p>
         </motion.div>
         <motion.button
@@ -320,7 +322,7 @@ export default function OfficerDashboard() {
       {/* ── KPI Cards ── */}
       {stats && (
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-          style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 18 }}
+          style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: isMobile ? 12 : 18 }}
         >
           <KPICard icon={<Clock size={22} />} label="Pending Review" value={stats.pending_count} sub="waiting for assignment" color="#f59e0b" pulse={stats.pending_count > 5} glow onClick={() => setStatusFilter('pending')} />
           <KPICard icon={<Users size={22} />} label="Assigned to Me" value={stats.assigned_to_me} sub="under your review" color="#3b82f6" onClick={() => setStatusFilter('my_queue')} />

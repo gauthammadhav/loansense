@@ -4,12 +4,14 @@ import { Database, TrendingUp, BarChart2, Activity, Users, FileBarChart, CheckCi
 import apiClient from '../../api/client';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
+import { useIsMobile } from '../../hooks/useIsMobile';
 
 export default function OfficerAnalytics() {
   const [modelHistory, setModelHistory] = useState([]);
   const [datasetStats, setDatasetStats] = useState(null);
   const [featureImportance, setFeatureImportance] = useState(null);
   const [loading, setLoading] = useState(true);
+  const isMobile = useIsMobile();
 
   useEffect(() => { fetchAllData(); }, []);
 
@@ -74,7 +76,7 @@ export default function OfficerAnalytics() {
           <span style={{ width: 7, height: 7, borderRadius: '50%', backgroundColor: '#3b82f6', display: 'inline-block' }} />
           <span style={{ color: '#3b82f6', fontWeight: 700, fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase' }}>System Telemetry</span>
         </div>
-        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 36, fontWeight: 900, color: 'var(--text)', margin: '0 0 8px 0', letterSpacing: '-0.02em' }}>
+        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: isMobile ? 26 : 36, fontWeight: 900, color: 'var(--text)', margin: '0 0 8px 0', letterSpacing: '-0.02em' }}>
           Analytics Hub
         </h1>
         <p style={{ fontSize: 14, color: 'var(--text-muted)', margin: 0 }}>
@@ -85,7 +87,7 @@ export default function OfficerAnalytics() {
       {/* ── KPI Cards ── */}
       {datasetStats && (
         <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }}
-          style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 20 }}
+          style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(4, 1fr)', gap: isMobile ? 12 : 20 }}
         >
           {[
             { icon: <Database size={22} />, badge: 'Dataset', badgeVariant: 'outline', label: 'Global Records', value: datasetStats.total_rows?.toLocaleString(), color: 'var(--text)' },
@@ -175,7 +177,7 @@ export default function OfficerAnalytics() {
       )}
 
       {/* ── Algorithm Registry + Feature Weights ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 24 }}>
 
         {/* Algorithm Registry */}
         <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}>

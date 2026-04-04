@@ -2,10 +2,11 @@ import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import { Badge } from '../components/ui/Badge';
-import { Check, ArrowRight, Activity, Code, FileText, Database, Shield, Zap, Sparkles, Binary, MoveRight } from 'lucide-react';
+import { Check, ArrowRight, Activity, Code, FileText, Database, Shield, Zap, Sparkles, Binary, MoveRight, Menu } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Lenis from 'lenis';
 import AdvancedHero from '../components/hero/AdvancedHero';
+import { useIsMobile } from '../hooks/useIsMobile';
 
 const fadeInUp = {
   hidden: { opacity: 0, y: 30 },
@@ -20,6 +21,7 @@ const staggerContainer = {
 export default function Landing() {
   const { isAuthenticated, role } = useAuthStore();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const lenis = new Lenis({ duration: 1.4, easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), smoothWheel: true });
@@ -43,27 +45,29 @@ export default function Landing() {
         borderBottom: '1px solid var(--glass-border)',
         boxShadow: 'var(--shadow-sm)',
       }}>
-        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 48px', height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ maxWidth: 1280, margin: '0 auto', padding: isMobile ? '0 16px' : '0 48px', height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }} onClick={() => window.scrollTo(0,0)}>
             <div style={{ width: 32, height: 32, backgroundColor: 'var(--lime)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 18, boxShadow: '0 0 15px rgba(200,241,53,0.3)' }}>+</div>
             <span style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 22, letterSpacing: '-0.02em', color: 'var(--text)' }}>LoanSense</span>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 40 }}>
-            {['Features', 'Intelligence', 'Architecture'].map(item => (
-              <a key={item} href={`#${item.toLowerCase()}`} style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-muted)', textDecoration: 'none', transition: 'color 0.2s' }}
-                onMouseEnter={e => e.target.style.color = 'var(--text)'}
-                onMouseLeave={e => e.target.style.color = 'var(--text-muted)'}>{item}</a>
-            ))}
-          </div>
+          {!isMobile && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 40 }}>
+              {['Features', 'Intelligence', 'Architecture'].map(item => (
+                <a key={item} href={`#${item.toLowerCase()}`} style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-muted)', textDecoration: 'none', transition: 'color 0.2s' }}
+                  onMouseEnter={e => e.target.style.color = 'var(--text)'}
+                  onMouseLeave={e => e.target.style.color = 'var(--text-muted)'}>{item}</a>
+              ))}
+            </div>
+          )}
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <button onClick={() => navigate('/login')} style={{ padding: '8px 20px', borderRadius: 10, border: '1px solid var(--glass-border)', backgroundColor: 'transparent', color: 'var(--text)', fontWeight: 700, fontSize: 14, cursor: 'pointer', transition: 'background 0.2s' }}
+          <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 8 : 12 }}>
+            <button onClick={() => navigate('/login')} style={{ padding: isMobile ? '8px 14px' : '8px 20px', borderRadius: 10, border: '1px solid var(--glass-border)', backgroundColor: 'transparent', color: 'var(--text)', fontWeight: 700, fontSize: isMobile ? 13 : 14, cursor: 'pointer', transition: 'background 0.2s' }}
               onMouseEnter={e => e.currentTarget.style.backgroundColor = 'var(--light3)'}
               onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}>Sign in</button>
-            <button onClick={() => navigate('/register')} style={{ padding: '8px 20px', borderRadius: 10, backgroundColor: 'var(--lime)', color: 'var(--text)', fontWeight: 700, fontSize: 14, cursor: 'pointer', border: 'none', boxShadow: 'var(--shadow-md)', transition: 'transform 0.15s, box-shadow 0.15s' }}
+            <button onClick={() => navigate('/register')} style={{ padding: isMobile ? '8px 14px' : '8px 20px', borderRadius: 10, backgroundColor: 'var(--lime)', color: 'var(--text)', fontWeight: 700, fontSize: isMobile ? 13 : 14, cursor: 'pointer', border: 'none', boxShadow: 'var(--shadow-md)', transition: 'transform 0.15s, box-shadow 0.15s' }}
               onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.03)'; }}
-              onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; }}>Get early access</button>
+              onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; }}>{isMobile ? 'Start' : 'Get early access'}</button>
           </div>
         </div>
       </nav>
@@ -72,8 +76,8 @@ export default function Landing() {
       <AdvancedHero />
 
       {/* ─── FEATURES ─── */}
-      <section id="features" style={{ backgroundColor: 'var(--light2)', borderTop: '1px solid var(--glass-border)', padding: '120px 0' }}>
-        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 48px' }}>
+      <section id="features" style={{ backgroundColor: 'var(--light2)', borderTop: '1px solid var(--glass-border)', padding: isMobile ? '60px 0' : '120px 0' }}>
+        <div style={{ maxWidth: 1280, margin: '0 auto', padding: isMobile ? '0 20px' : '0 48px' }}>
           <div style={{ textAlign: 'center', maxWidth: 700, margin: '0 auto 80px' }}>
             <motion.div initial={{ opacity: 0, scale: 0.9 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }}>
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '5px 14px', borderRadius: 999, border: '1px solid var(--glass-border)', backgroundColor: 'white', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 20 }}>
@@ -81,21 +85,21 @@ export default function Landing() {
               </span>
             </motion.div>
             <motion.h2 initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
-              style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 52, lineHeight: 1.1, color: 'var(--text)', margin: 0 }}>
+              style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: isMobile ? 32 : 52, lineHeight: 1.1, color: 'var(--text)', margin: 0 }}>
               Built for <span style={{ background: 'linear-gradient(90deg, var(--lime-dark), var(--success-dark))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>algorithmic fairness</span> & transparency.
             </motion.h2>
           </div>
 
           <motion.div variants={staggerContainer} initial="hidden" whileInView="show" viewport={{ once: true, margin: '-80px' }}
-            style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24 }}>
+            style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: isMobile ? 16 : 24 }}>
 
             {/* Large card — col span 2 */}
-            <motion.div variants={fadeInUp} style={{ gridColumn: 'span 2', background: 'rgba(255,255,255,0.75)', backdropFilter: 'blur(20px)', border: '1px solid var(--glass-border)', borderRadius: 28, padding: 48, position: 'relative', overflow: 'hidden', boxShadow: 'var(--shadow-md)', transition: 'border-color 0.2s, box-shadow 0.2s' }}
+            <motion.div variants={fadeInUp} style={{ gridColumn: isMobile ? 'auto' : 'span 2', background: 'rgba(255,255,255,0.75)', backdropFilter: 'blur(20px)', border: '1px solid var(--glass-border)', borderRadius: isMobile ? 20 : 28, padding: isMobile ? 28 : 48, position: 'relative', overflow: 'hidden', boxShadow: 'var(--shadow-md)', transition: 'border-color 0.2s, box-shadow 0.2s' }}
               onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--lime)'; e.currentTarget.style.boxShadow = 'var(--shadow-lg)'; }}
               onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--glass-border)'; e.currentTarget.style.boxShadow = 'var(--shadow-md)'; }}>
               <div style={{ position: 'absolute', right: 0, top: 0, width: 250, height: 250, background: 'rgba(200,241,53,0.08)', borderRadius: '50%', filter: 'blur(80px)', pointerEvents: 'none' }} />
               <div style={{ width: 52, height: 52, background: 'var(--light)', border: '1px solid var(--glass-border)', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--lime-dark)', marginBottom: 28, boxShadow: 'var(--shadow-sm)' }}><Code size={22} /></div>
-              <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 30, color: 'var(--text)', marginBottom: 14 }}>SHAP Explainability Maps</h3>
+              <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: isMobile ? 22 : 30, color: 'var(--text)', marginBottom: 14 }}>SHAP Explainability Maps</h3>
               <p style={{ fontSize: 16, color: 'var(--text-muted)', lineHeight: 1.7, maxWidth: 480, marginBottom: 20 }}>Eliminate black-box lending. Our infrastructure automatically generates feature-level waterfalls indicating exact approval weights.</p>
               <button style={{ background: 'none', border: 'none', padding: 0, display: 'flex', alignItems: 'center', gap: 6, color: 'var(--text-muted)', fontWeight: 700, fontSize: 14, cursor: 'pointer' }}
                 onMouseEnter={e => e.currentTarget.style.color = 'var(--lime-dark)'}
@@ -103,7 +107,7 @@ export default function Landing() {
             </motion.div>
 
             {/* Box 2 */}
-            <motion.div variants={fadeInUp} style={{ background: 'rgba(255,255,255,0.75)', backdropFilter: 'blur(20px)', border: '1px solid var(--glass-border)', borderRadius: 28, padding: 40, position: 'relative', overflow: 'hidden', boxShadow: 'var(--shadow-md)', transition: 'border-color 0.2s' }}
+            <motion.div variants={fadeInUp} style={{ background: 'rgba(255,255,255,0.75)', backdropFilter: 'blur(20px)', border: '1px solid var(--glass-border)', borderRadius: isMobile ? 20 : 28, padding: isMobile ? 24 : 40, position: 'relative', overflow: 'hidden', boxShadow: 'var(--shadow-md)', transition: 'border-color 0.2s' }}
               onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--warning)'}
               onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--glass-border)'}>
               <div style={{ width: 52, height: 52, background: 'var(--light)', border: '1px solid var(--glass-border)', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--warning-dark)', marginBottom: 24 }}><Activity size={22} /></div>
@@ -112,7 +116,7 @@ export default function Landing() {
             </motion.div>
 
             {/* Box 3 */}
-            <motion.div variants={fadeInUp} style={{ background: 'rgba(255,255,255,0.75)', backdropFilter: 'blur(20px)', border: '1px solid var(--glass-border)', borderRadius: 28, padding: 40, position: 'relative', overflow: 'hidden', boxShadow: 'var(--shadow-md)', transition: 'border-color 0.2s' }}
+            <motion.div variants={fadeInUp} style={{ background: 'rgba(255,255,255,0.75)', backdropFilter: 'blur(20px)', border: '1px solid var(--glass-border)', borderRadius: isMobile ? 20 : 28, padding: isMobile ? 24 : 40, position: 'relative', overflow: 'hidden', boxShadow: 'var(--shadow-md)', transition: 'border-color 0.2s' }}
               onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--info)'}
               onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--glass-border)'}>
               <div style={{ width: 52, height: 52, background: 'var(--light)', border: '1px solid var(--glass-border)', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--info-dark)', marginBottom: 24 }}><Database size={22} /></div>
@@ -121,7 +125,7 @@ export default function Landing() {
             </motion.div>
 
             {/* Box 4 — col span 2 */}
-            <motion.div variants={fadeInUp} style={{ gridColumn: 'span 2', background: 'rgba(255,255,255,0.75)', backdropFilter: 'blur(20px)', border: '1px solid var(--glass-border)', borderRadius: 28, padding: 48, position: 'relative', overflow: 'hidden', boxShadow: 'var(--shadow-md)', transition: 'border-color 0.2s' }}
+            <motion.div variants={fadeInUp} style={{ gridColumn: isMobile ? 'auto' : 'span 2', background: 'rgba(255,255,255,0.75)', backdropFilter: 'blur(20px)', border: '1px solid var(--glass-border)', borderRadius: isMobile ? 20 : 28, padding: isMobile ? 28 : 48, position: 'relative', overflow: 'hidden', boxShadow: 'var(--shadow-md)', transition: 'border-color 0.2s' }}
               onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--danger)'}
               onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--glass-border)'}>
               <div style={{ width: 52, height: 52, background: 'var(--light)', border: '1px solid var(--glass-border)', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--danger-dark)', marginBottom: 28, boxShadow: 'var(--shadow-sm)' }}><Shield size={22} /></div>
@@ -133,13 +137,13 @@ export default function Landing() {
       </section>
 
       {/* ─── INTELLIGENCE ─── */}
-      <section id="intelligence" style={{ backgroundColor: 'white', borderTop: '1px solid var(--glass-border)', padding: '120px 0', overflow: 'hidden' }}>
-        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 48px', display: 'flex', alignItems: 'center', gap: 80 }}>
+      <section id="intelligence" style={{ backgroundColor: 'white', borderTop: '1px solid var(--glass-border)', padding: isMobile ? '60px 0' : '120px 0', overflow: 'hidden' }}>
+        <div style={{ maxWidth: 1280, margin: '0 auto', padding: isMobile ? '0 20px' : '0 48px', display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'stretch' : 'center', gap: isMobile ? 40 : 80 }}>
           <motion.div initial={{ opacity: 0, x: -40 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true, margin: '-100px' }} style={{ flex: 1, minWidth: 0 }}>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '5px 14px', borderRadius: 999, border: '1px solid var(--glass-border)', backgroundColor: 'var(--light3)', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 24 }}>
               <Binary size={13} style={{ color: 'var(--lime-dark)' }} /> Inference Architecture
             </span>
-            <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 48, lineHeight: 1.1, color: 'var(--text)', marginBottom: 20 }}>Frictionless data,<br />instant routing.</h2>
+            <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: isMobile ? 30 : 48, lineHeight: 1.1, color: 'var(--text)', marginBottom: 20 }}>Frictionless data,<br />instant routing.</h2>
             <p style={{ fontSize: 17, color: 'var(--text-muted)', lineHeight: 1.7, marginBottom: 40, maxWidth: 460 }}>From applicant entry to final disbursement, the pipeline never bottlenecks. Random Forests parse 22 dimensions of credit history in 60 milliseconds.</p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
@@ -160,7 +164,7 @@ export default function Landing() {
           </motion.div>
 
           <motion.div initial={{ opacity: 0, x: 40 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true, margin: '-100px' }}
-            style={{ flex: 1, minWidth: 0, position: 'relative', background: 'var(--light)', border: '1px solid var(--glass-border)', borderRadius: 28, padding: 32, boxShadow: 'var(--shadow-xl)', height: 520 }}>
+            style={{ flex: 1, minWidth: 0, position: 'relative', background: 'var(--light)', border: '1px solid var(--glass-border)', borderRadius: isMobile ? 20 : 28, padding: isMobile ? 20 : 32, boxShadow: 'var(--shadow-xl)', height: isMobile ? 'auto' : 520 }}>
             <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at top right, rgba(200,241,53,0.12), transparent 50%)', borderRadius: 28, pointerEvents: 'none' }} />
             <div style={{ display: 'flex', gap: 8, marginBottom: 28, paddingBottom: 16, borderBottom: '1px solid var(--glass-border)' }}>
               {['var(--danger)', 'var(--warning)', 'var(--success)'].map((c, i) => (
@@ -180,32 +184,32 @@ export default function Landing() {
                 </motion.div>
               ))}
             </div>
-            {/* Floating card */}
-            <motion.div animate={{ y: [0, -10, 0] }} transition={{ repeat: Infinity, duration: 4 }}
+            {/* Floating card — hide on mobile */}
+            {!isMobile && <motion.div animate={{ y: [0, -10, 0] }} transition={{ repeat: Infinity, duration: 4 }}
               style={{ position: 'absolute', left: -48, bottom: 40, background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(20px)', border: '1px solid var(--glass-border)', padding: '20px 24px', borderRadius: 18, boxShadow: 'var(--shadow-xl)', minWidth: 200 }}>
               <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--lime-dark)', marginBottom: 6 }}>Automated Alert</div>
               <div style={{ fontWeight: 700, fontSize: 16, color: 'var(--text)', marginBottom: 4 }}>DTI Threshold Crossed</div>
               <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Routed to strict manual review.</div>
-            </motion.div>
+            </motion.div>}
           </motion.div>
         </div>
       </section>
 
       {/* ─── ARCHITECTURE ─── */}
-      <section id="architecture" style={{ backgroundColor: 'var(--light2)', borderTop: '1px solid var(--glass-border)', padding: '120px 0', position: 'relative', overflow: 'hidden' }}>
+      <section id="architecture" style={{ backgroundColor: 'var(--light2)', borderTop: '1px solid var(--glass-border)', padding: isMobile ? '60px 0' : '120px 0', position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: 800, height: 500, background: 'rgba(200,241,53,0.08)', borderRadius: '50%', filter: 'blur(150px)', pointerEvents: 'none' }} />
-        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 48px', position: 'relative', zIndex: 1 }}>
+        <div style={{ maxWidth: 1280, margin: '0 auto', padding: isMobile ? '0 20px' : '0 48px', position: 'relative', zIndex: 1 }}>
           <div style={{ textAlign: 'center', marginBottom: 72 }}>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '5px 14px', borderRadius: 999, border: '1px solid var(--glass-border)', backgroundColor: 'white', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 20 }}>
               <Check size={13} style={{ color: 'var(--lime-dark)' }} /> Dual Interface
             </span>
-            <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 52, lineHeight: 1.1, color: 'var(--text)', margin: 0 }}>One platform.<br />Two perspectives.</h2>
+            <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: isMobile ? 32 : 52, lineHeight: 1.1, color: 'var(--text)', margin: 0 }}>One platform.<br />Two perspectives.</h2>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? 16 : 24 }}>
             {/* Applicant Card */}
             <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
-              style={{ background: 'rgba(255,255,255,0.8)', backdropFilter: 'blur(20px)', border: '1px solid var(--glass-border)', borderRadius: 28, padding: 48, boxShadow: 'var(--shadow-md)', transition: 'border-color 0.2s' }}
+              style={{ background: 'rgba(255,255,255,0.8)', backdropFilter: 'blur(20px)', border: '1px solid var(--glass-border)', borderRadius: isMobile ? 20 : 28, padding: isMobile ? 28 : 48, boxShadow: 'var(--shadow-md)', transition: 'border-color 0.2s' }}
               onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--lime)'}
               onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--glass-border)'}>
               <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 30, color: 'var(--text)', marginBottom: 32 }}>The Applicant</h3>
@@ -223,7 +227,7 @@ export default function Landing() {
 
             {/* Officer Card */}
             <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} viewport={{ once: true }}
-              style={{ background: 'white', border: '1px solid var(--glass-border)', borderRadius: 28, padding: 48, boxShadow: 'var(--shadow-md)', transition: 'border-color 0.2s' }}
+              style={{ background: 'white', border: '1px solid var(--glass-border)', borderRadius: isMobile ? 20 : 28, padding: isMobile ? 28 : 48, boxShadow: 'var(--shadow-md)', transition: 'border-color 0.2s' }}
               onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--text-muted)'}
               onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--glass-border)'}>
               <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 30, color: 'var(--text)', marginBottom: 32 }}>The Officer</h3>
@@ -243,13 +247,13 @@ export default function Landing() {
       </section>
 
       {/* ─── CTA ─── */}
-      <section style={{ backgroundColor: 'var(--light)', padding: '120px 0' }}>
-        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 48px' }}>
+      <section style={{ backgroundColor: 'var(--light)', padding: isMobile ? '60px 0' : '120px 0' }}>
+        <div style={{ maxWidth: 1280, margin: '0 auto', padding: isMobile ? '0 20px' : '0 48px' }}>
           <motion.div initial={{ opacity: 0, scale: 0.96 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }}
-            style={{ background: 'white', borderRadius: 40, padding: '96px 64px', textAlign: 'center', boxShadow: 'var(--shadow-xl)', border: '1px solid var(--glass-border)', position: 'relative', overflow: 'hidden' }}>
+            style={{ background: 'white', borderRadius: isMobile ? 24 : 40, padding: isMobile ? '48px 24px' : '96px 64px', textAlign: 'center', boxShadow: 'var(--shadow-xl)', border: '1px solid var(--glass-border)', position: 'relative', overflow: 'hidden' }}>
             <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at center, rgba(200,241,53,0.15), transparent 70%)', pointerEvents: 'none' }} />
             <div style={{ position: 'relative', zIndex: 1 }}>
-              <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 60, color: 'var(--text)', marginBottom: 20, lineHeight: 1.05 }}>Deploy inference.</h2>
+              <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: isMobile ? 32 : 60, color: 'var(--text)', marginBottom: 20, lineHeight: 1.05 }}>Deploy inference.</h2>
               <p style={{ fontSize: 18, color: 'var(--text-muted)', marginBottom: 48, maxWidth: 560, margin: '0 auto 48px', lineHeight: 1.7 }}>Join edge-tier lending institutions processing risk matrices securely and transparently in milliseconds.</p>
               <button onClick={() => navigate('/register')}
                 style={{ padding: '18px 44px', borderRadius: 14, backgroundColor: 'var(--lime)', color: 'var(--text)', fontWeight: 700, fontSize: 16, cursor: 'pointer', border: 'none', boxShadow: 'var(--shadow-lg)', transition: 'transform 0.2s, box-shadow 0.2s' }}
@@ -263,9 +267,9 @@ export default function Landing() {
       </section>
 
       {/* ─── FOOTER ─── */}
-      <footer style={{ backgroundColor: 'white', borderTop: '1px solid var(--glass-border)', padding: '80px 0 40px' }}>
-        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 48px' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: 48, marginBottom: 64 }}>
+      <footer style={{ backgroundColor: 'white', borderTop: '1px solid var(--glass-border)', padding: isMobile ? '40px 0 24px' : '80px 0 40px' }}>
+        <div style={{ maxWidth: 1280, margin: '0 auto', padding: isMobile ? '0 20px' : '0 48px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '2fr 1fr 1fr 1fr', gap: isMobile ? 32 : 48, marginBottom: isMobile ? 32 : 64 }}>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
                 <div style={{ width: 32, height: 32, backgroundColor: 'var(--lime)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 18 }}>+</div>

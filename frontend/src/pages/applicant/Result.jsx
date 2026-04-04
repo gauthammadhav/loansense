@@ -10,6 +10,7 @@ import { ShapChart } from '../../components/ui/ShapChart';
 import WhatIfSimulator from '../../components/ui/WhatIfSimulator';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
+import { useIsMobile } from '../../hooks/useIsMobile';
 
 export default function ApplicantResult() {
   const location = useLocation();
@@ -19,6 +20,7 @@ export default function ApplicantResult() {
 
   const [application, setApplication] = useState(navApp);
   const [loading, setLoading] = useState(!navApp || !navApp.shap_values);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const fetchFullApp = async () => {
@@ -151,7 +153,7 @@ export default function ApplicantResult() {
       {/* ── Header ── */}
       <motion.div
         initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
-        style={{ display: 'flex', alignItems: 'center', gap: 16, borderBottom: '1px solid var(--glass-border)', paddingBottom: 24 }}
+        style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'flex-start' : 'center', gap: isMobile ? 12 : 16, borderBottom: '1px solid var(--glass-border)', paddingBottom: 24 }}
       >
         <button
           onClick={() => navigate('/applicant/dashboard')}
@@ -167,7 +169,7 @@ export default function ApplicantResult() {
           <ArrowLeft size={20} />
         </button>
         <div>
-          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 34, fontWeight: 900, color: 'var(--text)', margin: '0 0 4px 0', letterSpacing: '-0.02em', lineHeight: 1.1 }}>
+          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: isMobile ? 26 : 34, fontWeight: 900, color: 'var(--text)', margin: '0 0 4px 0', letterSpacing: '-0.02em', lineHeight: 1.1 }}>
             Evaluation Report
           </h1>
           <p style={{ fontSize: 12, fontWeight: 700, color: 'var(--lime-dark)', textTransform: 'uppercase', letterSpacing: '0.12em', margin: 0 }}>
@@ -205,7 +207,7 @@ export default function ApplicantResult() {
       </AnimatePresence>
 
       {/* ── ML Decision + Financial Capacity ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 24 }}>
 
         {/* ML Decision */}
         <motion.div
@@ -235,7 +237,7 @@ export default function ApplicantResult() {
           </motion.div>
 
           <h2 style={{
-            fontFamily: 'var(--font-display)', fontSize: 52, fontWeight: 900,
+            fontFamily: 'var(--font-display)', fontSize: isMobile ? 40 : 52, fontWeight: 900,
             color: isApproved ? 'var(--success)' : 'var(--danger)',
             margin: 0, letterSpacing: '-0.02em', lineHeight: 1,
           }}>
