@@ -8,10 +8,15 @@ from backend.config import settings
 SQLALCHEMY_DATABASE_URL = settings.DATABASE_URL
 
 # 2. Engine Creation
-# connect_args={"check_same_thread": False} is required only for SQLite
+# connect_args={"check_same_thread": False} is required ONLY for SQLite.
+# Passing it to PostgreSQL will cause a crash, so we conditionally apply it.
+engine_args = {}
+if SQLALCHEMY_DATABASE_URL.startswith("sqlite"):
+    engine_args["connect_args"] = {"check_same_thread": False}
+
 engine = create_engine(
-    SQLALCHEMY_DATABASE_URL, 
-    connect_args={"check_same_thread": False}
+    SQLALCHEMY_DATABASE_URL,
+    **engine_args
 )
 
 # 3. Session Maker Configuration
