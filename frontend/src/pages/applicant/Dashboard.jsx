@@ -65,7 +65,7 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchDashboard = async () => {
       try {
-        const res = await api.get('/applications');
+        const res = await api.get('/applications/');
         const apps = res.data;
         setApplications(apps);
         setStats({
