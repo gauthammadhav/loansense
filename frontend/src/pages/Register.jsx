@@ -119,7 +119,7 @@ export default function Register() {
           <Float speed={2} rotationIntensity={0.8} floatIntensity={1.5}>
             <mesh position={[0, 0, 0]} scale={2.8}>
               <octahedronGeometry args={[2, 0]} />
-              <MeshDistortMaterial color="#FAFAFA" distort={0.2} speed={1} roughness={0.1} metalness={0.1} wireframe transparent opacity={0.85} />
+              <MeshDistortMaterial color="#C8F135" distort={0.2} speed={1} roughness={0.1} metalness={0.1} wireframe transparent opacity={1} />
             </mesh>
             <mesh scale={2.5}>
               <octahedronGeometry args={[2, 0]} />

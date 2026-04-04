@@ -129,7 +129,7 @@ export default function Login() {
           <directionalLight position={[10, 10, 10]} color="#C8F135" intensity={1} />
           <Float speed={2} rotationIntensity={0.5} floatIntensity={2}>
             {/* Blob — scaled down so it stays inside the cage */}
-            <mesh position={[0, 0, 0]} scale={2.0}>
+            <mesh position={[0, 0, 0]} scale={2.55}>
               <icosahedronGeometry args={[2, 24]} />
               <MeshDistortMaterial color="#FAFAFA" distort={0.35} speed={2} roughness={0.2} metalness={0.1} />
             </mesh>
