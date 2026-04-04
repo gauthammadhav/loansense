@@ -446,19 +446,28 @@ def update_application_verification(db: Session, app: LoanApplication, doc: Docu
             else:
                 app.ml_risk_band = "Very High"
     else:
-        # Apply strict penalty for fraudulent/unverified documents (0 to -0.25)
-        # Revert any previous positive boost first
+        # Apply strict penalty for fraudulent/unverified documents
+        # Scale the confidence down dramatically; low trust = guaranteed High Risk
         old_boost = app.verification_boost or 0.0
         
-        # Calculate new penalty mapping 0-49 trust mapped to -0.25 -> 0.0
-        penalty = round(-0.25 * (50 - avg_trust) / 50, 4)
-        net_change = penalty - old_boost
-        
-        app.verification_boost = penalty
         if app.ml_confidence is not None:
-            new_conf = max(app.ml_confidence + net_change, 0.01)
+            base_conf = app.ml_confidence - old_boost
+            
+            # Trust multiplier (e.g. 10% trust means their confidence is multiplied by 0.1)
+            trust_multiplier = max(avg_trust / 100, 0.01)
+            target_conf = base_conf * trust_multiplier
+            
+            # If trust falls below 35%, enforce a hard ceiling to guarantee rejection
+            if avg_trust < 35:
+                target_conf = min(target_conf, 0.35)
+                
+            new_conf = round(max(target_conf, 0.01), 4)
+            
+            # Store exact differential applied
+            app.verification_boost = new_conf - base_conf
             app.ml_confidence = new_conf
             app.ml_prediction = "Y" if new_conf >= 0.5 else "N"
+
             
             # Recalculate risk band downward
             if new_conf >= 0.80:

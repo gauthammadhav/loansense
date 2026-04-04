@@ -8,9 +8,16 @@ import React, { useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Upload, CheckCircle2, AlertTriangle, X, Eye, Trash2,
-  ShieldCheck, TrendingUp, FileText, Banknote, CreditCard, List
+  ShieldCheck, TrendingUp, Info, Lock
 } from 'lucide-react';
 import apiClient from '../../api/client';
+import BankStatementIcon from '../icons/BankStatementIcon';
+import SalarySlipIcon from '../icons/SalarySlipIcon';
+import CreditReportIcon from '../icons/CreditReportIcon';
+import LoanStatementIcon from '../icons/LoanStatementIcon';
+import UploadCloudIcon from '../icons/UploadCloudIcon';
+import TrustShieldIcon from '../icons/TrustShieldIcon';
+import ScanningIcon from '../icons/ScanningIcon';
 
 // ── Config ────────────────────────────────────────────────────────────────────
 
@@ -18,39 +25,39 @@ const DOCUMENT_TYPES = [
   {
     type: 'bank_statement',
     label: 'Bank Statement',
-    emoji: '🏦',
-    description: 'Last 3 months — verifies income & spending patterns',
-    verifies: ['Monthly Income', 'Expenses', 'Financial Stability'],
-    boost: '+12%',
-    icon: Banknote,
+    IconComponent: BankStatementIcon,
+    description: 'Last 3 months to verify income',
+    verifies: ['Income', 'Expenses', 'Financial Stability'],
+    trustBoost: '+15%',
+    gradient: 'linear-gradient(135deg, #C8F135 0%, #9BBF00 100%)'
   },
   {
     type: 'salary_slip',
     label: 'Salary Slip',
-    emoji: '💼',
-    description: 'Latest month — confirms employment income',
-    verifies: ['Monthly Income', 'Employment Type'],
-    boost: '+8%',
-    icon: FileText,
+    IconComponent: SalarySlipIcon,
+    description: 'Latest salary slip',
+    verifies: ['Monthly Income', 'Employment'],
+    trustBoost: '+10%',
+    gradient: 'linear-gradient(135deg, #4ADE80 0%, #22C55E 100%)'
   },
   {
     type: 'credit_report',
     label: 'CIBIL Report',
-    emoji: '📊',
-    description: 'Credit score + loan history verification',
-    verifies: ['Credit Score', 'Loan History', 'EMI Load'],
-    boost: '+10%',
-    icon: CreditCard,
+    IconComponent: CreditReportIcon,
+    description: 'Credit score verification',
+    verifies: ['Credit Score', 'Loan History'],
+    trustBoost: '+12%',
+    gradient: 'linear-gradient(135deg, #818CF8 0%, #6366F1 100%)'
   },
   {
     type: 'loan_statement',
-    label: 'Loan Statement',
-    emoji: '📄',
-    description: 'Active loan EMI and outstanding details',
+    label: 'Existing Loan Statement',
+    IconComponent: LoanStatementIcon,
+    description: 'Current loan details',
     verifies: ['EMI Amount', 'Loan Count'],
-    boost: '+5%',
-    icon: List,
-  },
+    trustBoost: '+8%',
+    gradient: 'linear-gradient(135deg, #FBBF24 0%, #F59E0B 100%)'
+  }
 ];
 
 const TRUST_COLOR = (score) => {
@@ -108,6 +115,14 @@ function UploadedBadge() {
 }
 
 function DetailModal({ doc, onClose }) {
+  React.useEffect(() => {
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
+  }, []);
+
   const extracted = doc.extracted_data || {};
   const discrepancies = doc.discrepancies || [];
   const risk_flags = doc.risk_flags || [];
@@ -356,6 +371,7 @@ export default function DocumentUpload({
           const isUploaded = uploadedTypes.has(dt.type);
           const uploadedDoc = uploadedDocs.find(d => d.document_type === dt.type);
           const trust = uploadedDoc?.trust_score ?? 0;
+          const IconComponent = dt.IconComponent;
 
           return (
             <motion.div
@@ -365,40 +381,57 @@ export default function DocumentUpload({
                 backgroundColor: 'white',
                 border: isUploaded ? `2px solid ${TRUST_BORDER(trust)}` : '1.5px solid var(--glass-border)',
                 borderRadius: 20, padding: '20px 22px',
-                boxShadow: 'var(--shadow-sm)',
+                boxShadow: 'var(--shadow-md)',
                 position: 'relative', overflow: 'hidden',
-                transition: 'border-color 0.2s',
+                transition: 'all 0.3s',
               }}
             >
+              {/* Gradient background overlay */}
+              <div style={{
+                position: 'absolute',
+                top: 0, left: 0, right: 0, height: '80px',
+                background: dt.gradient,
+                opacity: 0.1,
+                borderRadius: '20px 20px 0 0',
+                pointerEvents: 'none'
+              }} />
+
               {/* Top accent bar when uploaded */}
               {isUploaded && (
                 <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, backgroundColor: TRUST_COLOR(trust) }} />
               )}
 
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
-                <span style={{ fontSize: 28 }}>{dt.emoji}</span>
+                <div style={{ position: 'relative', zIndex: 1 }}>
+                  <IconComponent size={40} />
+                </div>
                 {isUploaded ? (
                   <UploadedBadge />
                 ) : (
                   <div style={{
-                    fontSize: 11, fontWeight: 700, color: 'var(--lime-dark)',
-                    backgroundColor: 'rgba(200,241,53,0.15)', padding: '3px 10px', borderRadius: 20,
+                    fontSize: 11, fontWeight: 600, color: 'var(--info-dark)',
+                    backgroundColor: 'var(--info-bg)', padding: '5px 10px', borderRadius: 8,
+                    display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'var(--font-ui)'
                   }}>
-                    {dt.boost} confidence
+                    <TrendingUp size={12} strokeWidth={2.5}/> {dt.trustBoost}
                   </div>
                 )}
               </div>
 
-              <h4 style={{ fontWeight: 800, fontSize: 15, color: 'var(--text)', margin: '0 0 6px 0' }}>{dt.label}</h4>
+              <h4 style={{ fontWeight: 700, fontSize: 16, color: 'var(--text)', margin: '0 0 6px 0', fontFamily: 'var(--font-ui)' }}>{dt.label}</h4>
               <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: '0 0 12px 0', lineHeight: 1.5 }}>{dt.description}</p>
 
               {/* Verifies tags */}
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 14 }}>
                 {dt.verifies.map(v => (
                   <span key={v} style={{
-                    fontSize: 10, fontWeight: 700, padding: '3px 8px', borderRadius: 20,
-                    backgroundColor: '#f1f5f9', color: 'var(--text-muted)', border: '1px solid var(--glass-border)',
-                  }}>✓ {v}</span>
+                    display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'var(--lime-subtle)',
+                    color: 'var(--lime-dark)', padding: '4px 10px', borderRadius: '6px', fontSize: '10px',
+                    fontWeight: 600, fontFamily: 'var(--font-ui)'
+                  }}>
+                    <CheckCircle2 size={10} strokeWidth={2.5} />
+                    {v}
+                  </span>
                 ))}
               </div>
 
@@ -409,31 +442,35 @@ export default function DocumentUpload({
               <div style={{ display: 'flex', gap: 8 }}>
                 {isUploaded ? (
                   <>
-                    <button
+                    <motion.button
+                      whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
                       onClick={() => setPreviewDoc(uploadedDoc)}
-                      style={{ flex: 1, padding: '9px 0', borderRadius: 10, backgroundColor: '#f8fafc', border: '1px solid var(--glass-border)', cursor: 'pointer', fontSize: 12, fontWeight: 600, color: 'var(--text)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+                      style={{ flex: 1, padding: '10px 0', borderRadius: 10, backgroundColor: 'var(--lime-subtle)', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, color: 'var(--lime-dark)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, fontFamily: 'var(--font-ui)' }}
                     >
-                      <Eye size={14} /> Details
-                    </button>
-                    <button
+                      <Eye size={16} strokeWidth={2}/> Details
+                    </motion.button>
+                    <motion.button
+                      whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
                       onClick={() => triggerPicker(dt.type)}
-                      style={{ flex: 1, padding: '9px 0', borderRadius: 10, backgroundColor: 'rgba(200,241,53,0.12)', border: '1.5px solid var(--lime)', cursor: 'pointer', fontSize: 12, fontWeight: 700, color: 'var(--lime-dark)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+                      style={{ flex: 1, padding: '10px 0', borderRadius: 10, backgroundColor: 'white', border: '1px solid var(--lime)', cursor: 'pointer', fontSize: 13, fontWeight: 600, color: 'var(--lime-dark)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, fontFamily: 'var(--font-ui)' }}
                     >
-                      <Upload size={14} /> Replace
-                    </button>
+                      <UploadCloudIcon size={16} /> Replace
+                    </motion.button>
                   </>
                 ) : (
-                  <button
+                  <motion.button
+                    whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
                     onClick={() => triggerPicker(dt.type)}
                     style={{
-                      flex: 1, padding: '10px 0', borderRadius: 12, cursor: 'pointer',
-                      backgroundColor: 'var(--lime)', border: 'none',
-                      fontSize: 13, fontWeight: 700, color: 'var(--text)',
+                      width: '100%', padding: '10px 0', borderRadius: 10, cursor: 'pointer',
+                      background: dt.gradient, border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                      fontSize: 13, fontWeight: 700, color: 'white',
                       display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                      fontFamily: 'var(--font-ui)', transition: 'all 0.2s'
                     }}
                   >
-                    <Upload size={15} /> Upload
-                  </button>
+                    <UploadCloudIcon size={16} /> Upload Document
+                  </motion.button>
                 )}
               </div>
 
@@ -454,30 +491,24 @@ export default function DocumentUpload({
       <AnimatePresence>
         {uploading && (
           <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
             style={{
-              position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.45)',
-              zIndex: 1100, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999,
+              flexDirection: 'column', gap: 24
             }}
           >
-            <motion.div
-              initial={{ scale: 0.9 }} animate={{ scale: 1 }}
-              style={{
-                backgroundColor: 'white', borderRadius: 24, padding: '40px 48px',
-                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 18,
-                boxShadow: '0 24px 80px rgba(0,0,0,0.18)',
-              }}
-            >
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ repeat: Infinity, duration: 1.4, ease: 'linear' }}
-                style={{ width: 52, height: 52, borderRadius: '50%', border: '3px solid var(--lime)', borderTopColor: 'transparent' }}
-              />
-              <div style={{ fontWeight: 800, fontSize: 16, color: 'var(--text)' }}>Processing document…</div>
-              <div style={{ fontSize: 13, color: 'var(--text-muted)', textAlign: 'center', maxWidth: 240 }}>
-                Extracting data and running verification checks
-              </div>
-            </motion.div>
+            <ScanningIcon size={80} />
+            <div style={{ textAlign: 'center' }}>
+              <h3 style={{ color: 'white', fontFamily: 'var(--font-display)', fontSize: 24, margin: '0 0 8px 0' }}>
+                Processing Document
+              </h3>
+              <p style={{ color: 'rgba(255,255,255,0.7)', fontFamily: 'var(--font-body)', fontSize: 14, margin: 0 }}>
+                Extracting and verifying information...
+              </p>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -488,40 +519,72 @@ export default function DocumentUpload({
           <motion.div
             initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
             style={{
-              padding: '18px 22px', borderRadius: 18,
-              backgroundColor: TRUST_BG(overallTrust),
-              border: `1.5px solid ${TRUST_BORDER(overallTrust)}`,
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 20, flexWrap: 'wrap',
+              marginTop: 20,
+              background: 'linear-gradient(135deg, var(--success-bg) 0%, var(--info-bg) 100%)',
+              border: '1px solid var(--success)',
+              borderRadius: 16, padding: 28, position: 'relative', overflow: 'hidden'
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <ShieldCheck size={22} style={{ color: TRUST_COLOR(overallTrust), flexShrink: 0 }} />
+            {/* Decorative corner gradient */}
+            <div style={{
+              position: 'absolute', top: -50, right: -50, width: 150, height: 150,
+              background: 'radial-gradient(circle, var(--lime-glow), transparent)', pointerEvents: 'none'
+            }} />
+            
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+              <TrustShieldIcon score={overallTrust} size={56} />
               <div>
-                <div style={{ fontWeight: 800, fontSize: 14, color: 'var(--text)' }}>
-                  {uploadedDocs.length} document{uploadedDocs.length > 1 ? 's' : ''} verified
-                </div>
-                <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>
-                  Overall trust: <strong style={{ color: TRUST_COLOR(overallTrust) }}>{overallTrust.toFixed(0)}%</strong>
-                  {verificationBoost > 0 && (
-                    <span style={{ marginLeft: 8 }}>· Confidence boost: <strong style={{ color: '#16a34a' }}>+{(verificationBoost * 100).toFixed(0)}%</strong></span>
-                  )}
-                </div>
+                <h4 style={{ fontFamily: 'var(--font-display)', color: 'var(--success-dark)', fontSize: 20, margin: '0 0 4px 0' }}>
+                  Documents Verified
+                </h4>
+                <p style={{ color: 'var(--text-muted)', fontSize: 13, margin: 0, fontWeight: 500 }}>
+                  {uploadedDocs.length} document{uploadedDocs.length > 1 ? 's' : ''} processed successfully
+                </p>
               </div>
             </div>
-            <div style={{ display: 'flex', gap: 8 }}>
-              {uploadedDocs.map(d => {
-                const meta = DOCUMENT_TYPES.find(dt => dt.type === d.document_type);
-                return (
-                  <div key={d.document_type} style={{
-                    fontSize: 10, fontWeight: 700, padding: '4px 10px', borderRadius: 20,
-                    backgroundColor: 'white', border: `1px solid ${TRUST_BORDER(d.trust_score || 0)}`,
-                    color: TRUST_COLOR(d.trust_score || 0), display: 'flex', alignItems: 'center', gap: 4,
-                  }}>
-                    <TrendingUp size={10} /> {meta?.label}
+
+            {uploadedDocs.map((doc) => {
+              const docTypeConfig = DOCUMENT_TYPES.find(t => t.type === doc.document_type);
+              const IconComponent = docTypeConfig?.IconComponent;
+              
+              return (
+                <motion.div
+                  key={doc.document_id || doc.document_type}
+                  initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
+                  style={{
+                    background: 'white', padding: 16, borderRadius: 12, marginBottom: 12,
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                    {IconComponent && <IconComponent size={32} />}
+                    <div>
+                      <div style={{ fontWeight: 800, color: 'var(--text)', fontSize: 14, marginBottom: 4 }}>
+                        {docTypeConfig?.label}
+                      </div>
+                      <div style={{ fontSize: 12, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <span style={{ fontWeight: 600 }}>Trust Score:</span> <strong style={{ color: TRUST_COLOR(doc.trust_score || 0) }}>
+                          {(doc.trust_score || 0).toFixed(1)}%
+                        </strong>
+                      </div>
+                    </div>
                   </div>
-                );
-              })}
-            </div>
+                  
+                  <motion.button
+                    whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                    onClick={() => setPreviewDoc(doc)}
+                    style={{
+                      background: 'var(--lime-subtle)', color: 'var(--lime-dark)', border: 'none', padding: '10px 16px',
+                      borderRadius: 8, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
+                      fontSize: 13, fontWeight: 700, transition: 'all 0.2s'
+                    }}
+                  >
+                    <Eye size={16} strokeWidth={2.5} /> View Details
+                  </motion.button>
+                </motion.div>
+              )
+            })}
           </motion.div>
         )}
       </AnimatePresence>
