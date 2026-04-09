@@ -34,6 +34,12 @@ try:
         count = conn.execute(count_query).scalar()
         print(f"\n[Total Loan Applications]: {count}")
         
+        recent_query = sa.text("SELECT id, applicant_id, status, loan_amount FROM loan_applications ORDER BY id DESC LIMIT 5")
+        recent = conn.execute(recent_query).fetchall()
+        print("\n[Latest 5 Applications]:")
+        for row in recent:
+            print(f"  App ID={row.id} | User ID={row.applicant_id} | Status={row.status} | Amount={row.loan_amount}")
+        
     print("\nDatabase check complete!")
 except Exception as e:
     print(f"\n[Error] Connecting to database: {e}")

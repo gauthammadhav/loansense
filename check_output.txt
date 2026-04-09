@@ -1,0 +1,14 @@
+Connecting to database (starts with postgresql://postgre...)
+
+[Users found in Database]:
+  - gautham123@gmail.com (Gautham Madhav) [applicant]
+  - seed.applicant@loansense.in (Seed Applicant) [applicant]
+  - officer@loansense.in (LoanSense Officer) [officer]
+  - gracegram06@gmail.com (hazel grace) [applicant]
+  - jemay@gmail.com (James Done) [applicant]
+  - gauthu@gmail.com (Gauthy) [applicant]
+  - gauthammadhav@gmail.com (Gautham Madhav) [applicant]
+
+[Total Loan Applications]: 27
+
+Database check complete!

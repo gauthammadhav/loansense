@@ -1,0 +1,16 @@
+Migrating users from local SQLite -> live PostgreSQL...
+
+  [MIGRATED] jemay@gmail.com (James Done) [applicant]
+  [MIGRATED] gauthu@gmail.com (Gauthy) [applicant]
+  [SKIP] officer@loansense.in (already exists)
+  [SKIP] seed.applicant@loansense.in (already exists)
+
+Done! Migrated: 2, Skipped: 2
+
+Current users in LIVE database:
+  - gautham123@gmail.com (Gautham Madhav) [applicant]
+  - seed.applicant@loansense.in (Seed Applicant) [applicant]
+  - officer@loansense.in (LoanSense Officer) [officer]
+  - gracegram06@gmail.com (hazel grace) [applicant]
+  - jemay@gmail.com (James Done) [applicant]
+  - gauthu@gmail.com (Gauthy) [applicant]

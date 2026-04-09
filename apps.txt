@@ -1,0 +1,5 @@
+{'id': 27, 'loan_amount': 500000.0, 'purpose': 'General', 'ml_prediction': 'Y', 'ml_risk_band': 'Medium', 'status': 'submitted', 'submitted_at': datetime.datetime(2026, 4, 4, 15, 58, 11, 711347, tzinfo=datetime.timezone.utc)}
+{'id': 26, 'loan_amount': 500000.0, 'purpose': 'General', 'ml_prediction': 'Y', 'ml_risk_band': 'Low', 'status': 'submitted', 'submitted_at': datetime.datetime(2026, 4, 4, 15, 57, 5, 369733, tzinfo=datetime.timezone.utc)}
+{'id': 25, 'loan_amount': 2500000.0, 'purpose': 'Vehicle', 'ml_prediction': 'N', 'ml_risk_band': 'Very High', 'status': 'under_review', 'submitted_at': datetime.datetime(2026, 4, 2, 23, 2, 42, 70607, tzinfo=datetime.timezone.utc)}
+{'id': 24, 'loan_amount': 1500000.0, 'purpose': 'Business', 'ml_prediction': 'N', 'ml_risk_band': 'Very High', 'status': 'approved', 'submitted_at': datetime.datetime(2026, 3, 10, 14, 2, 42, 26391, tzinfo=datetime.timezone.utc)}
+{'id': 23, 'loan_amount': 500000.0, 'purpose': 'Home Purchase', 'ml_prediction': 'Y', 'ml_risk_band': 'Medium', 'status': 'approved', 'submitted_at': datetime.datetime(2026, 4, 1, 3, 2, 41, 984462, tzinfo=datetime.timezone.utc)}

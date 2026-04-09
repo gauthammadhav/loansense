@@ -1,0 +1,39 @@
+============================================================
+LOCAL SQLITE DATABASE CONTENTS
+============================================================
+
+--- USERS ---
+  ID=1 | jemay@gmail.com | James Done | applicant
+  ID=2 | gauthu@gmail.com | Gauthy | applicant
+  ID=3 | officer@loansense.in | LoanSense Officer | officer
+  ID=4 | seed.applicant@loansense.in | Seed Applicant | applicant
+
+--- LOAN APPLICATIONS (first 10 columns) ---
+  ID=1 | user_id=4 | status=submitted | ml=Y conf=0.8153 | loan=500000.0 income=300000.0
+  ID=2 | user_id=4 | status=under_review | ml=N conf=0.8725 | loan=100000.0 income=75000.0
+  ID=3 | user_id=4 | status=under_review | ml=N conf=0.8642 | loan=200000.0 income=45000.0
+  ID=4 | user_id=4 | status=submitted | ml=Y conf=0.6383 | loan=2500000.0 income=100000.0
+  ID=5 | user_id=4 | status=approved | ml=Y conf=0.889 | loan=1500000.0 income=75000.0
+  ID=6 | user_id=4 | status=submitted | ml=Y conf=0.5709 | loan=100000.0 income=100000.0
+  ID=7 | user_id=4 | status=submitted | ml=N conf=0.9151 | loan=750000.0 income=75000.0
+  ID=8 | user_id=4 | status=submitted | ml=N conf=0.8005 | loan=5000000.0 income=75000.0
+  ID=9 | user_id=4 | status=approved | ml=Y conf=0.8816 | loan=1000000.0 income=100000.0
+  ID=10 | user_id=4 | status=submitted | ml=N conf=0.8164 | loan=200000.0 income=300000.0
+  ID=11 | user_id=4 | status=under_review | ml=Y conf=0.6782 | loan=100000.0 income=200000.0
+  ID=12 | user_id=4 | status=under_review | ml=N conf=0.9113 | loan=750000.0 income=150000.0
+  ID=13 | user_id=4 | status=rejected | ml=Y conf=0.6299 | loan=100000.0 income=100000.0
+  ID=14 | user_id=4 | status=submitted | ml=Y conf=0.9211 | loan=500000.0 income=200000.0
+  ID=15 | user_id=4 | status=under_review | ml=Y conf=0.6728 | loan=100000.0 income=30000.0
+  ID=16 | user_id=4 | status=approved | ml=Y conf=0.7407 | loan=100000.0 income=75000.0
+  ID=17 | user_id=4 | status=approved | ml=Y conf=0.542 | loan=1500000.0 income=200000.0
+  ID=18 | user_id=4 | status=submitted | ml=N conf=0.5945 | loan=200000.0 income=200000.0
+  ID=19 | user_id=4 | status=approved | ml=Y conf=0.775 | loan=1000000.0 income=45000.0
+  ID=20 | user_id=4 | status=rejected | ml=Y conf=0.6721 | loan=500000.0 income=75000.0
+  ID=21 | user_id=4 | status=under_review | ml=N conf=0.5858 | loan=750000.0 income=45000.0
+  ID=22 | user_id=4 | status=approved | ml=Y conf=0.6474 | loan=500000.0 income=100000.0
+  ID=23 | user_id=4 | status=under_review | ml=N conf=0.8229 | loan=5000000.0 income=30000.0
+  ID=24 | user_id=4 | status=submitted | ml=Y conf=0.9491 | loan=1500000.0 income=200000.0
+  ID=25 | user_id=4 | status=submitted | ml=N conf=0.766 | loan=1500000.0 income=300000.0
+
+Total users: 4
+Total applications: 25
